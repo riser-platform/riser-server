@@ -1,0 +1,1 @@
+The `apply` folder contains generic riser server resources and may be copied into your state repo's infra folder (recommended) or `kubectl apply -f ./apply` (not recommended). You will also need to modify and copy/apply the example istio virtual service and gateway contained in this folder.

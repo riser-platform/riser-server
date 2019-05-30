@@ -1,0 +1,158 @@
+package resources
+
+import (
+	"testing"
+
+	"github.com/riser-platform/riser-server/api/v1/model"
+	"github.com/riser-platform/riser-server/pkg/core"
+
+	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+)
+
+func Test_CreateDeployment(t *testing.T) {
+	replicas := int32(2)
+	deployment := &core.Deployment{
+		DeploymentMeta: core.DeploymentMeta{
+			Name:      "myapp-deployment",
+			Namespace: "apps",
+			Stage:     "dev",
+			Docker: core.DeploymentDocker{
+				Tag: "myTag",
+			},
+		},
+		App: &model.AppConfig{
+			Name:     "myapp",
+			Image:    "hashicorp/http-echo",
+			Replicas: &replicas,
+			HealthCheck: &model.AppConfigHealthCheck{
+				Path: "/health",
+			},
+			Environment: map[string]intstr.IntOrString{
+				"envKey": intstr.Parse("envVal"),
+			},
+			Expose: &model.AppConfigExpose{
+				ContainerPort: 1337,
+			},
+		},
+	}
+
+	secretsForEnv := []string{
+		"mysecret",
+	}
+
+	result, err := CreateDeployment(deployment, secretsForEnv)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+	// Metadata
+	assert.Equal(t, "myapp-deployment", result.Name)
+	assert.Equal(t, "apps", result.Namespace)
+	assert.Equal(t, "Deployment", result.Kind)
+	assert.Equal(t, "apps/v1", result.APIVersion)
+	assert.Equal(t, 4, len(result.Labels))
+	assert.Equal(t, "dev", result.Labels["stage"])
+	assert.Equal(t, "myapp", result.Labels["app"])
+	assert.Equal(t, "myapp-deployment", result.Labels["deployment"])
+	assert.Equal(t, defaultRiserAppVersion, result.Labels["riser-app"])
+
+	// Pod
+	assert.Equal(t, 4, len(result.Spec.Template.Labels))
+	assert.Equal(t, "dev", result.Spec.Template.Labels["stage"])
+	assert.Equal(t, "myapp", result.Spec.Template.Labels["app"])
+	assert.Equal(t, "myapp-deployment", result.Spec.Template.Labels["deployment"])
+	assert.Equal(t, defaultRiserAppVersion, result.Labels["riser-app"])
+	assert.Equal(t, 1, len(result.Spec.Template.Annotations))
+	assert.Equal(t, result.Spec.Template.Annotations["sidecar.istio.io/rewriteAppHTTPProbers"], "true")
+	assert.Equal(t, 1, len(result.Spec.Template.Spec.Containers))
+	assert.Equal(t, &replicas, result.Spec.Replicas)
+	assert.False(t, *result.Spec.Template.Spec.EnableServiceLinks)
+
+	container := result.Spec.Template.Spec.Containers[0]
+	assert.Equal(t, "hashicorp/http-echo:myTag", container.Image)
+
+	// Env
+	assert.Equal(t, 2, len(container.Env))
+	assert.Equal(t, "ENVKEY", container.Env[0].Name)
+	assert.Equal(t, "envVal", container.Env[0].Value)
+	assert.Equal(t, "MYSECRET", container.Env[1].Name)
+	assert.Equal(t, "myapp-mysecret", container.Env[1].ValueFrom.SecretKeyRef.LocalObjectReference.Name)
+	assert.Equal(t, "data", container.Env[1].ValueFrom.SecretKeyRef.Key)
+
+	// Ports
+	assert.Equal(t, 1, len(container.Ports))
+	assert.EqualValues(t, 1337, container.Ports[0].ContainerPort)
+	assert.Equal(t, corev1.ProtocolTCP, container.Ports[0].Protocol)
+
+	// Health (Readiness Probe)
+	assert.Equal(t, "/health", container.ReadinessProbe.HTTPGet.Path)
+	assert.EqualValues(t, 1337, container.ReadinessProbe.HTTPGet.Port.IntVal)
+
+	// Resource Defaults
+	assert.EqualValues(t, 500, container.Resources.Limits.Cpu().MilliValue(), "millicores")
+	assert.EqualValues(t, 256000000, container.Resources.Limits.Memory().Value(), "bytes")
+	assert.EqualValues(t, 125, container.Resources.Requests.Cpu().MilliValue(), "millicores")
+	assert.EqualValues(t, 128000000, container.Resources.Requests.Memory().Value(), "bytes")
+}
+
+func Test_readinessProbe_nilDeploy(t *testing.T) {
+	app := &model.AppConfig{}
+
+	result := readinessProbe(app)
+
+	assert.Nil(t, result)
+}
+
+func Test_readinessProbe_nilHealth(t *testing.T) {
+	app := &model.AppConfig{}
+
+	result := readinessProbe(app)
+
+	assert.Nil(t, result)
+}
+
+func Test_readinessProbe_httpGetDefaultContainerPort(t *testing.T) {
+	app := &model.AppConfig{
+		HealthCheck: &model.AppConfigHealthCheck{
+			Path: "/health",
+		},
+		Expose: &model.AppConfigExpose{
+			ContainerPort: 1337,
+		},
+	}
+
+	result := readinessProbe(app)
+
+	assert.Equal(t, "/health", result.HTTPGet.Path)
+	assert.EqualValues(t, 1337, result.HTTPGet.Port.IntVal)
+}
+
+func Test_readinessProbe_httpGet(t *testing.T) {
+	app := &model.AppConfig{
+		HealthCheck: &model.AppConfigHealthCheck{
+			Path: "/health",
+			Port: int32Ptr(8080),
+		},
+	}
+
+	result := readinessProbe(app)
+
+	assert.Equal(t, "/health", result.HTTPGet.Path)
+	assert.EqualValues(t, 8080, result.HTTPGet.Port.IntVal)
+}
+
+func Test_resources(t *testing.T) {
+	app := &model.AppConfig{
+		Resources: &model.AppConfigResources{
+			CpuCores: float32Ptr(1.5),
+			MemoryMB: int32Ptr(4096),
+		},
+	}
+
+	result := resources(app)
+
+	assert.EqualValues(t, 1500, result.Limits.Cpu().MilliValue(), "millicores")
+	assert.EqualValues(t, 4096000000, result.Limits.Memory().Value(), "bytes")
+}

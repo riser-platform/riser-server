@@ -1,0 +1,2 @@
+These files are unmodified from a https://github.com/bitnami-labs/sealed-secrets release.
+TODO: use kustomize to install into `riser-system` instead of `kube-system` and any other needed modifications.

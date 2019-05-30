@@ -1,0 +1,47 @@
+IMG ?= riserplatform/riser-server:latest
+
+# Run tests.
+test: fmt lint test-cmd
+	$(TEST_COMMAND)
+	# Nested go modules are not tested for some reason, so test them separately
+	cd api/v1/model && $(TEST_COMMAND)
+
+test-cmd:
+ifeq (, $(shell which gotestsum))
+TEST_COMMAND=go test ./...
+else
+TEST_COMMAND=gotestsum
+endif
+
+# Runs the server
+run:
+	go run ./main.go || true
+
+# Run go fmt against code
+fmt:
+	go fmt ./...
+
+# Run go vet against code
+lint:
+	golangci-lint run
+
+# compile and run unit tests on change. Always "make test" before comitting.
+# requires filewatcher and gotestsum
+watch:
+	filewatcher gotestsum
+
+docker-build:
+	docker build . -t riser-server
+	docker tag riser-server ${IMG}
+
+docker-push:
+	docker push ${IMG}
+
+docker-run: docker-build
+	docker run -it --rm -p 8000:8000 -e "TEST_DIR=/riser-server" riser-server
+
+# Updates snapshot tests.
+update-snapshot:
+	@UPDATESNAPSHOT=true go test ./...
+	@echo "Snapshot updated. Check the diff when you commit to ensure that the updates are what you expect!"
+

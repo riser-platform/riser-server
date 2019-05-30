@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+    app: riser-server
+  name: riser-server-api
+  namespace: riser-system
+spec:
+  gateways:
+  - riser-system/public-default
+  - mesh
+  hosts:
+  # TODO: Add your host here
+  # - your-host.tempuri.org
+  - riser-server.riser-system.svc.cluster.local
+  http:
+  - route:
+    - destination:
+        host: riser-server.riser-system.svc.cluster.local

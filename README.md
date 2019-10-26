@@ -26,4 +26,4 @@ variable `RISER_POSTGRES_MIGRATE_ON_STARTUP=false`. To manually migrate, modify 
 migrate -source=file://migrations -database="postgres://user:password@postgreshost/riserdb" up
 ```
 
-See the [migrate](github.com/golang-migrate/migrate) documentation for more details.
+See the [migrate](github.com/golang-migrate/migrate) documentation for more details. 

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/docker/distribution/reference"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
@@ -54,7 +56,40 @@ func (appConfig *AppConfig) Validate() error {
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
 	)
 
+	if appConfig.Expose != nil {
+		exposeError := validation.ValidateStruct(appConfig.Expose,
+			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "grpc").Error("must be one of: http, grpc")))
+		err = mergeValidationErrors(err, exposeError, "expose")
+	}
+
 	return err
+}
+
+func mergeValidationErrors(baseError error, toMerge error, fieldPrefix string) error {
+	if toMerge == nil {
+		return baseError
+	}
+
+	var isValidationErrors bool
+	baseValidationErrors := validation.Errors{}
+
+	if baseError != nil {
+		baseValidationErrors, isValidationErrors = baseError.(validation.Errors)
+		if !isValidationErrors {
+			return baseError
+		}
+	}
+
+	toMergeValidationErrors, isValidationErrors := toMerge.(validation.Errors)
+	if !isValidationErrors {
+		return toMerge
+	}
+
+	for k, v := range toMergeValidationErrors {
+		baseValidationErrors[fmt.Sprintf("%s.%s", fieldPrefix, k)] = v
+	}
+
+	return baseValidationErrors
 }
 
 func validDockerImageWithoutTagOrDigest(value interface{}) error {

@@ -1,17 +1,13 @@
-> :information_source: For a simple single cluster stage demo, try `riser ops install-demo`. This README is for more advanced exploration of the riser platform.
+> :information_source: For a simple single cluster stage demo, try `riser demo install`. This README is for more advanced exploration of the riser platform.
 
-This folder contains demo infrastructure for components required by Riser. These are designed for demonstration purposes only and have not been rigorously tested for stability or security. It is recommended that you configure and install these dependencies using the recommended approach by the respective dependency. This documentation assumes that the reader already has prior experience installing Kubernetes.
-
+This folder contains demo infrastructure for components required by Riser. These are configured for demonstration purposes only and have not been rigorously tested for stability or security. It is recommended that you configure and install these dependencies using the recommended approach by the respective dependency. This documentation assumes that the reader already has prior experience installing Kubernetes.
 
 ## Creating a new stage
 Review each required component's README in this folder. With the exception of kube-applier, the final yaml for each component should be placed in your `riser-state` git repo in the
- `/stages/<stageName>/kube-resources/infra` folder. Kube-applier must be installed manually after the cluster is ready. Once kube-applier is installed and configured to read from
- your `riser-state` git repo, it should begin installing the remaining components.
+ `/stages/<stageName>/kube-resources/infra` folder. Kube-applier must be installed manually after the cluster is ready. Once kube-applier is installed and configured to read from your `riser-state` git repo, it should begin installing the remaining components.
 
- ### Riser Server
- The Riser Server spans all stages and only needs to be installed on one stage. Please review the [server README](../server/README.md) for installing the riser server.
-
-> TODO: Link to example state repo
+### Riser Server
+The Riser Server spans all stages and only needs to be installed on one stage. Please review the [server README](../server/README.md) for installing the riser server.
 
 ## Configure the default public gateway
 See [the example gateway](riser_default_gateway_example.yaml). This should be placed in the `riser-state` repo.

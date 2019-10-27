@@ -32,7 +32,8 @@ type AppConfig struct {
 }
 
 type AppConfigExpose struct {
-	ContainerPort int32 `json:"containerPort"`
+	Protocol      string `json:"protocol,omitempty"`
+	ContainerPort int32  `json:"containerPort"`
 }
 
 // Mode is not yet implemented (httpGet = default)

@@ -21,7 +21,7 @@ func CreateService(deployment *core.Deployment) (*corev1.Service, error) {
 			Ports: []corev1.ServicePort{
 				corev1.ServicePort{
 					Port: deployment.App.Expose.ContainerPort,
-					Name: "http",
+					Name: deployment.App.Expose.Protocol,
 				},
 			},
 			Selector: map[string]string{"deployment": deployment.Name},

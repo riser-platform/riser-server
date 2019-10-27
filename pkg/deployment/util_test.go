@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Sanitize_DefaultsToAppName(t *testing.T) {
+func Test_ApplyDefaults_Defaults(t *testing.T) {
 	deployment := &core.NewDeployment{
 		App: &model.AppConfigWithOverrides{
 			AppConfig: model.AppConfig{
@@ -21,29 +21,37 @@ func Test_Sanitize_DefaultsToAppName(t *testing.T) {
 		},
 	}
 
-	result := Sanitize(deployment)
+	result := ApplyDefaults(deployment)
 
 	assert.Equal(t, "myapp", result.Name)
+	assert.Equal(t, "apps", result.Namespace)
+	assert.Equal(t, "http", result.App.Expose.Protocol)
 }
 
-func Test_Sanitize_AddsAppNameAsPrefix(t *testing.T) {
+func Test_ApplyDefaults_AllowValues(t *testing.T) {
 	deployment := &core.NewDeployment{
 		DeploymentMeta: core.DeploymentMeta{
-			Name: "mydeployment",
+			Name:      "mydeployment",
+			Namespace: "not-yet-supported",
 		},
 		App: &model.AppConfigWithOverrides{
 			AppConfig: model.AppConfig{
 				Name: "myapp",
+				Expose: &model.AppConfigExpose{
+					Protocol: "grpc",
+				},
 			},
 		},
 	}
 
-	result := Sanitize(deployment)
+	result := ApplyDefaults(deployment)
 
+	assert.Equal(t, "apps", result.Namespace)
 	assert.Equal(t, "myapp-mydeployment", result.Name)
+	assert.Equal(t, "grpc", result.App.Expose.Protocol)
 }
 
-func Test_Sanitize_DoesNotAddPrefixIfNamesMatch(t *testing.T) {
+func Test_ApplyDefaults_WhenDeploymentNameSpecified_DoesNotAddPrefixIfNamesMatch(t *testing.T) {
 	deployment := &core.NewDeployment{
 		DeploymentMeta: core.DeploymentMeta{
 			Name: "myapp",
@@ -55,19 +63,9 @@ func Test_Sanitize_DoesNotAddPrefixIfNamesMatch(t *testing.T) {
 		},
 	}
 
-	result := Sanitize(deployment)
+	result := ApplyDefaults(deployment)
 
 	assert.Equal(t, "myapp", result.Name)
-}
-
-func Test_Sanitize_DefaultNamespace(t *testing.T) {
-	deployment := &core.NewDeployment{
-		App: &model.AppConfigWithOverrides{},
-	}
-
-	result := Sanitize(deployment)
-
-	assert.Equal(t, "apps", result.Namespace)
 }
 
 func Test_ApplyOverrides_NoOverrides(t *testing.T) {

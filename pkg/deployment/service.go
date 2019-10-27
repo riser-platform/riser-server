@@ -43,7 +43,7 @@ func (s *service) Update(deployment *core.NewDeployment, committer state.Committ
 }
 
 func (s *service) update(newDeployment *core.NewDeployment, committer state.Committer, secretNames []string, publicGatewayHost string) error {
-	newDeployment = Sanitize(newDeployment)
+	newDeployment = ApplyDefaults(newDeployment)
 
 	deployment, err := ApplyOverrides(newDeployment)
 	if err != nil {

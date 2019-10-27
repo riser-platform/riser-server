@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/riser-platform/riser-server/api/v1/model"
+
 	"github.com/imdario/mergo"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-func Sanitize(deployment *core.NewDeployment) *core.NewDeployment {
+const DefaultExposeProtocol = "http"
+
+func ApplyDefaults(deployment *core.NewDeployment) *core.NewDeployment {
 	if deployment.Name == "" {
 		deployment.Name = deployment.App.Name
 	} else if !strings.EqualFold(deployment.Name, deployment.App.Name) {
@@ -18,6 +22,13 @@ func Sanitize(deployment *core.NewDeployment) *core.NewDeployment {
 
 	// Hard coded until we implement namespace support
 	deployment.Namespace = "apps"
+
+	if deployment.App.Expose == nil {
+		deployment.App.Expose = &model.AppConfigExpose{}
+	}
+	if deployment.App.Expose.Protocol == "" {
+		deployment.App.Expose.Protocol = DefaultExposeProtocol
+	}
 	return deployment
 }
 

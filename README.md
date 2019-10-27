@@ -1,7 +1,7 @@
 # Riser Server
 
 <p align="left">
-  <a href="https://github.com/riser-platform/riser-server"><img alt="GitHub Actions status" src="https://github.com/riser-platform/riser-server/workflows/Main/badge.svg"></a>
+  <a href="https://github.com/riser-platform/riser-server"><img alt="GitHub Actions status" src="https://github.com/riser-platform/riser-server/workflows/Build/badge.svg"></a>
 </p>
 
 This is the server for the [Riser Platform](https://github.com/riser-platform/riser).
@@ -26,4 +26,4 @@ variable `RISER_POSTGRES_MIGRATE_ON_STARTUP=false`. To manually migrate, modify 
 migrate -source=file://migrations -database="postgres://user:password@postgreshost/riserdb" up
 ```
 
-See the [migrate](github.com/golang-migrate/migrate) documentation for more details. 
+See the [migrate](github.com/golang-migrate/migrate) documentation for more details.

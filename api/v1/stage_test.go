@@ -43,3 +43,22 @@ func Test_mapStageConfigToDomain(t *testing.T) {
 	assert.Equal(t, []byte{0x1}, result.SealedSecretCert)
 	assert.Equal(t, "myhost", result.PublicGatewayHost)
 }
+
+var stageNameTests = []struct {
+	stageName string
+	expected  error
+}{
+	{"", NewAPIError(400, "cannot be blank")},
+	{"a", NewAPIError(400, "the length must be between 3 and 63")},
+	{"0abcd", NewAPIError(400, "must be alphanumeric and start with a letter")},
+	{"A123456789012345678901234567890123456789012345678901234567891234", NewAPIError(400, "the length must be between 3 and 63")},
+	{"A!@#", NewAPIError(400, "must be alphanumeric and start with a letter")},
+	{"valid", nil},
+}
+
+func Test_validateStageName(t *testing.T) {
+	for _, tt := range stageNameTests {
+		result := validateStageName(tt.stageName)
+		assert.Equal(t, tt.expected, result, tt.stageName)
+	}
+}

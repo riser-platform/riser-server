@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/imdario/mergo"
@@ -21,6 +22,7 @@ type Service interface {
 	Ping(stageName string) error
 	SetConfig(stageName string, stage *core.StageConfig) error
 	GetStatus(stageName string) (*core.StageStatus, error)
+	ValidateDeployable(stageName string) error
 }
 
 type service struct {
@@ -70,6 +72,25 @@ func (s *service) GetStatus(stageName string) (*core.StageStatus, error) {
 	}
 
 	return status, nil
+}
+
+// ValidateDeployable validates the existence of a stage and returns a user friendly error with a list of valid stages
+// In the future this may become more sophisticated to determine if it's deployable for a given app e.g. based on RBAC, teams, etc.
+func (s *service) ValidateDeployable(stageName string) error {
+	stages, err := s.stages.List()
+	if err != nil {
+		return errors.Wrap(err, "Unable to validate stage")
+	}
+
+	stageNames := []string{}
+	for _, stage := range stages {
+		if stage.Name == stageName {
+			return nil
+		}
+		stageNames = append(stageNames, stage.Name)
+	}
+
+	return fmt.Errorf("Invalid stage. Must be one of: %s", strings.Join(stageNames, ", "))
 }
 
 func (s *service) Ping(stageName string) error {

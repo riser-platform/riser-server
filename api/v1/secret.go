@@ -3,6 +3,8 @@ package v1
 import (
 	"net/http"
 
+	"github.com/riser-platform/riser-server/pkg/stage"
+
 	"github.com/riser-platform/riser-server/pkg/core"
 
 	"github.com/labstack/echo/v4"
@@ -13,11 +15,16 @@ import (
 	"github.com/riser-platform/riser-server/pkg/state"
 )
 
-func PutSecret(c echo.Context, stateRepo git.GitRepoProvider, secretService secret.Service) error {
+func PutSecret(c echo.Context, stateRepo git.GitRepoProvider, secretService secret.Service, stageService stage.Service) error {
 	unsealedSecret := &model.UnsealedSecret{}
 	err := c.Bind(unsealedSecret)
 	if err != nil {
 		return errors.Wrap(err, "Error binding secret")
+	}
+
+	err = stageService.ValidateDeployable(unsealedSecret.Stage)
+	if err != nil {
+		return NewAPIError(http.StatusBadRequest, err.Error())
 	}
 
 	// We don't know what namespace an app is associated with yet as namespace support is not fully supported.
@@ -25,9 +32,14 @@ func PutSecret(c echo.Context, stateRepo git.GitRepoProvider, secretService secr
 	return secretService.SealAndSave(unsealedSecret.PlainText, mapSecretMetaFromModel(&unsealedSecret.SecretMeta), "apps", state.NewGitComitter(stateRepo))
 }
 
-func GetSecrets(c echo.Context, secretService secret.Service) error {
+func GetSecrets(c echo.Context, secretService secret.Service, stageService stage.Service) error {
 	appName := c.Param("appName")
 	stageName := c.Param("stageName")
+
+	err := stageService.ValidateDeployable(stageName)
+	if err != nil {
+		return NewAPIError(http.StatusBadRequest, err.Error())
+	}
 
 	secretMetas, err := secretService.FindByStage(appName, stageName)
 	if err != nil {

@@ -210,3 +210,45 @@ func Test_SetConfig_IgnoresEmptyValues(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, stageRepository.SaveCallCount)
 }
+
+func Test_ValidateDeployable(t *testing.T) {
+	stageRepository := &core.FakeStageRepository{
+		ListFn: func() ([]core.Stage, error) {
+			return []core.Stage{core.Stage{Name: "stage1"}}, nil
+		},
+	}
+
+	service := service{stageRepository}
+
+	err := service.ValidateDeployable("stage1")
+
+	assert.NoError(t, err)
+}
+
+func Test_ValidateDeployable_WhenStageDoesNotExist(t *testing.T) {
+	stageRepository := &core.FakeStageRepository{
+		ListFn: func() ([]core.Stage, error) {
+			return []core.Stage{core.Stage{Name: "stage1"}, core.Stage{Name: "stage2"}}, nil
+		},
+	}
+
+	service := service{stageRepository}
+
+	err := service.ValidateDeployable("stage3")
+
+	assert.Equal(t, "Invalid stage. Must be one of: stage1, stage2", err.Error())
+}
+
+func Test_ValidateDeployable_ReturnsError(t *testing.T) {
+	stageRepository := &core.FakeStageRepository{
+		ListFn: func() ([]core.Stage, error) {
+			return nil, errors.New("failed")
+		},
+	}
+
+	service := service{stageRepository}
+
+	err := service.ValidateDeployable("stage3")
+
+	assert.Equal(t, "Unable to validate stage: failed", err.Error())
+}

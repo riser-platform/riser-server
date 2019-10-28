@@ -3,6 +3,8 @@ package v1
 import (
 	"net/http"
 
+	"github.com/riser-platform/riser-server/pkg/stage"
+
 	"github.com/riser-platform/riser-server/pkg/namespace"
 
 	"github.com/riser-platform/riser-server/pkg/deployment"
@@ -18,7 +20,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService app.Service, deploymentService deployment.Service) error {
+func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
 	deploymentRequest := &model.DeploymentRequest{}
 	err := c.Bind(deploymentRequest)
 	if err != nil {
@@ -42,6 +44,11 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 	}
 	if err != nil {
 		return err
+	}
+
+	err = stageService.ValidateDeployable(deploymentRequest.Stage)
+	if err != nil {
+		return NewAPIError(http.StatusBadRequest, err.Error())
 	}
 
 	var committer state.Committer

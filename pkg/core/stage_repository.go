@@ -9,12 +9,15 @@ type StageRepository interface {
 type FakeStageRepository struct {
 	GetFn         func(string) (*Stage, error)
 	GetCallCount  int
+	ListFn        func() ([]Stage, error)
+	ListCallCount int
 	SaveFn        func(*Stage) error
 	SaveCallCount int
 }
 
 func (fake *FakeStageRepository) List() ([]Stage, error) {
-	panic("NI")
+	fake.ListCallCount++
+	return fake.ListFn()
 }
 
 func (fake *FakeStageRepository) Save(stage *Stage) error {

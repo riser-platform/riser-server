@@ -24,3 +24,7 @@ func (fake *FakeService) GetStatus(stageName string) (*core.StageStatus, error) 
 func (fake *FakeService) SetConfig(stageName string, stage *core.StageConfig) error {
 	panic("NI")
 }
+
+func (fake *FakeService) ValidateDeployable(stageName string) error {
+	panic("NI")
+}

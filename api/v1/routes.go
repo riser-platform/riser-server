@@ -51,17 +51,17 @@ func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
 	})
 
 	v1.POST("/deployments", func(c echo.Context) error {
-		return PostDeployment(c, repo, appService, deploymentService)
+		return PostDeployment(c, repo, appService, deploymentService, stageService)
 	})
 	v1.PUT("/deployments", func(c echo.Context) error {
-		return PostDeployment(c, repo, appService, deploymentService)
+		return PostDeployment(c, repo, appService, deploymentService, stageService)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {
-		return PutSecret(c, repo, secretService)
+		return PutSecret(c, repo, secretService, stageService)
 	})
 	v1.GET("/secrets/:appName/:stageName", func(c echo.Context) error {
-		return GetSecrets(c, secretService)
+		return GetSecrets(c, secretService, stageService)
 	})
 
 	v1.POST("/status", func(c echo.Context) error {

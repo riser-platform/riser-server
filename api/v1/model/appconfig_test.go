@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jinzhu/copier"
 
@@ -147,6 +148,88 @@ func Test_mergeValidationErrors_NilToMerge(t *testing.T) {
 	validationErrors := result.(validation.Errors)
 	assert.Len(t, validationErrors, 1)
 	assert.Equal(t, "field1 error", validationErrors["field1"].Error())
+}
+
+func Test_ApplyOverrides_NoOverrides(t *testing.T) {
+	appConfig := &AppConfigWithOverrides{
+		AppConfig: AppConfig{
+			Name: "myapp",
+		},
+	}
+
+	result, err := appConfig.ApplyOverrides("test")
+
+	require.NoError(t, err)
+	assert.Equal(t, "myapp", result.Name)
+}
+
+func Test_ApplyOverrides_NoOverridesForStage(t *testing.T) {
+	replicas := int32(3)
+	replicasDev := int32(1)
+	appConfig := &AppConfigWithOverrides{
+		AppConfig: AppConfig{
+			Name:     "myapp",
+			Replicas: &replicas,
+		},
+		Overrides: map[string]AppConfig{
+			"dev": AppConfig{
+				Replicas: &replicasDev,
+			},
+		},
+	}
+
+	result, err := appConfig.ApplyOverrides("test")
+
+	require.NoError(t, err)
+	assert.Equal(t, "myapp", result.Name)
+	assert.Equal(t, replicas, *result.Replicas)
+}
+
+func Test_ApplyOverrides_WithOverrides(t *testing.T) {
+	replicas := int32(3)
+	replicasDev := int32(1)
+	appConfig := &AppConfigWithOverrides{
+		AppConfig: AppConfig{
+			Name:     "myapp",
+			Image:    "hashicorp/http-echo",
+			Replicas: &replicas,
+			HealthCheck: &AppConfigHealthCheck{
+				Path: "/health",
+			},
+			Environment: map[string]intstr.IntOrString{
+				"envKey":     intstr.Parse("envVal"),
+				"envKeyBase": intstr.Parse("envValBase"),
+			},
+			Expose: &AppConfigExpose{
+				ContainerPort: 1337,
+			},
+		},
+		Overrides: map[string]AppConfig{
+			"dev": AppConfig{
+				Replicas: &replicasDev,
+				Environment: map[string]intstr.IntOrString{
+					"envKey":    intstr.Parse("envValDevOverride"),
+					"envKeyDev": intstr.Parse("envValDev"),
+				},
+				Expose: &AppConfigExpose{
+					ContainerPort: 8080,
+				},
+			},
+		},
+	}
+
+	result, err := appConfig.ApplyOverrides("dev")
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "myapp", result.Name)
+	assert.Len(t, result.Environment, 3)
+	assert.Equal(t, "envValDevOverride", result.Environment["envKey"].StrVal)
+	assert.Equal(t, "envValDev", result.Environment["envKeyDev"].StrVal)
+	assert.Equal(t, "envValBase", result.Environment["envKeyBase"].StrVal)
+	assert.EqualValues(t, 8080, result.Expose.ContainerPort)
+	assert.EqualValues(t, 1, *result.Replicas)
+	assert.Equal(t, "/health", result.HealthCheck.Path)
 }
 
 func assertFieldsRequired(t *testing.T, errors validation.Errors, fieldNames ...string) {

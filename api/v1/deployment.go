@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// TODO: Refactor and add unit test coverage
 func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
 	deploymentRequest := &model.DeploymentRequest{}
 	err := c.Bind(deploymentRequest)
@@ -28,11 +29,6 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 	}
 
 	isDryRun := c.QueryParam("dryRun") == "true"
-
-	err = deploymentRequest.App.Validate()
-	if err != nil {
-		return handleValidationError(c, err, "Invalid app config")
-	}
 
 	appId, err := core.DecodeAppId(deploymentRequest.App.AppConfig.Id)
 	if err != nil {
@@ -51,6 +47,16 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 		return NewAPIError(http.StatusBadRequest, err.Error())
 	}
 
+	newDeployment, err := mapDeploymentRequestToDomain(deploymentRequest)
+	if err != nil {
+		return err
+	}
+
+	err = newDeployment.App.Validate()
+	if err != nil {
+		return handleValidationError(c, err, "Invalid app config")
+	}
+
 	var committer state.Committer
 
 	if isDryRun {
@@ -67,7 +73,7 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 		return err
 	}
 
-	err = deploymentService.Update(mapDeploymentRequestToDomain(deploymentRequest), committer)
+	err = deploymentService.Update(newDeployment, committer)
 	if err != nil {
 		if err == git.ErrNoChanges {
 			return c.JSON(http.StatusOK, model.DeploymentResponse{Message: "No changes to deploy"})
@@ -102,8 +108,12 @@ func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunComm
 	return out
 }
 
-func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) *core.NewDeployment {
-	return &core.NewDeployment{
+func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*core.Deployment, error) {
+	app, err := deploymentRequest.App.ApplyOverrides(deploymentRequest.Stage)
+	if err != nil {
+		return nil, err
+	}
+	return &core.Deployment{
 		DeploymentMeta: core.DeploymentMeta{
 			Name:      deploymentRequest.Name,
 			Namespace: deploymentRequest.Namespace,
@@ -112,6 +122,6 @@ func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) *c
 				Tag: deploymentRequest.Docker.Tag,
 			},
 		},
-		App: deploymentRequest.App,
-	}
+		App: app,
+	}, nil
 }

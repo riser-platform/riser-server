@@ -61,11 +61,39 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 		},
 	}
 
-	result := mapDeploymentRequestToDomain(request)
+	result, err := mapDeploymentRequestToDomain(request)
 
+	assert.NoError(t, err)
 	assert.Equal(t, "mydeployment", result.Name)
 	assert.Equal(t, "myns", result.Namespace)
 	assert.Equal(t, "mystage", result.Stage)
 	assert.Equal(t, "mytag", result.Docker.Tag)
-	assert.Equal(t, request.App, result.App)
+	assert.Equal(t, request.App.AppConfig, *result.App)
+}
+
+func Test_mapDeploymentRequestToDomain_Overrides(t *testing.T) {
+	request := &model.DeploymentRequest{
+		DeploymentMeta: model.DeploymentMeta{
+			Name:      "mydeployment",
+			Namespace: "myns",
+			Stage:     "mystage",
+			Docker: model.DeploymentDocker{
+				Tag: "mytag",
+			},
+		},
+		App: &model.AppConfigWithOverrides{
+			AppConfig: model.AppConfig{},
+			Overrides: map[string]model.AppConfig{
+				"mystage": model.AppConfig{
+					Expose: &model.AppConfigExpose{ContainerPort: 1337},
+				},
+			},
+		},
+	}
+
+	result, err := mapDeploymentRequestToDomain(request)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(1337), result.App.Expose.ContainerPort)
+
 }

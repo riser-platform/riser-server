@@ -23,7 +23,7 @@ import (
 // Pass the UPDATESNAPSHOT=true env var to "go test" to regenerate the snapshot data
 
 func Test_update_snapshot_simple(t *testing.T) {
-	newDeployment := &core.NewDeployment{
+	newDeployment := &core.Deployment{
 		DeploymentMeta: core.DeploymentMeta{
 			Name:      "myapp",
 			Namespace: "apps",
@@ -32,13 +32,11 @@ func Test_update_snapshot_simple(t *testing.T) {
 				Tag: "0.0.1",
 			},
 		},
-		App: &model.AppConfigWithOverrides{
-			AppConfig: model.AppConfig{
-				Name: "myapp",
-				Id:   "myid",
-				Expose: &model.AppConfigExpose{
-					ContainerPort: 8080,
-				},
+		App: &model.AppConfig{
+			Name: "myapp",
+			Id:   "myid",
+			Expose: &model.AppConfigExpose{
+				ContainerPort: 8080,
 			},
 		},
 	}
@@ -57,8 +55,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 	} else {
 		committer = dryRunComitter
 	}
-	service := service{}
-	err = service.update(newDeployment, committer, secretNames, "dev.riser.org")
+	err = deploy(newDeployment, committer, secretNames, "dev.riser.org")
 
 	assert.NoError(t, err)
 	if !shouldUpdateSnapshot() {

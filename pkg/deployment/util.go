@@ -6,14 +6,12 @@ import (
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 
-	"github.com/imdario/mergo"
-
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
 const DefaultExposeProtocol = "http"
 
-func ApplyDefaults(deployment *core.NewDeployment) *core.NewDeployment {
+func ApplyDefaults(deployment *core.Deployment) *core.Deployment {
 	if deployment.Name == "" {
 		deployment.Name = deployment.App.Name
 	} else if !strings.EqualFold(deployment.Name, deployment.App.Name) {
@@ -30,23 +28,4 @@ func ApplyDefaults(deployment *core.NewDeployment) *core.NewDeployment {
 		deployment.App.Expose.Protocol = DefaultExposeProtocol
 	}
 	return deployment
-}
-
-func ApplyOverrides(in *core.NewDeployment) (*core.Deployment, error) {
-	out := &core.Deployment{
-		DeploymentMeta: in.DeploymentMeta,
-	}
-	app := in.App.AppConfig
-	if overrideApp, ok := in.App.Overrides[in.Stage]; ok {
-		err := mergo.Merge(&overrideApp, app)
-		if err != nil {
-			return nil, err
-		}
-
-		app = overrideApp
-	}
-
-	out.App = &app
-
-	return out, nil
 }

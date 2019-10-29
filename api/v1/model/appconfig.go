@@ -5,6 +5,7 @@ import (
 
 	"github.com/docker/distribution/reference"
 	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -17,6 +18,21 @@ import (
 type AppConfigWithOverrides struct {
 	AppConfig
 	Overrides map[string]AppConfig `json:"stages,omitempty"`
+}
+
+func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig, error) {
+	app := &cfg.AppConfig
+	if overrideApp, ok := cfg.Overrides[stageName]; ok {
+		err := mergo.Merge(&overrideApp, app)
+		if err != nil {
+			return nil, err
+		}
+
+		app = &overrideApp
+	}
+
+	return app, nil
+
 }
 
 // AppConfig is the root of the application config object graph without stage overrides

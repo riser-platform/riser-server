@@ -1,10 +1,13 @@
-package validation
+package model
 
 import (
 	"regexp"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 )
+
+// Ideally these rules would be in pkg/... for reuse with the service layer but this causes a circular dependency.
+// Most validation happens in the API model so this works for now.
 
 func RulesAppName() []validation.Rule {
 	rules := []validation.Rule{
@@ -14,7 +17,7 @@ func RulesAppName() []validation.Rule {
 	return append(rules, RulesNamingIdentifier()...)
 }
 
-// RulesNamingIdentifier returns a base set of rules for naming things (e.g. an app name, stage name, etc.). These identifiers must be DNS RFC1035 compatible for use as a subdomain
+// RulesNamingIdentifier returns rules for naming things (e.g. an app, stage) that are RFC 1035 subdomain compatible.
 func RulesNamingIdentifier() []validation.Rule {
 	return []validation.Rule{
 		validation.Required,

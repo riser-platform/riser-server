@@ -2,7 +2,6 @@ package v1
 
 import (
 	"net/http"
-	"regexp"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 
@@ -54,16 +53,10 @@ func ListStages(c echo.Context, stageRepository core.StageRepository) error {
 	return c.JSON(http.StatusAccepted, mapStageMetaArrayFromDomain(stages))
 }
 
-// TODO: Look into using echo validation during databinding
 func validateStageName(stageName string) error {
-	err := validation.Validate(&stageName,
-		validation.Required,
-		// Length is constrained to 63 since we use it as a subdomain
-		validation.RuneLength(3, 63),
-		validation.Match(regexp.MustCompile("^[a-z][a-z0-9]+")).Error("must be alphanumeric and start with a letter"),
-	)
+	err := validation.Validate(&stageName, model.RulesNamingIdentifier()...)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return core.NewValidationError("invalid stage name", err)
 	}
 	return nil
 }

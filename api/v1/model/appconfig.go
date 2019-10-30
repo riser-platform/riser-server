@@ -67,7 +67,7 @@ type AppConfigResources struct {
 
 func (appConfig *AppConfig) Validate() error {
 	err := validation.ValidateStruct(appConfig,
-		validation.Field(&appConfig.Name, validation.Required),
+		validation.Field(&appConfig.Name, RulesAppName()...),
 		validation.Field(&appConfig.Id, validation.Required),
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
 	)

@@ -3,8 +3,6 @@ package v1
 import (
 	"testing"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/riser-platform/riser-server/api/v1/model"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -46,21 +44,13 @@ func Test_mapStageConfigToDomain(t *testing.T) {
 	assert.Equal(t, "myhost", result.PublicGatewayHost)
 }
 
-var stageNameTests = []struct {
-	stageName string
-	expected  error
-}{
-	{"", echo.NewHTTPError(400, "cannot be blank")},
-	{"a", echo.NewHTTPError(400, "the length must be between 3 and 63")},
-	{"0abcd", echo.NewHTTPError(400, "must be alphanumeric and start with a letter")},
-	{"A123456789012345678901234567890123456789012345678901234567891234", echo.NewHTTPError(400, "the length must be between 3 and 63")},
-	{"A!@#", echo.NewHTTPError(400, "must be alphanumeric and start with a letter")},
-	{"valid", nil},
+func Test_validateStageName_Error(t *testing.T) {
+	result := validateStageName("")
+	assert.NotNil(t, result)
+	assert.IsType(t, &core.ValidationError{}, result)
 }
 
-func Test_validateStageName(t *testing.T) {
-	for _, tt := range stageNameTests {
-		result := validateStageName(tt.stageName)
-		assert.Equal(t, tt.expected, result, tt.stageName)
-	}
+func Test_validateStageName_NoError(t *testing.T) {
+	result := validateStageName("valid")
+	assert.Nil(t, result)
 }

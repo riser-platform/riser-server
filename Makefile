@@ -1,7 +1,7 @@
 IMG ?= riserplatform/riser-server:latest
 
 # Run tests.
-test: fmt lint test-cmd
+test: fmt lint tidy test-cmd
 	$(TEST_COMMAND)
 	# Nested go modules are not tested for some reason, so test them separately
 	cd api/v1/model && $(TEST_COMMAND)
@@ -12,6 +12,10 @@ TEST_COMMAND=go test ./...
 else
 TEST_COMMAND=gotestsum
 endif
+
+tidy:
+	go mod tidy
+	cd api/v1/model && go mod tidy
 
 # Runs the server
 run:

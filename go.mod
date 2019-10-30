@@ -21,7 +21,6 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
-	gotest.tools v2.2.0+incompatible
 	istio.io/api v0.0.0-20190924012112-a90f8772954b
 	k8s.io/api v0.0.0-20190627205229-acea843d18eb
 	k8s.io/apimachinery v0.0.0-20190629005116-7ae370969693

@@ -63,7 +63,7 @@ func validateStageName(stageName string) error {
 		validation.Match(regexp.MustCompile("^[a-z][a-z0-9]+")).Error("must be alphanumeric and start with a letter"),
 	)
 	if err != nil {
-		return NewAPIError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	return nil
 }

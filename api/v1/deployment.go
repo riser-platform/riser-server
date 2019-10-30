@@ -32,11 +32,11 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 
 	appId, err := core.DecodeAppId(deploymentRequest.App.AppConfig.Id)
 	if err != nil {
-		return NewAPIError(http.StatusBadRequest, "App Id must be a hex string")
+		return echo.NewHTTPError(http.StatusBadRequest, "App Id must be a hex string")
 	}
 	err = appService.CheckAppId(deploymentRequest.App.Name, appId)
 	if err == app.ErrInvalidAppId {
-		return NewAPIError(http.StatusBadRequest, "Invalid App Id")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid App Id")
 	}
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 
 	err = stageService.ValidateDeployable(deploymentRequest.Stage)
 	if err != nil {
-		return NewAPIError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	newDeployment, err := mapDeploymentRequestToDomain(deploymentRequest)
@@ -54,7 +54,7 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 
 	err = newDeployment.App.Validate()
 	if err != nil {
-		return handleValidationError(c, err, "Invalid app config")
+		return core.NewValidationError("Invalid app config", err)
 	}
 
 	var committer state.Committer

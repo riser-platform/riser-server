@@ -3,6 +3,8 @@ package v1
 import (
 	"testing"
 
+	"github.com/labstack/echo/v4"
+
 	"github.com/riser-platform/riser-server/api/v1/model"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -48,11 +50,11 @@ var stageNameTests = []struct {
 	stageName string
 	expected  error
 }{
-	{"", NewAPIError(400, "cannot be blank")},
-	{"a", NewAPIError(400, "the length must be between 3 and 63")},
-	{"0abcd", NewAPIError(400, "must be alphanumeric and start with a letter")},
-	{"A123456789012345678901234567890123456789012345678901234567891234", NewAPIError(400, "the length must be between 3 and 63")},
-	{"A!@#", NewAPIError(400, "must be alphanumeric and start with a letter")},
+	{"", echo.NewHTTPError(400, "cannot be blank")},
+	{"a", echo.NewHTTPError(400, "the length must be between 3 and 63")},
+	{"0abcd", echo.NewHTTPError(400, "must be alphanumeric and start with a letter")},
+	{"A123456789012345678901234567890123456789012345678901234567891234", echo.NewHTTPError(400, "the length must be between 3 and 63")},
+	{"A!@#", echo.NewHTTPError(400, "must be alphanumeric and start with a letter")},
 	{"valid", nil},
 }
 

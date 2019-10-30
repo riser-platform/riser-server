@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 
+	"github.com/riser-platform/riser-server/api"
+
 	"github.com/riser-platform/riser-server/pkg/login"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -77,7 +79,7 @@ func main() {
 
 	e.Logger = echolog.NewLogger(logger, "")
 	e.Use(echolog.Middleware(echolog.DefaultConfig))
-	e.HTTPErrorHandler = apiv1.ApiErrorHandler
+	e.HTTPErrorHandler = api.ErrorHandler
 
 	apiv1.RegisterRoutes(e, repo, postgresDb)
 	err = e.Start(rc.BindAddress)

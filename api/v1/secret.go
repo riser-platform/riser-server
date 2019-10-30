@@ -24,7 +24,7 @@ func PutSecret(c echo.Context, stateRepo git.GitRepoProvider, secretService secr
 
 	err = stageService.ValidateDeployable(unsealedSecret.Stage)
 	if err != nil {
-		return NewAPIError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	// We don't know what namespace an app is associated with yet as namespace support is not fully supported.
@@ -38,7 +38,7 @@ func GetSecrets(c echo.Context, secretService secret.Service, stageService stage
 
 	err := stageService.ValidateDeployable(stageName)
 	if err != nil {
-		return NewAPIError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	secretMetas, err := secretService.FindByStage(appName, stageName)

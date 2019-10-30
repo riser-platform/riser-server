@@ -10,6 +10,7 @@ import (
 
 var ErrAlreadyExists = errors.New("app already exists")
 var ErrInvalidAppId = errors.New("invalid app ID")
+var ErrAppNotFound = errors.New("app not found")
 
 const appIdSizeInBytes = 4
 
@@ -50,6 +51,9 @@ func (s *service) CreateApp(name string) (*core.App, error) {
 func (s *service) CheckAppId(name string, appId core.AppId) error {
 	app, err := s.apps.FindByName(name)
 	if err != nil {
+		if err == core.ErrNotFound {
+			return ErrAppNotFound
+		}
 		return errors.Wrap(err, "Error getting app")
 	}
 

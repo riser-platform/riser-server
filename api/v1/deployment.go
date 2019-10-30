@@ -30,18 +30,6 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 
 	isDryRun := c.QueryParam("dryRun") == "true"
 
-	appId, err := core.DecodeAppId(deploymentRequest.App.AppConfig.Id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "App Id must be a hex string")
-	}
-	err = appService.CheckAppId(deploymentRequest.App.Name, appId)
-	if err == app.ErrInvalidAppId {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid App Id")
-	}
-	if err != nil {
-		return err
-	}
-
 	err = stageService.ValidateDeployable(deploymentRequest.Stage)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -55,6 +43,18 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 	err = newDeployment.App.Validate()
 	if err != nil {
 		return core.NewValidationError("Invalid app config", err)
+	}
+
+	appId, err := core.DecodeAppId(deploymentRequest.App.AppConfig.Id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "App Id must be a hex string")
+	}
+	err = appService.CheckAppId(deploymentRequest.App.Name, appId)
+	if err == app.ErrInvalidAppId || err == app.ErrAppNotFound {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if err != nil {
+		return err
 	}
 
 	var committer state.Committer

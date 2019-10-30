@@ -132,6 +132,22 @@ func Test_CheckAppId_WhenInvalidAppId_ReturnsErr(t *testing.T) {
 	assert.Equal(t, ErrInvalidAppId, err)
 }
 
+func Test_CheckAppId_WhenAppDoesNotExist_ReturnsErr(t *testing.T) {
+	appRepository := &core.FakeAppRepository{
+		FindByNameFn: func(name string) (*core.App, error) {
+			return nil, core.ErrNotFound
+		},
+	}
+
+	appService := service{
+		apps: appRepository,
+	}
+
+	err := appService.CheckAppId("myapp", createAppId())
+
+	assert.Equal(t, ErrAppNotFound, err)
+}
+
 func Test_CheckAppId_WhenRepositoryError_ReturnsErr(t *testing.T) {
 	expectedErr := errors.New("error")
 	appRepository := &core.FakeAppRepository{

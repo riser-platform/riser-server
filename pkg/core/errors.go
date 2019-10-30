@@ -9,7 +9,7 @@ import (
 
 var ErrNotFound = errors.New("the object could not be found")
 
-// ValidationError provides an error consumable by a client. This is safe to return to the API as the errorHandler is aware of this error and will handle it correctly.
+// ValidationError provides an error consumable by a client. This is safe to return to the API as the errorHandler is aware of this error
 type ValidationError struct {
 	Message string
 	// ValidationErrors is a map of errors. The key should be set to the field name.

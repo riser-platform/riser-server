@@ -17,7 +17,7 @@ var appNameTests = []struct {
 	{"123456789012345678901234567890123456789012345678901", "the length must be between 3 and 50"},
 	{"1abc", "must be lowercase, alphanumeric, and start with a letter"},
 	{"ABCD", "must be lowercase, alphanumeric, and start with a letter"},
-	{"b@d", "must be lowercase, alphanumeric, and start with a letter"},
+	{"bad!", "must be lowercase, alphanumeric, and start with a letter"},
 	{"", "cannot be blank"},
 }
 

@@ -25,6 +25,6 @@ func RulesNamingIdentifier() []validation.Rule {
 		// Change with care as we use naming identifiers for DNS names and this conforms to RFC 1035
 		// Note that depending on the TLD the spec allows for more characters than allowed below. This restriction is
 		// designed for maximum portability and simplicity.
-		validation.Match(regexp.MustCompile("^[a-z][a-z0-9]+")).Error("must be lowercase, alphanumeric, and start with a letter"),
+		validation.Match(regexp.MustCompile("^[a-z][a-z0-9-]+$")).Error("must be lowercase, alphanumeric, and start with a letter"),
 	}
 }

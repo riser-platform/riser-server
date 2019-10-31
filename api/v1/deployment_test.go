@@ -47,9 +47,8 @@ func Test_mapDryRunCommitsFromDomain(t *testing.T) {
 func Test_mapDeploymentRequestToDomain(t *testing.T) {
 	request := &model.DeploymentRequest{
 		DeploymentMeta: model.DeploymentMeta{
-			Name:      "mydeployment",
-			Namespace: "myns",
-			Stage:     "mystage",
+			Name:  "mydeployment",
+			Stage: "mystage",
 			Docker: model.DeploymentDocker{
 				Tag: "mytag",
 			},
@@ -65,7 +64,7 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "mydeployment", result.Name)
-	assert.Equal(t, "myns", result.Namespace)
+	assert.Equal(t, DefaultNamespace, result.Namespace)
 	assert.Equal(t, "mystage", result.Stage)
 	assert.Equal(t, "mytag", result.Docker.Tag)
 	assert.Equal(t, request.App.AppConfig, *result.App)
@@ -74,9 +73,8 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 func Test_mapDeploymentRequestToDomain_Overrides(t *testing.T) {
 	request := &model.DeploymentRequest{
 		DeploymentMeta: model.DeploymentMeta{
-			Name:      "mydeployment",
-			Namespace: "myns",
-			Stage:     "mystage",
+			Name:  "mydeployment",
+			Stage: "mystage",
 			Docker: model.DeploymentDocker{
 				Tag: "mytag",
 			},

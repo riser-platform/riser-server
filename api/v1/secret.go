@@ -28,8 +28,8 @@ func PutSecret(c echo.Context, stateRepo git.GitRepoProvider, secretService secr
 	}
 
 	// We don't know what namespace an app is associated with yet as namespace support is not fully supported.
-	// This could get tricky if we support apps being deployed to mulitple namespaces.
-	return secretService.SealAndSave(unsealedSecret.PlainText, mapSecretMetaFromModel(&unsealedSecret.SecretMeta), "apps", state.NewGitComitter(stateRepo))
+	// This could get tricky if we support apps being deployed to multiple namespaces.
+	return secretService.SealAndSave(unsealedSecret.PlainText, mapSecretMetaFromModel(&unsealedSecret.SecretMeta), DefaultNamespace, state.NewGitComitter(stateRepo))
 }
 
 func GetSecrets(c echo.Context, secretService secret.Service, stageService stage.Service) error {

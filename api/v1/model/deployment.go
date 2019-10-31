@@ -26,10 +26,9 @@ type Deployment struct {
 }
 
 type DeploymentMeta struct {
-	Name      string           `json:"name"`
-	Namespace string           `json:"namespace"`
-	Stage     string           `json:"stage"`
-	Docker    DeploymentDocker `json:"docker"`
+	Name   string           `json:"name"`
+	Stage  string           `json:"stage"`
+	Docker DeploymentDocker `json:"docker"`
 }
 
 type DeploymentDocker struct {

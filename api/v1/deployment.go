@@ -20,6 +20,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const DefaultNamespace = "apps"
+
 // TODO: Refactor and add unit test coverage
 func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
 	deploymentRequest := &model.DeploymentRequest{}
@@ -68,7 +70,7 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 	// TODO: This is a hack that exists for ease of use since we only support the "apps" namespace.
 	// Once we support multiple namespace this should be in its own route
 	namespaceService := namespace.NewService()
-	err = namespaceService.Save(&core.Namespace{Name: "apps", Stage: deploymentRequest.Stage}, committer)
+	err = namespaceService.Save(&core.Namespace{Name: DefaultNamespace, Stage: deploymentRequest.Stage}, committer)
 	if err != nil && err != git.ErrNoChanges {
 		return err
 	}
@@ -116,7 +118,7 @@ func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*
 	return &core.Deployment{
 		DeploymentMeta: core.DeploymentMeta{
 			Name:      deploymentRequest.Name,
-			Namespace: deploymentRequest.Namespace,
+			Namespace: DefaultNamespace,
 			Stage:     deploymentRequest.Stage,
 			Docker: core.DeploymentDocker{
 				Tag: deploymentRequest.Docker.Tag,

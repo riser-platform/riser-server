@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 
-	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
 )
 
@@ -11,24 +10,23 @@ var ErrNotFound = errors.New("the object could not be found")
 
 // ValidationError provides an error consumable by a client. This is safe to return to the API as the errorHandler is aware of this error
 type ValidationError struct {
+	error
 	Message string
-	// ValidationErrors is a map of errors. The key should be set to the field name.
-	ValidationErrors validation.Errors
-	// Internal is an optional error that should not be exposed to the client.
-	Internal error
+	// ValidationError represents the validation error that ocurred. See the API errorHandler for how this is returned to the client.
+	ValidationError error
 }
 
-// NewValidationError creates a ValidationError conditional on the type of error passed in. It is expected that validationErrors
-// is typically of type  ozzo-validation.Errors object, containing a key/value pair of string/errors. If validationErrors is another error,
-// Internal will be set.
-func NewValidationError(message string, validationErrors error) error {
-	if ve, ok := validationErrors.(validation.Errors); ok {
-		return &ValidationError{Message: message, ValidationErrors: ve}
-	}
-
-	return &ValidationError{Message: message, Internal: validationErrors}
+// NewValidationError creates a ValidationError conditional on the type of error passed in. It is expected that validationError
+// is typically of type ozzo-validation.Errors object, containing a key/value pair of string/errors, but it can be of any type of error that is
+// consumable by a client.
+func NewValidationError(message string, validationError error) error {
+	return &ValidationError{Message: message, ValidationError: validationError}
 }
 
 func (e *ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Message, e.ValidationErrors.Error())
+	if e.ValidationError != nil {
+		return fmt.Sprintf("%s: %s", e.Message, e.ValidationError.Error())
+	}
+
+	return e.Message
 }

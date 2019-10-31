@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	validation "github.com/go-ozzo/ozzo-validation"
+
 	"github.com/riser-platform/riser-server/pkg/core"
 
 	"github.com/labstack/echo/v4"
@@ -12,14 +14,14 @@ import (
 // Note: This model is shared between API versions. Therefore any change here is breaking for all API versions.
 type ValidationErrorResponse struct {
 	Message          string            `json:"message"`
-	ValidationErrors map[string]string `json:"validationErrors"`
+	ValidationErrors map[string]string `json:"validationErrors,omitempty"`
 }
 
 func ErrorHandler(err error, c echo.Context) {
 	var (
 		code          = http.StatusInternalServerError
-		jsonResponse  interface{}
 		internalError = err
+		jsonResponse  interface{}
 	)
 
 	if httpError, ok := err.(*echo.HTTPError); ok {
@@ -29,11 +31,23 @@ func ErrorHandler(err error, c echo.Context) {
 	}
 
 	if validationError, ok := err.(*core.ValidationError); ok {
-		internalError = validationError.Internal
-		code = http.StatusBadRequest
-		jsonResponse = &ValidationErrorResponse{
-			Message:          validationError.Message,
-			ValidationErrors: formatValidationErrors(validationError.ValidationErrors),
+		// An ozzo-validation Internal error means that something went wrong (e.g. a misconfigured validation rule).
+		if ozzoInternal, ok := validationError.ValidationError.(validation.InternalError); ok {
+			internalError = ozzoInternal
+		} else {
+			internalError = nil
+			code = http.StatusBadRequest
+			// ozzoValidation returns field specific errors, resulting in more user friendly error messages
+			if ozzoValidation, ok := validationError.ValidationError.(validation.Errors); ok {
+				jsonResponse = &ValidationErrorResponse{
+					Message:          validationError.Message,
+					ValidationErrors: formatValidationErrors(ozzoValidation),
+				}
+			} else {
+				jsonResponse = &ValidationErrorResponse{
+					Message: fmt.Sprintf("%s: %s", validationError.Message, validationError.ValidationError.Error()),
+				}
+			}
 		}
 	}
 
@@ -55,8 +69,11 @@ func ErrorHandler(err error, c echo.Context) {
 	}
 }
 
-func formatValidationErrors(errors map[string]error) map[string]string {
+func formatValidationErrors(errors validation.Errors) map[string]string {
 	result := map[string]string{}
+	if errors == nil {
+		return result
+	}
 	for k, v := range errors {
 		result[k] = v.Error()
 	}

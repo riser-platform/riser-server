@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/riser-platform/riser-server/pkg/core"
 
 	"github.com/riser-platform/riser-server/pkg/app"
@@ -14,11 +15,15 @@ import (
 )
 
 func PostApp(c echo.Context, appService app.Service) error {
-	// TODO: Validate app
 	newAppRequest := &model.NewApp{}
 	err := c.Bind(newAppRequest)
 	if err != nil {
 		return errors.Wrap(err, "Error binding App")
+	}
+
+	err = validation.Validate(&newAppRequest.Name, model.RulesAppName()...)
+	if err != nil {
+		return core.NewValidationError("invalid app name", err)
 	}
 
 	createdApp, err := appService.CreateApp(newAppRequest.Name)

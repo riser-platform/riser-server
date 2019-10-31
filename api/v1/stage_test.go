@@ -47,7 +47,7 @@ func Test_mapStageConfigToDomain(t *testing.T) {
 func Test_validateStageName_Error(t *testing.T) {
 	result := validateStageName("")
 	assert.NotNil(t, result)
-	assert.IsType(t, &core.ValidationError{}, result)
+	assert.Equal(t, "invalid stage name: cannot be blank", result.Error())
 }
 
 func Test_validateStageName_NoError(t *testing.T) {

@@ -43,12 +43,12 @@ func Test_ErrorHandler_WhenHttpErrorStatusNon500_DoesNotLog(t *testing.T) {
 	logBuf := &bytes.Buffer{}
 	ctx, rec := errorHandlerTestSetup(logBuf)
 
-	err := echo.NewHTTPError(http.StatusBadRequest, "test")
+	err := echo.NewHTTPError(http.StatusConflict, "test")
 
 	ErrorHandler(err, ctx)
 
 	assert.Empty(t, logBuf)
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Equal(t, http.StatusConflict, rec.Code)
 	assert.Equal(t, "{\"message\":\"test\"}\n", rec.Body.String())
 }
 
@@ -56,8 +56,8 @@ func Test_ErrorHandler_WhenHttpErrorInternal_AlwaysLogsInternal(t *testing.T) {
 	logBuf := &bytes.Buffer{}
 	ctx, rec := errorHandlerTestSetup(logBuf)
 
-	err := echo.NewHTTPError(http.StatusBadRequest, "test")
-	err = err.SetInternal(errors.New("test"))
+	err := echo.NewHTTPError(http.StatusConflict, "test")
+	err = err.SetInternal(errors.New("log me"))
 
 	ErrorHandler(err, ctx)
 
@@ -66,20 +66,21 @@ func Test_ErrorHandler_WhenHttpErrorInternal_AlwaysLogsInternal(t *testing.T) {
 	assert.Len(t, splitLogLines, 2)
 	jsonLog := unmarshalErrorLogLine(t, splitLogLines[0])
 	assert.Equal(t, "ERROR", jsonLog["level"])
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, jsonLog["message"], "log me")
+	assert.Equal(t, http.StatusConflict, rec.Code)
 	assert.Equal(t, "{\"message\":\"test\"}\n", rec.Body.String())
 }
 
-func Test_ErrorHandler_WhenValidationError_ReturnsValidationResponse(t *testing.T) {
+func Test_ErrorHandler_WhenValidationErrorWithFields_FormatsResponse(t *testing.T) {
 	logBuf := &bytes.Buffer{}
 	ctx, rec := errorHandlerTestSetup(logBuf)
 
-	err := &core.ValidationError{
-		Message: "validation failed",
-		ValidationErrors: validation.Errors{
-			"field": errors.New("field error"),
+	err := core.NewValidationError("validation failed",
+		validation.Errors{
+			"field1": errors.New("field1 error"),
+			"field2": errors.New("field2 error"),
 		},
-	}
+	)
 
 	ErrorHandler(err, ctx)
 
@@ -88,17 +89,35 @@ func Test_ErrorHandler_WhenValidationError_ReturnsValidationResponse(t *testing.
 	jsonResponse := ValidationErrorResponse{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jsonResponse), rec.Body.String())
 	assert.Equal(t, jsonResponse.Message, "validation failed")
-	assert.Len(t, jsonResponse.ValidationErrors, 1)
-	assert.Equal(t, "field error", jsonResponse.ValidationErrors["field"])
+	assert.Len(t, jsonResponse.ValidationErrors, 2)
+	assert.Equal(t, "field1 error", jsonResponse.ValidationErrors["field1"])
+	assert.Equal(t, "field2 error", jsonResponse.ValidationErrors["field2"])
 }
 
-func Test_ErrorHandler_WhenValidationErrorWithInternal_LogsInternal(t *testing.T) {
+func Test_ErrorHandler_WhenValidationErrorNoFields(t *testing.T) {
 	logBuf := &bytes.Buffer{}
-	ctx, _ := errorHandlerTestSetup(logBuf)
+	ctx, rec := errorHandlerTestSetup(logBuf)
+
+	err := core.NewValidationError("validation failed", errors.New("details"))
+
+	ErrorHandler(err, ctx)
+
+	assert.Empty(t, logBuf)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	jsonResponse := ValidationErrorResponse{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jsonResponse), rec.Body.String())
+	assert.Equal(t, jsonResponse.Message, "validation failed: details")
+	assert.Len(t, jsonResponse.ValidationErrors, 0)
+}
+
+// An ozzo-validation Internal error means that something went wrong (e.g. a misconfigured validation rule).
+func Test_ErrorHandler_WhenValidationErrorIsInternal_Returns500AndLogsInternal(t *testing.T) {
+	logBuf := &bytes.Buffer{}
+	ctx, rec := errorHandlerTestSetup(logBuf)
 
 	err := &core.ValidationError{
-		Message:  "validation failed",
-		Internal: errors.New("test error"),
+		Message:         "validation failed",
+		ValidationError: validation.NewInternalError(errors.New("log me")),
 	}
 
 	ErrorHandler(err, ctx)
@@ -108,7 +127,12 @@ func Test_ErrorHandler_WhenValidationErrorWithInternal_LogsInternal(t *testing.T
 	assert.Len(t, splitLogLines, 2)
 	jsonLog := unmarshalErrorLogLine(t, splitLogLines[0])
 	assert.Equal(t, "ERROR", jsonLog["level"])
-	assert.Contains(t, jsonLog["message"], "test error")
+	assert.Contains(t, jsonLog["message"], "log me")
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	jsonResponse := ValidationErrorResponse{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jsonResponse), rec.Body.String())
+	assert.Equal(t, jsonResponse.Message, http.StatusText(http.StatusInternalServerError))
 }
 
 func errorHandlerTestSetup(logWriter io.Writer) (echo.Context, *httptest.ResponseRecorder) {

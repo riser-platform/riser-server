@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// TODO: Move outside the API and into a seperate module. The AppConfig should version independantly of the API via a Version field on the root AppConfig object
+// TODO: Move outside the API and into a separate module. The AppConfig should version independently of the API via a Version field on the root AppConfig object
 // Also, pkg/* should not have a dependency here. However, moving this into pkg/core (for example) would cause a circular module dependency so we
 // may need to create a separate module e.g. pkg/core/appconfig
 

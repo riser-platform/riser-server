@@ -60,12 +60,13 @@ func deploy(deployment *core.Deployment, stageConfig core.StageConfig, committer
 	}
 
 	var resources []state.KubeResource
-
-	if stageConfig.KNativeEnabled {
-		resources, err = createKNativeDeploymentResources(deployment, stageConfig, secretNames)
-	} else {
-		resources, err = createDeploymentResources(deployment, stageConfig, secretNames)
-	}
+	resources, err = createKNativeDeploymentResources(deployment, stageConfig, secretNames)
+	// TODO: Don't commit!
+	// if stageConfig.KNativeEnabled {
+	// 	resources, err = createKNativeDeploymentResources(deployment, stageConfig, secretNames)
+	// } else {
+	// 	resources, err = createDeploymentResources(deployment, stageConfig, secretNames)
+	// }
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,7 @@ func deploy(deployment *core.Deployment, stageConfig core.StageConfig, committer
 }
 
 func createKNativeDeploymentResources(deployment *core.Deployment, stageConfig core.StageConfig, secretNames []string) ([]state.KubeResource, error) {
-	return nil, nil
+	return []state.KubeResource{resources.CreateKNativeService(deployment, secretNames)}, nil
 }
 
 func createDeploymentResources(deployment *core.Deployment, stageConfig core.StageConfig, secretNames []string) ([]state.KubeResource, error) {

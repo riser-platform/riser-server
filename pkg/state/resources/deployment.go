@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -43,33 +42,41 @@ func CreateDeployment(deployment *core.Deployment, secretsForEnv []string) (*app
 				},
 			},
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: commonLabels(deployment),
-					Annotations: map[string]string{
-						"sidecar.istio.io/rewriteAppHTTPProbers": "true",
-					},
-				},
-				Spec: corev1.PodSpec{
-					EnableServiceLinks: boolPtr(false),
-					Containers: []corev1.Container{
-						corev1.Container{
-							Name:           deployment.Name,
-							Image:          fmt.Sprintf("%s:%s", deployment.App.Image, deployment.Docker.Tag),
-							Resources:      resources(deployment.App),
-							ReadinessProbe: readinessProbe(deployment.App),
-							Env:            k8sEnvVars(deployment, secretsForEnv),
-							Ports: []corev1.ContainerPort{
-								corev1.ContainerPort{
-									Protocol:      corev1.ProtocolTCP,
-									ContainerPort: deployment.App.Expose.ContainerPort,
-								},
-							},
-						},
+				ObjectMeta: createPodObjectMeta(deployment, commonLabels(deployment)),
+				Spec:       createPodSpec(deployment, secretsForEnv),
+			},
+		},
+	}, nil
+}
+
+func createPodObjectMeta(deployment *core.Deployment, labels map[string]string) metav1.ObjectMeta {
+	return metav1.ObjectMeta{
+		Labels: labels,
+		Annotations: map[string]string{
+			"sidecar.istio.io/rewriteAppHTTPProbers": "true",
+		},
+	}
+}
+
+func createPodSpec(deployment *core.Deployment, secretsForEnv []string) corev1.PodSpec {
+	return corev1.PodSpec{
+		EnableServiceLinks: boolPtr(false),
+		Containers: []corev1.Container{
+			corev1.Container{
+				Name:           deployment.Name,
+				Image:          fmt.Sprintf("%s:%s", deployment.App.Image, deployment.Docker.Tag),
+				Resources:      resources(deployment.App),
+				ReadinessProbe: readinessProbe(deployment.App),
+				Env:            k8sEnvVars(deployment, secretsForEnv),
+				Ports: []corev1.ContainerPort{
+					corev1.ContainerPort{
+						Protocol:      corev1.ProtocolTCP,
+						ContainerPort: deployment.App.Expose.ContainerPort,
 					},
 				},
 			},
 		},
-	}, nil
+	}
 }
 
 func readinessProbe(appConfig *model.AppConfig) *corev1.Probe {
@@ -77,16 +84,18 @@ func readinessProbe(appConfig *model.AppConfig) *corev1.Probe {
 		return nil
 	}
 
-	port := appConfig.HealthCheck.Port
-	if port == nil && appConfig.Expose != nil {
-		port = &appConfig.Expose.ContainerPort
-	}
+	// TODO: Do not commit (KNative does not allow setting this)
+	// port := appConfig.HealthCheck.Port
+	// if port == nil && appConfig.Expose != nil {
+	// 	port = &appConfig.Expose.ContainerPort
+	// }
 
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: appConfig.HealthCheck.Path,
-				Port: intstr.FromInt(int(*port)),
+				// TODO: Do not commit (KNative does not allow setting this)
+				// Port: intstr.FromInt(int(*port)),
 			},
 		},
 	}

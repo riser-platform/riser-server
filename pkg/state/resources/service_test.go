@@ -33,11 +33,10 @@ func Test_CreateService(t *testing.T) {
 	assert.Equal(t, deployment.Name, result.Name)
 	assert.Equal(t, "apps", result.Namespace)
 
-	assert.Equal(t, 4, len(result.Labels))
-	assert.Equal(t, "dev", result.Labels["stage"])
-	assert.Equal(t, "myapp", result.Labels["app"])
-	assert.Equal(t, "myapp-deployment", result.Labels["deployment"])
-	assert.Equal(t, defaultRiserAppVersion, result.Labels["riser-app"])
+	assert.Equal(t, 3, len(result.Labels))
+	assert.Equal(t, "dev", result.Labels[riserLabel("stage")])
+	assert.Equal(t, "myapp", result.Labels[riserLabel("app")])
+	assert.Equal(t, "myapp-deployment", result.Labels[riserLabel("deployment")])
 
 	assert.Equal(t, "Service", result.Kind)
 	assert.Equal(t, "v1", result.APIVersion)

@@ -1,17 +1,22 @@
 package resources
 
-import "github.com/riser-platform/riser-server/pkg/core"
+import (
+	"fmt"
 
-// TODO: Move this to AppDefaults or something
-var defaultRiserAppVersion = "v1"
+	"github.com/riser-platform/riser-server/pkg/core"
+)
 
 func commonLabels(deployment *core.Deployment) map[string]string {
 	return map[string]string{
-		"deployment": deployment.Name,
-		"stage":      deployment.Stage,
-		"app":        deployment.App.Name,
-		"riser-app":  defaultRiserAppVersion,
+		riserLabel("deployment"): deployment.Name,
+		riserLabel("stage"):      deployment.Stage,
+		riserLabel("app"):        deployment.App.Name,
 	}
+}
+
+// riserLabel returns a fully qualified riser label or annotation (e.g. riser.dev/your-label)
+func riserLabel(labelName string) string {
+	return fmt.Sprintf("riser.dev/%s", labelName)
 }
 
 func int32Ptr(val int32) *int32 {

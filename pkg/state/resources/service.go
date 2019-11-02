@@ -24,7 +24,7 @@ func CreateService(deployment *core.Deployment) (*corev1.Service, error) {
 					Name: deployment.App.Expose.Protocol,
 				},
 			},
-			Selector: map[string]string{"deployment": deployment.Name},
+			Selector: map[string]string{riserLabel("deployment"): deployment.Name},
 		},
 	}
 

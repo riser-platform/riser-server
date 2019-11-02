@@ -39,7 +39,7 @@ func CreateDeployment(deployment *core.Deployment, secretsForEnv []string) (*app
 			Replicas: deployment.App.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"deployment": deployment.Name,
+					riserLabel("deployment"): deployment.Name,
 				},
 			},
 			Template: corev1.PodTemplateSpec{

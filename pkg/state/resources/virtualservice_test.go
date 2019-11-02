@@ -33,11 +33,10 @@ func Test_CreateVirtualService(t *testing.T) {
 	assert.Equal(t, "apps-myapp-deployment-8000", result.Name)
 	assert.Equal(t, "apps", result.Namespace)
 
-	assert.Equal(t, 4, len(result.Labels))
-	assert.Equal(t, "dev", result.Labels["stage"])
-	assert.Equal(t, "myapp", result.Labels["app"])
-	assert.Equal(t, "myapp-deployment", result.Labels["deployment"])
-	assert.Equal(t, defaultRiserAppVersion, result.Labels["riser-app"])
+	assert.Equal(t, 3, len(result.Labels))
+	assert.Equal(t, "dev", result.Labels[riserLabel("stage")])
+	assert.Equal(t, "myapp", result.Labels[riserLabel("app")])
+	assert.Equal(t, "myapp-deployment", result.Labels[riserLabel("deployment")])
 
 	assert.Equal(t, 2, len(result.Spec.Gateways))
 	assert.Equal(t, defaultGateway, result.Spec.Gateways[0])

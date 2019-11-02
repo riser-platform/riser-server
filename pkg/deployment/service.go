@@ -58,25 +58,49 @@ func deploy(deployment *core.Deployment, stageConfig core.StageConfig, committer
 		// confusion (e.g. the suffix may be short enough but not <appName>-<deploymentSuffix>)
 		return core.NewValidationError(fmt.Sprintf("invalid deployment name %q", deployment.Name), err)
 	}
-	deploymentResource, err := resources.CreateDeployment(deployment, secretNames)
+
+	var resources []state.KubeResource
+
+	if stageConfig.KNativeEnabled {
+		resources, err = createKNativeDeploymentResources(deployment, stageConfig, secretNames)
+	} else {
+		resources, err = createDeploymentResources(deployment, stageConfig, secretNames)
+	}
 	if err != nil {
 		return err
 	}
 
-	serviceResource, err := resources.CreateService(deployment)
-	if err != nil {
-		return err
-	}
-
-	virtualServiceResource, err := resources.CreateVirtualService(deployment, stageConfig.PublicGatewayHost)
-	if err != nil {
-		return err
-	}
-
-	resourceFiles, err := state.RenderDeployment(deployment, deploymentResource, serviceResource, virtualServiceResource)
+	resourceFiles, err := state.RenderDeployment(deployment, resources...)
 	if err != nil {
 		return errors.Wrap(err, "Error rendering deployment resources")
 	}
 
 	return committer.Commit(fmt.Sprintf("Updating resources for %q in stage %q", deployment.App.Name, deployment.Stage), resourceFiles)
+}
+
+func createKNativeDeploymentResources(deployment *core.Deployment, stageConfig core.StageConfig, secretNames []string) ([]state.KubeResource, error) {
+	return nil, nil
+}
+
+func createDeploymentResources(deployment *core.Deployment, stageConfig core.StageConfig, secretNames []string) ([]state.KubeResource, error) {
+	deploymentResource, err := resources.CreateDeployment(deployment, secretNames)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceResource, err := resources.CreateService(deployment)
+	if err != nil {
+		return nil, err
+	}
+
+	virtualServiceResource, err := resources.CreateVirtualService(deployment, stageConfig.PublicGatewayHost)
+	if err != nil {
+		return nil, err
+	}
+
+	return []state.KubeResource{
+		deploymentResource,
+		serviceResource,
+		virtualServiceResource,
+	}, nil
 }

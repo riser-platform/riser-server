@@ -4,7 +4,7 @@ global:
     enabled: false
 
   mtls:
-    enabled: true
+    enabled: false
 
   proxy:
     resources:

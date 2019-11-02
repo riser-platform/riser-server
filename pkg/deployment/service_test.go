@@ -19,7 +19,7 @@ func Test_deploy_ValidatesName(t *testing.T) {
 		},
 	}
 
-	result := deploy(deployment, nil, nil, "")
+	result := deploy(deployment, core.StageConfig{}, nil, nil)
 
 	assert.IsType(t, &core.ValidationError{}, result)
 	ve := result.(*core.ValidationError)

@@ -55,7 +55,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 	} else {
 		committer = dryRunComitter
 	}
-	err = deploy(newDeployment, committer, secretNames, "dev.riser.org")
+	err = deploy(newDeployment, core.StageConfig{PublicGatewayHost: "dev.riser.org"}, committer, secretNames)
 
 	assert.NoError(t, err)
 	if !shouldUpdateSnapshot() {

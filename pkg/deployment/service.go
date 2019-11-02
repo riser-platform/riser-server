@@ -42,10 +42,10 @@ func (s *service) Update(deployment *core.Deployment, committer state.Committer)
 	}
 
 	// TODO: Log a warning if the public gateway host is not configured for this stage
-	return deploy(deployment, committer, secretNames, stage.Doc.Config.PublicGatewayHost)
+	return deploy(deployment, stage.Doc.Config, committer, secretNames)
 }
 
-func deploy(deployment *core.Deployment, committer state.Committer, secretNames []string, publicGatewayHost string) error {
+func deploy(deployment *core.Deployment, stageConfig core.StageConfig, committer state.Committer, secretNames []string) error {
 	deployment = ApplyDefaults(deployment)
 	// This is a one-off validation until we rationalize our validation strategy.
 	// TODO: Once rules are factored out of api/v1/model use RulesNamingIdentifier (creates a circular dep)
@@ -68,7 +68,7 @@ func deploy(deployment *core.Deployment, committer state.Committer, secretNames 
 		return err
 	}
 
-	virtualServiceResource, err := resources.CreateVirtualService(deployment, publicGatewayHost)
+	virtualServiceResource, err := resources.CreateVirtualService(deployment, stageConfig.PublicGatewayHost)
 	if err != nil {
 		return err
 	}

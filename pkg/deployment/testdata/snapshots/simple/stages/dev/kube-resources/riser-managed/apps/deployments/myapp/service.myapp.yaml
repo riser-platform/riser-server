@@ -4,10 +4,9 @@ kind: Service
 metadata:
   creationTimestamp: null
   labels:
-    app: myapp
-    deployment: myapp
-    riser-app: v1
-    stage: dev
+    riser.dev/app: myapp
+    riser.dev/deployment: myapp
+    riser.dev/stage: dev
   name: myapp
   namespace: apps
 spec:
@@ -16,6 +15,6 @@ spec:
     port: 8080
     targetPort: 0
   selector:
-    deployment: myapp
+    riser.dev/deployment: myapp
 status:
   loadBalancer: {}

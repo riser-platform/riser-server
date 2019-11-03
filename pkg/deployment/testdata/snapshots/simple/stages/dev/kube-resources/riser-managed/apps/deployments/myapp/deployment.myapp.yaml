@@ -4,16 +4,15 @@ kind: Deployment
 metadata:
   creationTimestamp: null
   labels:
-    app: myapp
-    deployment: myapp
-    riser-app: v1
-    stage: dev
+    riser.dev/app: myapp
+    riser.dev/deployment: myapp
+    riser.dev/stage: dev
   name: myapp
   namespace: apps
 spec:
   selector:
     matchLabels:
-      deployment: myapp
+      riser.dev/deployment: myapp
   strategy: {}
   template:
     metadata:
@@ -21,10 +20,9 @@ spec:
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
       creationTimestamp: null
       labels:
-        app: myapp
-        deployment: myapp
-        riser-app: v1
-        stage: dev
+        riser.dev/app: myapp
+        riser.dev/deployment: myapp
+        riser.dev/stage: dev
     spec:
       containers:
       - env:

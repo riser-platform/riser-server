@@ -46,6 +46,6 @@ func Test_CreateService(t *testing.T) {
 	assert.Equal(t, "http", result.Spec.Ports[0].Name)
 
 	assert.Equal(t, result.Spec.Selector, map[string]string{
-		"deployment": "myapp-deployment",
+		riserLabel("deployment"): "myapp-deployment",
 	})
 }

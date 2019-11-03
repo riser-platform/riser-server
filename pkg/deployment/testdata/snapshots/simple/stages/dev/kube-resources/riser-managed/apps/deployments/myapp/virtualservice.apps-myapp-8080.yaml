@@ -4,10 +4,9 @@ kind: VirtualService
 metadata:
   creationTimestamp: null
   labels:
-    app: myapp
-    deployment: myapp
-    riser-app: v1
-    stage: dev
+    riser.dev/app: myapp
+    riser.dev/deployment: myapp
+    riser.dev/stage: dev
   name: apps-myapp-8080
   namespace: apps
 spec:

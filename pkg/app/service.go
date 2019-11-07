@@ -28,7 +28,7 @@ func NewService(apps core.AppRepository) Service {
 }
 
 func (s *service) CreateApp(name string) (*core.App, error) {
-	_, err := s.apps.FindByName(name)
+	_, err := s.apps.Get(name)
 
 	if err == nil {
 		return nil, ErrAlreadyExists
@@ -49,7 +49,7 @@ func (s *service) CreateApp(name string) (*core.App, error) {
 }
 
 func (s *service) CheckAppId(name string, appId core.AppId) error {
-	app, err := s.apps.FindByName(name)
+	app, err := s.apps.Get(name)
 	if err != nil {
 		if err == core.ErrNotFound {
 			return ErrAppNotFound

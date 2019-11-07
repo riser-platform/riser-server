@@ -20,11 +20,6 @@ type DryRunFile struct {
 	Contents string `json:"contents"`
 }
 
-type Deployment struct {
-	DeploymentMeta `json:",inline"`
-	App            *AppConfig `json:"app"`
-}
-
 type DeploymentMeta struct {
 	Name   string           `json:"name"`
 	Stage  string           `json:"stage"`

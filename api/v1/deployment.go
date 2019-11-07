@@ -3,6 +3,8 @@ package v1
 import (
 	"net/http"
 
+	"github.com/pkg/errors"
+	"github.com/riser-platform/riser-server/pkg/deploymentstatus"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/riser-platform/riser-server/pkg/namespace"
@@ -95,6 +97,19 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 	return c.JSON(http.StatusAccepted, model.APIResponse{Message: "Deployment requested"})
 }
 
+func PutDeploymentStatus(c echo.Context, deploymentStatusService deploymentstatus.Service) error {
+	deploymentStatus := &model.DeploymentStatusMutable{}
+	err := c.Bind(deploymentStatus)
+	if err != nil {
+		return errors.Wrap(err, "Error binding status")
+	}
+
+	deploymentName := c.Param("deploymentName")
+	stageName := c.Param("stageName")
+
+	return deploymentStatusService.UpdateStatus(deploymentName, stageName, mapDeploymentStatusFromModel(deploymentStatus))
+}
+
 func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunCommit {
 	out := []model.DryRunCommit{}
 	for _, commit := range commits {
@@ -110,19 +125,17 @@ func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunComm
 	return out
 }
 
-func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*core.Deployment, error) {
+func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*core.DeploymentConfig, error) {
 	app, err := deploymentRequest.App.ApplyOverrides(deploymentRequest.Stage)
 	if err != nil {
 		return nil, err
 	}
-	return &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      deploymentRequest.Name,
-			Namespace: DefaultNamespace,
-			Stage:     deploymentRequest.Stage,
-			Docker: core.DeploymentDocker{
-				Tag: deploymentRequest.Docker.Tag,
-			},
+	return &core.DeploymentConfig{
+		Name:      deploymentRequest.Name,
+		Namespace: DefaultNamespace,
+		Stage:     deploymentRequest.Stage,
+		Docker: core.DeploymentDocker{
+			Tag: deploymentRequest.Docker.Tag,
 		},
 		App: app,
 	}, nil

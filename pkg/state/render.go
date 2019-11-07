@@ -27,9 +27,9 @@ func RenderSealedSecret(app, stage string, sealedSecret *resources.SealedSecret)
 	}, sealedSecret)
 }
 
-func RenderDeployment(deployment *core.Deployment, deploymentResources ...KubeResource) ([]core.ResourceFile, error) {
+func RenderDeployment(deployment *core.DeploymentConfig, deploymentResources ...KubeResource) ([]core.ResourceFile, error) {
 	files, err := renderKubeResources(func(resource KubeResource) string {
-		return getDeploymentScmPath(deployment.DeploymentMeta, resource)
+		return getDeploymentScmPath(deployment, resource)
 	}, deploymentResources...)
 
 	if err != nil {
@@ -45,7 +45,7 @@ func RenderDeployment(deployment *core.Deployment, deploymentResources ...KubeRe
 	return files, nil
 }
 
-func renderAppConfig(deployment *core.Deployment) (*core.ResourceFile, error) {
+func renderAppConfig(deployment *core.DeploymentConfig) (*core.ResourceFile, error) {
 	serialized, err := util.ToYaml(deployment.App)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("Error serializing app config"))
@@ -71,7 +71,7 @@ func renderKubeResources(pathFunc getResourcePathFunc, resources ...KubeResource
 	return files, nil
 }
 
-func getDeploymentScmPath(deploymentMeta core.DeploymentMeta, resource KubeResource) string {
+func getDeploymentScmPath(deploymentMeta *core.DeploymentConfig, resource KubeResource) string {
 	return strings.ToLower(filepath.Join(
 		getPlatformResourcesPath(deploymentMeta.Stage),
 		deploymentMeta.Namespace,
@@ -89,7 +89,7 @@ func getSecretScmPath(app string, stage string, sealedSecret KubeResource) strin
 		getFileNameFromResource(sealedSecret)))
 }
 
-func getAppConfigScmPath(deployment *core.Deployment) string {
+func getAppConfigScmPath(deployment *core.DeploymentConfig) string {
 	return strings.ToLower(filepath.Join(
 		"stages",
 		deployment.Stage,

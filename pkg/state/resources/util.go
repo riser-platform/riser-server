@@ -2,15 +2,22 @@ package resources
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-func commonLabels(deployment *core.Deployment) map[string]string {
+func commonLabels(ctx *core.DeploymentContext) map[string]string {
 	return map[string]string{
-		riserLabel("deployment"): deployment.Name,
-		riserLabel("stage"):      deployment.Stage,
-		riserLabel("app"):        deployment.App.Name,
+		riserLabel("deployment"): ctx.Deployment.Name,
+		riserLabel("stage"):      ctx.Deployment.Stage,
+		riserLabel("app"):        ctx.Deployment.App.Name,
+	}
+}
+
+func commonAnnotations(ctx *core.DeploymentContext) map[string]string {
+	return map[string]string{
+		riserLabel("generation"): strconv.FormatInt(ctx.RiserGeneration, 10),
 	}
 }
 

@@ -16,7 +16,7 @@ func Test_CreateApp(t *testing.T) {
 	var appName string
 	var newApp *core.App
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(nameArg string) (*core.App, error) {
+		GetFn: func(nameArg string) (*core.App, error) {
 			appName = nameArg
 			return nil, core.ErrNotFound
 		},
@@ -42,7 +42,7 @@ func Test_CreateApp(t *testing.T) {
 
 func Test_CreateApp_WhenAppExists_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(nameArg string) (*core.App, error) {
+		GetFn: func(nameArg string) (*core.App, error) {
 			return &core.App{}, nil
 		},
 	}
@@ -60,7 +60,7 @@ func Test_CreateApp_WhenAppExists_ReturnsErr(t *testing.T) {
 func Test_CreateApp_WhenErrorCheckingApp_ReturnsErr(t *testing.T) {
 	expectedErr := errors.New("error")
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(nameArg string) (*core.App, error) {
+		GetFn: func(nameArg string) (*core.App, error) {
 			return &core.App{}, expectedErr
 		},
 	}
@@ -78,7 +78,7 @@ func Test_CreateApp_WhenErrorCheckingApp_ReturnsErr(t *testing.T) {
 func Test_CreateApp_WhenCreateFails_ReturnsErr(t *testing.T) {
 	expectedErr := errors.New("error")
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(nameArg string) (*core.App, error) {
+		GetFn: func(nameArg string) (*core.App, error) {
 			return nil, core.ErrNotFound
 		},
 		CreateFn: func(*core.App) error {
@@ -100,7 +100,7 @@ func Test_CheckAppId(t *testing.T) {
 	appId := createAppId()
 	var receivedName string
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(name string) (*core.App, error) {
+		GetFn: func(name string) (*core.App, error) {
 			receivedName = name
 			return &core.App{Hashid: appId}, nil
 		},
@@ -118,7 +118,7 @@ func Test_CheckAppId(t *testing.T) {
 
 func Test_CheckAppId_WhenInvalidAppId_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(name string) (*core.App, error) {
+		GetFn: func(name string) (*core.App, error) {
 			return &core.App{Hashid: createAppId()}, nil
 		},
 	}
@@ -134,7 +134,7 @@ func Test_CheckAppId_WhenInvalidAppId_ReturnsErr(t *testing.T) {
 
 func Test_CheckAppId_WhenAppDoesNotExist_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(name string) (*core.App, error) {
+		GetFn: func(name string) (*core.App, error) {
 			return nil, core.ErrNotFound
 		},
 	}
@@ -151,7 +151,7 @@ func Test_CheckAppId_WhenAppDoesNotExist_ReturnsErr(t *testing.T) {
 func Test_CheckAppId_WhenRepositoryError_ReturnsErr(t *testing.T) {
 	expectedErr := errors.New("error")
 	appRepository := &core.FakeAppRepository{
-		FindByNameFn: func(name string) (*core.App, error) {
+		GetFn: func(name string) (*core.App, error) {
 			return nil, expectedErr
 		},
 	}

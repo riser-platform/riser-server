@@ -6,12 +6,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateService(deployment *core.Deployment) (*corev1.Service, error) {
+func CreateService(ctx *core.DeploymentContext) (*corev1.Service, error) {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deployment.Name,
-			Namespace: deployment.Namespace,
-			Labels:    commonLabels(deployment),
+			Name:        ctx.Deployment.Name,
+			Namespace:   ctx.Deployment.Namespace,
+			Annotations: commonAnnotations(ctx),
+			Labels:      commonLabels(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
@@ -20,11 +21,11 @@ func CreateService(deployment *core.Deployment) (*corev1.Service, error) {
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
 				corev1.ServicePort{
-					Port: deployment.App.Expose.ContainerPort,
-					Name: deployment.App.Expose.Protocol,
+					Port: ctx.Deployment.App.Expose.ContainerPort,
+					Name: ctx.Deployment.App.Expose.Protocol,
 				},
 			},
-			Selector: map[string]string{riserLabel("deployment"): deployment.Name},
+			Selector: map[string]string{riserLabel("deployment"): ctx.Deployment.Name},
 		},
 	}
 

@@ -11,12 +11,10 @@ import (
 )
 
 func Test_CreateVirtualService(t *testing.T) {
-	deployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      "myapp-deployment",
-			Namespace: "apps",
-			Stage:     "dev",
-		},
+	deployment := &core.DeploymentConfig{
+		Name:      "myapp-deployment",
+		Namespace: "apps",
+		Stage:     "dev",
 		App: &model.AppConfig{
 			Name: "myapp",
 			Expose: &model.AppConfigExpose{
@@ -24,8 +22,11 @@ func Test_CreateVirtualService(t *testing.T) {
 			},
 		},
 	}
+	stage := &core.StageConfig{
+		PublicGatewayHost: "dev.riser.org",
+	}
 
-	result, err := CreateVirtualService(deployment, "dev.riser.org")
+	result, err := CreateVirtualService(&core.DeploymentContext{Deployment: deployment, Stage: stage, RiserGeneration: 3})
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -37,6 +38,8 @@ func Test_CreateVirtualService(t *testing.T) {
 	assert.Equal(t, "dev", result.Labels[riserLabel("stage")])
 	assert.Equal(t, "myapp", result.Labels[riserLabel("app")])
 	assert.Equal(t, "myapp-deployment", result.Labels[riserLabel("deployment")])
+	assert.Len(t, result.Annotations, 1)
+	assert.Equal(t, "3", result.Annotations[riserLabel("generation")])
 
 	assert.Equal(t, 2, len(result.Spec.Gateways))
 	assert.Equal(t, defaultGateway, result.Spec.Gateways[0])

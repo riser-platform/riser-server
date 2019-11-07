@@ -8,57 +8,50 @@ import (
 	"github.com/riser-platform/riser-server/pkg/stage"
 )
 
+// TODO: Consider better homes for these
 type Service interface {
-	Save(status *core.DeploymentStatus) error
-	GetSummary(appName string) (*core.DeploymentStatusSummary, error)
+	UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error
+	GetByApp(appName string) (*core.AppStatus, error)
 }
 
 type service struct {
-	statuses     core.DeploymentStatusRepository
+	deployments  core.DeploymentRepository
 	stageService stage.Service
 }
 
-func NewService(statuses core.DeploymentStatusRepository, stageService stage.Service) Service {
-	return &service{statuses, stageService}
+func NewService(deployments core.DeploymentRepository, stageService stage.Service) Service {
+	return &service{deployments, stageService}
 }
 
-func (s *service) GetSummary(appName string) (*core.DeploymentStatusSummary, error) {
-	deploymentStatuses, err := s.statuses.FindByApp(appName)
+func (s *service) GetByApp(appName string) (*core.AppStatus, error) {
+	deployments, err := s.deployments.FindByApp(appName)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error retrieving deployment status")
 	}
 
-	summary := &core.DeploymentStatusSummary{
-		DeploymentStatuses: deploymentStatuses,
-		StageStatuses:      []core.StageStatus{},
+	appStatus := &core.AppStatus{
+		Deployments:   deployments,
+		StageStatuses: []core.StageStatus{},
 	}
 
 	stageMap := map[string]core.StageStatus{}
 
-	for _, deploymentStatus := range deploymentStatuses {
+	for _, deploymentStatus := range deployments {
 		if _, ok := stageMap[deploymentStatus.StageName]; !ok {
 			stageStatus, err := s.stageService.GetStatus(deploymentStatus.StageName)
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("Error retrieving stage status for stage %q", deploymentStatus.StageName))
 			}
 			stageMap[deploymentStatus.StageName] = *stageStatus
-			summary.StageStatuses = append(summary.StageStatuses, *stageStatus)
+			appStatus.StageStatuses = append(appStatus.StageStatuses, *stageStatus)
 		}
 	}
 
-	return summary, nil
+	return appStatus, nil
 }
 
-func (s *service) Save(status *core.DeploymentStatus) error {
-	err := s.stageService.Ping(status.StageName)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Error saving stage %q", status.StageName))
-	}
-
-	err = s.statuses.Save(status)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Error saving deployment status for app %q", status.AppName))
-	}
-
-	return nil
+// TODO: Move to deployment service
+func (s *service) UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error {
+	err := s.deployments.UpdateStatus(deploymentName, stageName, status)
+	return errors.Wrap(err, fmt.Sprintf("Error saving status for deployment %q in stage %q", deploymentName, stageName))
 }

@@ -30,3 +30,9 @@ func (a *StageDoc) Value() (driver.Value, error) {
 func (a *StageDoc) Scan(value interface{}) error {
 	return jsonbSqlUnmarshal(value, &a)
 }
+
+type StageStatus struct {
+	StageName string
+	Healthy   bool
+	Reason    string
+}

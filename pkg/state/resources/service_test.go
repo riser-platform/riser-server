@@ -11,12 +11,10 @@ import (
 )
 
 func Test_CreateService(t *testing.T) {
-	deployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      "myapp-deployment",
-			Namespace: "apps",
-			Stage:     "dev",
-		},
+	deployment := &core.DeploymentConfig{
+		Name:      "myapp-deployment",
+		Namespace: "apps",
+		Stage:     "dev",
 		App: &model.AppConfig{
 			Name: "myapp",
 			Expose: &model.AppConfigExpose{
@@ -26,7 +24,7 @@ func Test_CreateService(t *testing.T) {
 		},
 	}
 
-	result, err := CreateService(deployment)
+	result, err := CreateService(&core.DeploymentContext{Deployment: deployment, RiserGeneration: 3})
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -37,6 +35,8 @@ func Test_CreateService(t *testing.T) {
 	assert.Equal(t, "dev", result.Labels[riserLabel("stage")])
 	assert.Equal(t, "myapp", result.Labels[riserLabel("app")])
 	assert.Equal(t, "myapp-deployment", result.Labels[riserLabel("deployment")])
+	assert.Equal(t, 1, len(result.Annotations))
+	assert.Equal(t, "3", result.Annotations[riserLabel("generation")])
 
 	assert.Equal(t, "Service", result.Kind)
 	assert.Equal(t, "v1", result.APIVersion)

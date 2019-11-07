@@ -24,27 +24,28 @@ const (
 )
 
 // CreateDeployment creates a kubernetes Deployment from a riser deployment
-func CreateDeployment(deployment *core.Deployment, secretsForEnv []string) (*appsv1.Deployment, error) {
+func CreateDeployment(ctx *core.DeploymentContext) (*appsv1.Deployment, error) {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deployment.Name,
-			Namespace: deployment.Namespace,
-			Labels:    commonLabels(deployment),
+			Name:        ctx.Deployment.Name,
+			Namespace:   ctx.Deployment.Namespace,
+			Labels:      commonLabels(ctx),
+			Annotations: commonAnnotations(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: deployment.App.Replicas,
+			Replicas: ctx.Deployment.App.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					riserLabel("deployment"): deployment.Name,
+					riserLabel("deployment"): ctx.Deployment.Name,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: commonLabels(deployment),
+					Labels: commonLabels(ctx),
 					Annotations: map[string]string{
 						"sidecar.istio.io/rewriteAppHTTPProbers": "true",
 					},
@@ -53,15 +54,15 @@ func CreateDeployment(deployment *core.Deployment, secretsForEnv []string) (*app
 					EnableServiceLinks: boolPtr(false),
 					Containers: []corev1.Container{
 						corev1.Container{
-							Name:           deployment.Name,
-							Image:          fmt.Sprintf("%s:%s", deployment.App.Image, deployment.Docker.Tag),
-							Resources:      resources(deployment.App),
-							ReadinessProbe: readinessProbe(deployment.App),
-							Env:            k8sEnvVars(deployment, secretsForEnv),
+							Name:           ctx.Deployment.Name,
+							Image:          fmt.Sprintf("%s:%s", ctx.Deployment.App.Image, ctx.Deployment.Docker.Tag),
+							Resources:      resources(ctx.Deployment.App),
+							ReadinessProbe: readinessProbe(ctx.Deployment.App),
+							Env:            k8sEnvVars(ctx),
 							Ports: []corev1.ContainerPort{
 								corev1.ContainerPort{
 									Protocol:      corev1.ProtocolTCP,
-									ContainerPort: deployment.App.Expose.ContainerPort,
+									ContainerPort: ctx.Deployment.App.Expose.ContainerPort,
 								},
 							},
 						},

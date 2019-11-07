@@ -44,8 +44,12 @@ func ErrorHandler(err error, c echo.Context) {
 					ValidationErrors: formatValidationErrors(ozzoValidation),
 				}
 			} else {
+				message := validationError.Message
+				if validationError.ValidationError != nil {
+					message = fmt.Sprintf("%s: %s", validationError.Message, validationError.ValidationError.Error())
+				}
 				jsonResponse = &ValidationErrorResponse{
-					Message: fmt.Sprintf("%s: %s", validationError.Message, validationError.ValidationError.Error()),
+					Message: message,
 				}
 			}
 		}

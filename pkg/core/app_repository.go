@@ -1,19 +1,21 @@
 package core
 
 type AppRepository interface {
-	FindByName(string) (*App, error)
+	Get(name string) (*App, error)
 	Create(app *App) error
 	ListApps() ([]App, error)
 }
 
 type FakeAppRepository struct {
-	FindByNameFn func(string) (*App, error)
+	GetFn        func(string) (*App, error)
+	GetCallCount int
 	CreateFn     func(app *App) error
 	ListAppsFn   func() ([]App, error)
 }
 
-func (fake *FakeAppRepository) FindByName(name string) (*App, error) {
-	return fake.FindByNameFn(name)
+func (fake *FakeAppRepository) Get(name string) (*App, error) {
+	fake.GetCallCount++
+	return fake.GetFn(name)
 }
 
 func (fake *FakeAppRepository) Create(app *App) error {

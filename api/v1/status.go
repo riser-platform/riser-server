@@ -11,35 +11,23 @@ import (
 	"github.com/riser-platform/riser-server/api/v1/model"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 )
 
-func PostStatus(c echo.Context, deploymentStatusService deploymentstatus.Service) error {
-	deploymentStatus := &model.DeploymentStatus{}
-	err := c.Bind(deploymentStatus)
-	if err != nil {
-		return errors.Wrap(err, "Error binding status")
-	}
+func GetStatus(c echo.Context, statusService deploymentstatus.Service) error {
+	appName := c.Param("appName")
 
-	return deploymentStatusService.Save(mapDeploymentStatusFromModel(deploymentStatus))
-}
-
-func GetStatus(c echo.Context, deploymentStatusService deploymentstatus.Service) error {
-	// TODO: Support by stage and deploymentName too
-	appName := c.QueryParam("app")
-
-	statusSummary, err := deploymentStatusService.GetSummary(appName)
+	appStatus, err := statusService.GetByApp(appName)
 	if err != nil {
 		return err
 	}
 
-	statusModel := model.Status{
+	statusModel := model.AppStatus{
 		Stages:      []model.StageStatus{},
 		Deployments: []model.DeploymentStatus{},
 	}
 
 	// TODO: Move and test model conversion.
-	for _, stageStatus := range statusSummary.StageStatuses {
+	for _, stageStatus := range appStatus.StageStatuses {
 		statusModel.Stages = append(statusModel.Stages, model.StageStatus{
 			StageName: stageStatus.StageName,
 			Healthy:   stageStatus.Healthy,
@@ -47,48 +35,53 @@ func GetStatus(c echo.Context, deploymentStatusService deploymentstatus.Service)
 		})
 	}
 
-	for _, deploymentStatus := range statusSummary.DeploymentStatuses {
-		statusModel.Deployments = append(statusModel.Deployments, *mapDeploymentStatusToModel(&deploymentStatus))
+	for _, deployment := range appStatus.Deployments {
+		statusModel.Deployments = append(statusModel.Deployments, *mapDeploymentToStatusModel(&deployment))
 	}
 
 	return c.JSON(http.StatusOK, statusModel)
 }
 
-func mapDeploymentStatusToModel(domain *core.DeploymentStatus) *model.DeploymentStatus {
+func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus {
 	status := &model.DeploymentStatus{
-		AppName:             domain.AppName,
-		DeploymentName:      domain.DeploymentName,
-		StageName:           domain.StageName,
-		RolloutStatus:       domain.Doc.RolloutStatus,
-		RolloutStatusReason: domain.Doc.RolloutStatusReason,
-		RolloutRevision:     domain.Doc.RolloutRevision,
-		DockerImage:         domain.Doc.DockerImage,
+		DeploymentName:  domain.Name,
+		StageName:       domain.StageName,
+		RiserGeneration: domain.RiserGeneration,
 	}
+	if domain.Doc.Status == nil {
+		status.DeploymentStatusMutable = model.DeploymentStatusMutable{
+			RolloutStatus: model.RolloutStatusUnknown,
+		}
+	} else {
+		status.DeploymentStatusMutable = model.DeploymentStatusMutable{
+			ObservedRiserGeneration: domain.Doc.Status.ObservedRiserGeneration,
+			RolloutStatus:           domain.Doc.Status.RolloutStatus,
+			RolloutStatusReason:     domain.Doc.Status.RolloutStatusReason,
+			RolloutRevision:         domain.Doc.Status.RolloutRevision,
+			DockerImage:             domain.Doc.Status.DockerImage,
+		}
 
-	status.Problems = []model.DeploymentStatusProblem{}
-	for _, problem := range domain.Doc.Problems {
-		status.Problems = append(status.Problems, model.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
+		status.Problems = []model.DeploymentStatusProblem{}
+		for _, problem := range domain.Doc.Status.Problems {
+			status.Problems = append(status.Problems, model.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
+		}
 	}
 	return status
 }
 
-func mapDeploymentStatusFromModel(in *model.DeploymentStatus) *core.DeploymentStatus {
+func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.DeploymentStatus {
 	out := &core.DeploymentStatus{
-		AppName:        in.AppName,
-		DeploymentName: in.DeploymentName,
-		StageName:      in.StageName,
-		Doc: &core.DeploymentStatusDoc{
-			RolloutStatus:       in.RolloutStatus,
-			RolloutStatusReason: in.RolloutStatusReason,
-			RolloutRevision:     in.RolloutRevision,
-			DockerImage:         in.DockerImage,
-			LastUpdated:         time.Now().UTC(),
-		},
+		ObservedRiserGeneration: in.ObservedRiserGeneration,
+		RolloutStatus:           in.RolloutStatus,
+		RolloutStatusReason:     in.RolloutStatusReason,
+		RolloutRevision:         in.RolloutRevision,
+		DockerImage:             in.DockerImage,
+		LastUpdated:             time.Now().UTC(),
 	}
 
-	out.Doc.Problems = []core.DeploymentStatusProblem{}
+	out.Problems = []core.DeploymentStatusProblem{}
 	for _, problem := range in.Problems {
-		out.Doc.Problems = append(out.Doc.Problems, core.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
+		out.Problems = append(out.Problems, core.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
 	}
 
 	return out

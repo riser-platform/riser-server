@@ -14,7 +14,7 @@ func NewAppRepository(db *sql.DB) core.AppRepository {
 	return &appRepository{db: db}
 }
 
-func (r *appRepository) FindByName(name string) (*core.App, error) {
+func (r *appRepository) Get(name string) (*core.App, error) {
 	app := &core.App{}
 	err := r.db.QueryRow("SELECT name, hashid FROM app WHERE name = $1", name).Scan(&app.Name, &app.Hashid)
 	if err == sql.ErrNoRows {

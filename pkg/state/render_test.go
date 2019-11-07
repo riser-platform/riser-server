@@ -26,24 +26,22 @@ func Test_getDeploymentScmPath(t *testing.T) {
 			Kind: "Deployment",
 		},
 	}
-	meta := core.DeploymentMeta{
+	deploymentCfg := &core.DeploymentConfig{
 		Namespace: "apps",
 		Name:      "myapp01",
 		Stage:     "dev",
 	}
 
-	result := getDeploymentScmPath(meta, deployment)
+	result := getDeploymentScmPath(deploymentCfg, deployment)
 
 	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/myapp01/deployment.myapp01.yaml", result)
 }
 
 func Test_getAppConfigScmPath(t *testing.T) {
-	deployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      "myapp01-test",
-			Namespace: "apps",
-			Stage:     "dev",
-		},
+	deployment := &core.DeploymentConfig{
+		Name:      "myapp01-test",
+		Namespace: "apps",
+		Stage:     "dev",
 		App: &model.AppConfig{
 			Name: "myapp01",
 		},
@@ -71,12 +69,10 @@ func Test_getSecretScmPath(t *testing.T) {
 }
 
 func Test_renderDeploymentResources(t *testing.T) {
-	deployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      "mydeployment",
-			Namespace: "apps",
-			Stage:     "dev",
-		},
+	deployment := &core.DeploymentConfig{
+		Name:      "mydeployment",
+		Namespace: "apps",
+		Stage:     "dev",
 		App: &model.AppConfig{
 			Name: "myapp01",
 		},

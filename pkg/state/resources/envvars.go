@@ -9,26 +9,24 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func k8sEnvVars(deployment *core.Deployment, secretNames []string) []corev1.EnvVar {
+func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 	envVars := []corev1.EnvVar{}
-	for key, val := range deployment.App.Environment {
+	for key, val := range ctx.Deployment.App.Environment {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  strings.ToUpper(key),
 			Value: val.String(),
 		})
 	}
 
-	for _, secretName := range secretNames {
+	for _, secretName := range ctx.SecretNames {
 		secretEnv := corev1.EnvVar{
 			Name: strings.ToUpper(secretName),
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
-					// TODO: Instaed of hard coding this use SecretName or somehting and add GetKeySelector() (even though this will likely always return "data")
 					Key:      "data",
 					Optional: boolPtr(false),
 					LocalObjectReference: corev1.LocalObjectReference{
-						// TODO: Instead of using a string use a SecretName or something with a GetEnvName() and GetSecretObjectName() functions on it
-						Name: fmt.Sprintf("%s-%s", deployment.App.Name, secretName),
+						Name: fmt.Sprintf("%s-%s", ctx.Deployment.App.Name, secretName),
 					},
 				},
 			},

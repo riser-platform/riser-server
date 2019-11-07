@@ -2,6 +2,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    riser.dev/generation: "3"
   creationTimestamp: null
   labels:
     riser.dev/app: myapp

@@ -91,7 +91,7 @@ func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, st
 		SET doc = jsonb_set(doc, '{status}', $3)
 		WHERE name = $1 AND stage_name = $2
 		-- Don't update status from an older observed generation
-		AND (doc->'status'->>'observedRiserGeneration')::int <= $4
+		AND ((doc->'status'->>'observedRiserGeneration')::int <= $4 OR doc->'status' IS NULL OR doc->'status'->>'observedRiserGeneration' IS NULL)
 	`, deploymentName, stageName, status, status.ObservedRiserGeneration)
 
 	if err != nil {

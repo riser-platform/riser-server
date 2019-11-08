@@ -33,6 +33,8 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v1
       - uses: jerray/publish-docker-action@v1.0.3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}

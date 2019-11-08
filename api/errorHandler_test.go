@@ -110,6 +110,22 @@ func Test_ErrorHandler_WhenValidationErrorNoFields(t *testing.T) {
 	assert.Len(t, jsonResponse.ValidationErrors, 0)
 }
 
+func Test_ErrorHandler_WhenValidationErrorIsNil(t *testing.T) {
+	logBuf := &bytes.Buffer{}
+	ctx, rec := errorHandlerTestSetup(logBuf)
+
+	err := core.NewValidationError("validation failed", nil)
+
+	ErrorHandler(err, ctx)
+
+	assert.Empty(t, logBuf)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	jsonResponse := ValidationErrorResponse{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jsonResponse), rec.Body.String())
+	assert.Equal(t, jsonResponse.Message, "validation failed")
+	assert.Len(t, jsonResponse.ValidationErrors, 0)
+}
+
 // An ozzo-validation Internal error means that something went wrong (e.g. a misconfigured validation rule).
 func Test_ErrorHandler_WhenValidationErrorIsInternal_Returns500AndLogsInternal(t *testing.T) {
 	logBuf := &bytes.Buffer{}

@@ -8,26 +8,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ApplyDefaults_Defaults(t *testing.T) {
-	deployment := &core.Deployment{
+func Test_applyDefaults_Defaults(t *testing.T) {
+	deployment := &core.DeploymentConfig{
 		App: &model.AppConfig{
 			Name: "myapp",
 		},
 	}
 
-	result := ApplyDefaults(deployment)
+	applyDefaults(deployment)
 
-	assert.Equal(t, "myapp", result.Name)
-	assert.Equal(t, "apps", result.Namespace)
-	assert.Equal(t, "http", result.App.Expose.Protocol)
+	assert.Equal(t, "myapp", deployment.Name)
+	assert.Equal(t, "apps", deployment.Namespace)
+	assert.Equal(t, "http", deployment.App.Expose.Protocol)
 }
 
-func Test_ApplyDefaults_AllowValues(t *testing.T) {
-	deployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      "mydeployment",
-			Namespace: "not-yet-supported",
-		},
+func Test_applyDefaults_AllowValues(t *testing.T) {
+	deployment := &core.DeploymentConfig{
+		Name:      "mydeployment",
+		Namespace: "not-yet-supported",
 		App: &model.AppConfig{
 			Name: "myapp",
 			Expose: &model.AppConfigExpose{
@@ -36,24 +34,22 @@ func Test_ApplyDefaults_AllowValues(t *testing.T) {
 		},
 	}
 
-	result := ApplyDefaults(deployment)
+	applyDefaults(deployment)
 
-	assert.Equal(t, "apps", result.Namespace)
-	assert.Equal(t, "myapp-mydeployment", result.Name)
-	assert.Equal(t, "grpc", result.App.Expose.Protocol)
+	assert.Equal(t, "apps", deployment.Namespace)
+	assert.Equal(t, "myapp-mydeployment", deployment.Name)
+	assert.Equal(t, "grpc", deployment.App.Expose.Protocol)
 }
 
 func Test_ApplyDefaults_WhenDeploymentNameSpecified_DoesNotAddPrefixIfNamesMatch(t *testing.T) {
-	deployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name: "myapp",
-		},
+	deployment := &core.DeploymentConfig{
+		Name: "myapp",
 		App: &model.AppConfig{
 			Name: "myapp",
 		},
 	}
 
-	result := ApplyDefaults(deployment)
+	applyDefaults(deployment)
 
-	assert.Equal(t, "myapp", result.Name)
+	assert.Equal(t, "myapp", deployment.Name)
 }

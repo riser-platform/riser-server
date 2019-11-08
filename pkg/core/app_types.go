@@ -13,6 +13,13 @@ type App struct {
 	Hashid AppId
 }
 
+type AppStatus struct {
+	StageStatuses []StageStatus
+	// Deployments returns the whole deployment. We should probably use a different type here with less data, but we can't just pass
+	// Deployment.Doc.Status as we also need the DeploymentName and the Stage.
+	Deployments []Deployment
+}
+
 type AppId []byte
 
 func (appId AppId) String() string {

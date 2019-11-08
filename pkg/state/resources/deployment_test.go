@@ -14,14 +14,12 @@ import (
 
 func Test_CreateDeployment(t *testing.T) {
 	replicas := int32(2)
-	deployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      "myapp-deployment",
-			Namespace: "apps",
-			Stage:     "dev",
-			Docker: core.DeploymentDocker{
-				Tag: "myTag",
-			},
+	deployment := &core.DeploymentConfig{
+		Name:      "myapp-deployment",
+		Namespace: "apps",
+		Stage:     "dev",
+		Docker: core.DeploymentDocker{
+			Tag: "myTag",
 		},
 		App: &model.AppConfig{
 			Name:     "myapp",
@@ -43,7 +41,7 @@ func Test_CreateDeployment(t *testing.T) {
 		"mysecret",
 	}
 
-	result, err := CreateDeployment(deployment, secretsForEnv)
+	result, err := CreateDeployment(&core.DeploymentContext{Deployment: deployment, SecretNames: secretsForEnv, RiserGeneration: 3})
 
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -56,13 +54,16 @@ func Test_CreateDeployment(t *testing.T) {
 	assert.Equal(t, "dev", result.Labels[riserLabel("stage")])
 	assert.Equal(t, "myapp", result.Labels[riserLabel("app")])
 	assert.Equal(t, "myapp-deployment", result.Labels[riserLabel("deployment")])
+	assert.Equal(t, 1, len(result.Annotations))
+	assert.Equal(t, "3", result.Annotations[riserLabel("generation")])
 
 	// Pod
-	assert.Equal(t, 3, len(result.Spec.Template.Labels))
+	assert.Len(t, result.Spec.Template.Labels, 3)
 	assert.Equal(t, "dev", result.Spec.Template.Labels[riserLabel("stage")])
 	assert.Equal(t, "myapp", result.Spec.Template.Labels[riserLabel("app")])
 	assert.Equal(t, "myapp-deployment", result.Spec.Template.Labels[riserLabel("deployment")])
-	assert.Equal(t, 1, len(result.Spec.Template.Annotations))
+	assert.Len(t, result.Spec.Template.Annotations, 2)
+	assert.Equal(t, "3", result.Spec.Template.Annotations[riserLabel("generation")])
 	assert.Equal(t, result.Spec.Template.Annotations["sidecar.istio.io/rewriteAppHTTPProbers"], "true")
 	assert.Equal(t, 1, len(result.Spec.Template.Spec.Containers))
 	assert.Equal(t, &replicas, result.Spec.Replicas)
@@ -86,7 +87,7 @@ func Test_CreateDeployment(t *testing.T) {
 
 	// Health (Readiness Probe)
 	assert.Equal(t, "/health", container.ReadinessProbe.HTTPGet.Path)
-	assert.EqualValues(t, 1337, container.ReadinessProbe.HTTPGet.Port.IntVal)
+	assert.Empty(t, container.ReadinessProbe.HTTPGet.Port)
 
 	// Resource Defaults
 	assert.EqualValues(t, 500, container.Resources.Limits.Cpu().MilliValue(), "millicores")
@@ -109,22 +110,6 @@ func Test_readinessProbe_nilHealth(t *testing.T) {
 	result := readinessProbe(app)
 
 	assert.Nil(t, result)
-}
-
-func Test_readinessProbe_httpGetDefaultContainerPort(t *testing.T) {
-	app := &model.AppConfig{
-		HealthCheck: &model.AppConfigHealthCheck{
-			Path: "/health",
-		},
-		Expose: &model.AppConfigExpose{
-			ContainerPort: 1337,
-		},
-	}
-
-	result := readinessProbe(app)
-
-	assert.Equal(t, "/health", result.HTTPGet.Path)
-	assert.EqualValues(t, 1337, result.HTTPGet.Port.IntVal)
 }
 
 func Test_readinessProbe_httpGet(t *testing.T) {

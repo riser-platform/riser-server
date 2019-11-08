@@ -1,27 +1,29 @@
 CREATE TABLE app
 (
-  name character varying(64) NOT NULL,
+  name character varying(63) NOT NULL,
   hashid bytea NOT NULL,
 	PRIMARY KEY(name)
 );
 
 CREATE UNIQUE INDEX ix_app_hashid ON app(hashid);
 
-CREATE TABLE deployment_status
+CREATE TABLE deployment
 (
-  app_name character varying(64) NOT NULL REFERENCES app(name),
-  deployment_name character varying(64) NOT NULL,
-  stage_name character varying(64) NOT NULL,
+  name character varying(63) NOT NULL,
+  stage_name character varying(63) NOT NULL,
+  app_name character varying(63) NOT NULL REFERENCES app(name),
+  riser_generation integer NOT NULL DEFAULT(0),
   doc jsonb NOT NULL,
-  PRIMARY KEY (app_name, deployment_name,stage_name)
+  PRIMARY KEY (name,stage_name)
 );
 
-CREATE UNIQUE INDEX ix_deployment_status ON deployment_status(app_name,deployment_name,stage_name);
+CREATE UNIQUE INDEX ix_deployment ON deployment(name,stage_name);
+CREATE INDEX ix_deployment_riser_generation ON deployment(riser_generation);
 
 CREATE TABLE secret_meta (
-  app_name character varying(64) NOT NULL REFERENCES app(name),
-  stage_name character varying(64) NOT NULL,
-  secret_name character varying(64) NOT NULL,
+  app_name character varying(63) NOT NULL REFERENCES app(name),
+  stage_name character varying(63) NOT NULL,
+  secret_name character varying(63) NOT NULL,
   doc jsonb NOT NULL,
   PRIMARY KEY (app_name, stage_name, secret_name)
 );
@@ -51,7 +53,7 @@ CREATE INDEX ix_userlogin_user_id ON apikey(riser_user_id);
 CREATE UNIQUE INDEX ix_userlogin_key_hash ON apikey(key_hash);
 
 CREATE TABLE stage (
-  name character varying(64) NOT NULL,
+  name character varying(63) NOT NULL,
   doc jsonb NOT NULL,
   PRIMARY KEY(name)
 )

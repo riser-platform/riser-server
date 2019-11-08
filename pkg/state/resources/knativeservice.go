@@ -5,16 +5,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateKNativeService(deployment *core.Deployment, secretsForEnv []string) *Service {
-	labels := commonLabels(deployment)
+func CreateKNativeService(ctx *core.DeploymentContext) *Service {
+	labels := commonLabels(ctx)
 	// TODO: This won't be necessary after we move to using riser.dev/app.
 	delete(labels, "app")
 
-	podSpec := createPodSpec(deployment, secretsForEnv)
+	podSpec := createPodSpec(ctx)
 	// KNative does not allow setting this
 	podSpec.EnableServiceLinks = nil
 
-	podMeta := createPodObjectMeta(deployment, labels)
+	podMeta := createPodObjectMeta(ctx)
 	// We should consider exposing this in the app config. We don't want to disable scale-to-zero cluster wide as we
 	// want to eventually support that on an app by app basis.
 	podMeta.Annotations["autoscaling.knative.dev/minScale"] = "1"
@@ -24,9 +24,10 @@ func CreateKNativeService(deployment *core.Deployment, secretsForEnv []string) *
 
 	return &Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deployment.Name,
-			Namespace: deployment.Namespace,
-			Labels:    labels,
+			Name:        ctx.Deployment.Name,
+			Namespace:   ctx.Deployment.Namespace,
+			Labels:      labels,
+			Annotations: commonAnnotations(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",

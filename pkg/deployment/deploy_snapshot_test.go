@@ -23,14 +23,12 @@ import (
 // Pass the UPDATESNAPSHOT=true env var to "go test" to regenerate the snapshot data
 
 func Test_update_snapshot_simple(t *testing.T) {
-	newDeployment := &core.Deployment{
-		DeploymentMeta: core.DeploymentMeta{
-			Name:      "myapp",
-			Namespace: "apps",
-			Stage:     "dev",
-			Docker: core.DeploymentDocker{
-				Tag: "0.0.1",
-			},
+	newDeployment := &core.DeploymentConfig{
+		Name:      "myapp",
+		Namespace: "apps",
+		Stage:     "dev",
+		Docker: core.DeploymentDocker{
+			Tag: "0.0.1",
 		},
 		App: &model.AppConfig{
 			Name: "myapp",
@@ -55,7 +53,16 @@ func Test_update_snapshot_simple(t *testing.T) {
 	} else {
 		committer = dryRunComitter
 	}
-	err = deploy(newDeployment, core.StageConfig{PublicGatewayHost: "dev.riser.org"}, committer, secretNames)
+
+	ctx := &core.DeploymentContext{
+		Deployment:      newDeployment,
+		Stage:           &core.StageConfig{PublicGatewayHost: "dev.riser.org"},
+		RiserGeneration: 3,
+		SecretNames:     secretNames,
+	}
+	// TODO: Refactor
+	applyDefaults(newDeployment)
+	err = deploy(ctx, committer)
 
 	assert.NoError(t, err)
 	if !shouldUpdateSnapshot() {

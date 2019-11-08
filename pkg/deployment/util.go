@@ -11,7 +11,9 @@ import (
 
 const DefaultExposeProtocol = "http"
 
-func ApplyDefaults(deployment *core.Deployment) *core.Deployment {
+func applyDefaults(deployment *core.DeploymentConfig) {
+	// TODO: This sucks. Name should be calculated before getting here. Instead the request object should contain a "nameSuffix" instead of "name"
+	// field and then compute the deployment name before calling into the service layer.
 	if deployment.Name == "" {
 		deployment.Name = deployment.App.Name
 	} else if !strings.EqualFold(deployment.Name, deployment.App.Name) {
@@ -27,5 +29,4 @@ func ApplyDefaults(deployment *core.Deployment) *core.Deployment {
 	if deployment.App.Expose.Protocol == "" {
 		deployment.App.Expose.Protocol = DefaultExposeProtocol
 	}
-	return deployment
 }

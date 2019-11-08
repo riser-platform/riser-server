@@ -18,12 +18,13 @@ type VirtualService struct {
 	Spec              *istionet.VirtualService `json:"spec"`
 }
 
-func CreateVirtualService(deployment *core.Deployment, gatewayHost string) (*VirtualService, error) {
+func CreateVirtualService(ctx *core.DeploymentContext) (*VirtualService, error) {
 	virtualService := &VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s-%d", deployment.Namespace, deployment.Name, deployment.App.Expose.ContainerPort),
-			Namespace: deployment.Namespace,
-			Labels:    commonLabels(deployment),
+			Name:        fmt.Sprintf("%s-%s-%d", ctx.Deployment.Namespace, ctx.Deployment.Name, ctx.Deployment.App.Expose.ContainerPort),
+			Namespace:   ctx.Deployment.Namespace,
+			Annotations: commonAnnotations(ctx),
+			Labels:      commonLabels(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VirtualService",
@@ -36,15 +37,15 @@ func CreateVirtualService(deployment *core.Deployment, gatewayHost string) (*Vir
 				"mesh",
 			},
 			Hosts: []string{
-				fmt.Sprintf("%s.%s.%s", deployment.Name, deployment.Namespace, gatewayHost),
-				fmt.Sprintf("%s.%s.svc.cluster.local", deployment.Name, deployment.Namespace),
+				fmt.Sprintf("%s.%s.%s", ctx.Deployment.Name, ctx.Deployment.Namespace, ctx.Stage.PublicGatewayHost),
+				fmt.Sprintf("%s.%s.svc.cluster.local", ctx.Deployment.Name, ctx.Deployment.Namespace),
 			},
 			Http: []*istionet.HTTPRoute{
 				&istionet.HTTPRoute{
 					Route: []*istionet.HTTPRouteDestination{
 						&istionet.HTTPRouteDestination{
 							Destination: &istionet.Destination{
-								Host: fmt.Sprintf("%s.%s.svc.cluster.local", deployment.Name, deployment.Namespace),
+								Host: fmt.Sprintf("%s.%s.svc.cluster.local", ctx.Deployment.Name, ctx.Deployment.Namespace),
 							},
 						},
 					},

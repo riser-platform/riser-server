@@ -11,7 +11,7 @@ import (
 
 func Test_k8sEnvVars(t *testing.T) {
 	secretNames := []string{"secret2", "secret1"}
-	deployment := &core.Deployment{
+	deployment := &core.DeploymentConfig{
 		App: &model.AppConfig{
 			Environment: map[string]intstr.IntOrString{
 				"env1": intstr.Parse("env1Val"),
@@ -20,7 +20,7 @@ func Test_k8sEnvVars(t *testing.T) {
 		},
 	}
 
-	result := k8sEnvVars(deployment, secretNames)
+	result := k8sEnvVars(&core.DeploymentContext{Deployment: deployment, SecretNames: secretNames})
 
 	assert.Len(t, result, 4)
 	assert.Equal(t, "ENV1", result[0].Name)

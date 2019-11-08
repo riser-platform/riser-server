@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -23,55 +24,57 @@ const (
 )
 
 // CreateDeployment creates a kubernetes Deployment from a riser deployment
-func CreateDeployment(deployment *core.Deployment, secretsForEnv []string) (*appsv1.Deployment, error) {
+func CreateDeployment(ctx *core.DeploymentContext) (*appsv1.Deployment, error) {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deployment.Name,
-			Namespace: deployment.Namespace,
-			Labels:    commonLabels(deployment),
+			Name:        ctx.Deployment.Name,
+			Namespace:   ctx.Deployment.Namespace,
+			Labels:      commonLabels(ctx),
+			Annotations: commonAnnotations(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: "apps/v1",
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: deployment.App.Replicas,
+			Replicas: ctx.Deployment.App.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					riserLabel("deployment"): deployment.Name,
+					riserLabel("deployment"): ctx.Deployment.Name,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: createPodObjectMeta(deployment, commonLabels(deployment)),
-				Spec:       createPodSpec(deployment, secretsForEnv),
+				ObjectMeta: createPodObjectMeta(ctx),
+				Spec:       createPodSpec(ctx),
 			},
 		},
 	}, nil
 }
 
-func createPodObjectMeta(deployment *core.Deployment, labels map[string]string) metav1.ObjectMeta {
+func createPodObjectMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
+	annotations := commonAnnotations(ctx)
+	// This is required for probes to work w/mTLS on teh same port as the service port
+	annotations["sidecar.istio.io/rewriteAppHTTPProbers"] = "true"
 	return metav1.ObjectMeta{
-		Labels: labels,
-		Annotations: map[string]string{
-			"sidecar.istio.io/rewriteAppHTTPProbers": "true",
-		},
+		Labels:      commonLabels(ctx),
+		Annotations: annotations,
 	}
 }
 
-func createPodSpec(deployment *core.Deployment, secretsForEnv []string) corev1.PodSpec {
+func createPodSpec(ctx *core.DeploymentContext) corev1.PodSpec {
 	return corev1.PodSpec{
 		EnableServiceLinks: boolPtr(false),
 		Containers: []corev1.Container{
 			corev1.Container{
-				Name:           deployment.Name,
-				Image:          fmt.Sprintf("%s:%s", deployment.App.Image, deployment.Docker.Tag),
-				Resources:      resources(deployment.App),
-				ReadinessProbe: readinessProbe(deployment.App),
-				Env:            k8sEnvVars(deployment, secretsForEnv),
+				Name:           ctx.Deployment.Name,
+				Image:          fmt.Sprintf("%s:%s", ctx.Deployment.App.Image, ctx.Deployment.Docker.Tag),
+				Resources:      resources(ctx.Deployment.App),
+				ReadinessProbe: readinessProbe(ctx.Deployment.App),
+				Env:            k8sEnvVars(ctx),
 				Ports: []corev1.ContainerPort{
 					corev1.ContainerPort{
 						Protocol:      corev1.ProtocolTCP,
-						ContainerPort: deployment.App.Expose.ContainerPort,
+						ContainerPort: ctx.Deployment.App.Expose.ContainerPort,
 					},
 				},
 			},
@@ -84,21 +87,22 @@ func readinessProbe(appConfig *model.AppConfig) *corev1.Probe {
 		return nil
 	}
 
-	// TODO: Do not commit (KNative does not allow setting this)
-	// port := appConfig.HealthCheck.Port
-	// if port == nil && appConfig.Expose != nil {
-	// 	port = &appConfig.Expose.ContainerPort
-	// }
+	port := appConfig.HealthCheck.Port
 
-	return &corev1.Probe{
+	probe := &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: appConfig.HealthCheck.Path,
-				// TODO: Do not commit (KNative does not allow setting this)
-				// Port: intstr.FromInt(int(*port)),
 			},
 		},
 	}
+
+	// TODO: KNative doesn't appear to allow setting this, need to investigate further
+	if port != nil {
+		probe.Handler.HTTPGet.Port = intstr.FromInt(int(*port))
+	}
+
+	return probe
 }
 
 func resources(appConfig *model.AppConfig) corev1.ResourceRequirements {

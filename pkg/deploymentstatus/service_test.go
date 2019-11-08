@@ -12,26 +12,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_GetSummary(t *testing.T) {
-	status := core.DeploymentStatus{
-		AppName:        "myapp",
-		DeploymentName: "myDeployment",
-		StageName:      "mystage",
-		Doc: &core.DeploymentStatusDoc{
-			RolloutStatus:       "InProgress",
-			RolloutStatusReason: "Deploying",
-			RolloutRevision:     1,
-			DockerImage:         "foo:v1.0",
-			Problems: []core.DeploymentStatusProblem{
-				core.DeploymentStatusProblem{Count: 1, Message: "testProblem"},
+func Test_GetByApp(t *testing.T) {
+	status := core.Deployment{
+		Name:      "myDeployment",
+		StageName: "mystage",
+		AppName:   "myapp",
+		Doc: core.DeploymentDoc{
+			Status: &core.DeploymentStatus{
+				RolloutStatus:       "InProgress",
+				RolloutStatusReason: "Deploying",
+				RolloutRevision:     1,
+				DockerImage:         "foo:v1.0",
+				Problems: []core.DeploymentStatusProblem{
+					core.DeploymentStatusProblem{Count: 1, Message: "testProblem"},
+				},
 			},
 		},
 	}
 
-	statusRepository := &core.FakeDeploymentStatusRepository{
-		FindByAppFn: func(appName string) ([]core.DeploymentStatus, error) {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		FindByAppFn: func(appName string) ([]core.Deployment, error) {
 			assert.Equal(t, "myapp", appName)
-			return []core.DeploymentStatus{status}, nil
+			return []core.Deployment{status}, nil
 		},
 	}
 
@@ -45,43 +47,43 @@ func Test_GetSummary(t *testing.T) {
 		},
 	}
 
-	service := service{statuses: statusRepository, stageService: stageService}
+	service := service{deployments: deploymentRepository, stageService: stageService}
 
-	result, err := service.GetSummary("myapp")
+	result, err := service.GetByApp("myapp")
 
 	assert.NoError(t, err)
 	assert.Len(t, result.StageStatuses, 1)
 	assert.Equal(t, "mystage", result.StageStatuses[0].StageName)
-	assert.Len(t, result.DeploymentStatuses, 1)
-	assert.Equal(t, status, result.DeploymentStatuses[0])
+	assert.Len(t, result.Deployments, 1)
+	assert.Equal(t, status, result.Deployments[0])
 	assert.Equal(t, 1, stageService.GetStatusCallCount)
 }
 
-func Test_GetSummary_StatusRepoErr_ReturnsErr(t *testing.T) {
-	statusRepository := &core.FakeDeploymentStatusRepository{
-		FindByAppFn: func(string) ([]core.DeploymentStatus, error) {
+func Test_GetByApp_StatusRepoErr_ReturnsErr(t *testing.T) {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		FindByAppFn: func(string) ([]core.Deployment, error) {
 			return nil, errors.New("test")
 		},
 	}
 
-	service := service{statuses: statusRepository}
+	service := service{deployments: deploymentRepository}
 
-	result, err := service.GetSummary("myapp")
+	result, err := service.GetByApp("myapp")
 
 	assert.Nil(t, result)
 	assert.Equal(t, err.Error(), "Error retrieving deployment status: test")
 }
 
-func Test_GetSummary_StageStatusError_ReturnsError(t *testing.T) {
-	status := core.DeploymentStatus{
+func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
+	status := core.Deployment{
 		AppName:   "myapp",
 		StageName: "mystage",
 	}
 
-	statusRepository := &core.FakeDeploymentStatusRepository{
-		FindByAppFn: func(appName string) ([]core.DeploymentStatus, error) {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		FindByAppFn: func(appName string) ([]core.Deployment, error) {
 			assert.Equal(t, "myapp", appName)
-			return []core.DeploymentStatus{status}, nil
+			return []core.Deployment{status}, nil
 		},
 	}
 
@@ -91,77 +93,46 @@ func Test_GetSummary_StageStatusError_ReturnsError(t *testing.T) {
 		},
 	}
 
-	service := service{statuses: statusRepository, stageService: stageService}
+	service := service{deployments: deploymentRepository, stageService: stageService}
 
-	result, err := service.GetSummary("myapp")
+	result, err := service.GetByApp("myapp")
 
 	assert.Nil(t, result)
 	assert.Equal(t, "Error retrieving stage status for stage \"mystage\": test", err.Error())
 
 }
 
-func Test_Save(t *testing.T) {
-	status := &core.DeploymentStatus{StageName: "mystage"}
+func Test_UpdateStatus(t *testing.T) {
+	status := &core.DeploymentStatus{RolloutStatus: "test"}
 
-	statusRepository := &core.FakeDeploymentStatusRepository{
-		SaveFn: func(statusArg *core.DeploymentStatus) error {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		UpdateStatusFn: func(deploymentNameArg string, stageNameArg string, statusArg *core.DeploymentStatus) error {
 			assert.Equal(t, status, statusArg)
+			assert.Equal(t, "mydeployment", deploymentNameArg)
+			assert.Equal(t, "mystage", stageNameArg)
 			return nil
 		},
 	}
 
-	stageService := &stage.FakeService{
-		PingFn: func(stageName string) error {
-			assert.Equal(t, "mystage", stageName)
-			return nil
-		},
-	}
-
-	service := service{statuses: statusRepository, stageService: stageService}
-
-	err := service.Save(status)
+	service := service{deployments: deploymentRepository}
+	err := service.UpdateStatus("mydeployment", "mystage", status)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 1, statusRepository.SaveCallCount)
-	assert.Equal(t, 1, stageService.PingCallCount)
+	assert.Equal(t, 1, deploymentRepository.UpdateStatusCallCount)
 }
 
-func Test_Save_WhenPingStageError_ReturnsError(t *testing.T) {
-	status := &core.DeploymentStatus{StageName: "mystage"}
+func Test_UpdateStatus_WhenUpdateStatusError_ReturnsError(t *testing.T) {
+	status := &core.DeploymentStatus{}
 
-	stageService := &stage.FakeService{
-		PingFn: func(string) error {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		UpdateStatusFn: func(string, string, *core.DeploymentStatus) error {
 			return errors.New("test")
 		},
 	}
 
-	service := service{stageService: stageService}
+	service := service{deployments: deploymentRepository}
 
-	err := service.Save(status)
+	err := service.UpdateStatus("mydeployment", "mystage", status)
 
-	assert.Equal(t, "Error saving stage \"mystage\": test", err.Error())
-}
-
-func Test_Save_WhenSaveError_ReturnsError(t *testing.T) {
-	status := &core.DeploymentStatus{
-		AppName: "myapp",
-	}
-
-	statusRepository := &core.FakeDeploymentStatusRepository{
-		SaveFn: func(statusArg *core.DeploymentStatus) error {
-			return errors.New("test")
-		},
-	}
-
-	stageService := &stage.FakeService{
-		PingFn: func(string) error {
-			return nil
-		},
-	}
-
-	service := service{statuses: statusRepository, stageService: stageService}
-
-	err := service.Save(status)
-
-	assert.Equal(t, "Error saving deployment status for app \"myapp\": test", err.Error())
+	assert.Equal(t, "Error saving status for deployment \"mydeployment\" in stage \"mystage\": test", err.Error())
 }

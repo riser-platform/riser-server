@@ -27,9 +27,9 @@ func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
 	stageRepository := postgres.NewStageRepository(db)
 	stageService := stage.NewService(stageRepository)
 	secretService := secret.NewService(secretMetaRepository, stageRepository)
-	deploymentService := deployment.NewService(secretService, stageRepository)
-	deploymentStatusRepository := postgres.NewDeploymentStatusRepository(db)
-	deploymentStatusService := deploymentstatus.NewService(deploymentStatusRepository, stageService)
+	deploymentRepository := postgres.NewDeploymentRepository(db)
+	deploymentService := deployment.NewService(secretService, stageRepository, deploymentRepository)
+	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
 	userRepository := postgres.NewUserRepository(db)
 	apiKeyRepository := postgres.NewApiKeyRepository(db)
 	loginService := login.NewService(userRepository, apiKeyRepository)
@@ -42,10 +42,14 @@ func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
 		},
 	}))
 
-	// NOTE: May just limit to /apps/:namespace in the future
 	v1.GET("/apps", func(c echo.Context) error {
 		return ListApps(c, appRepository)
 	})
+
+	v1.GET("/apps/:appName/status", func(c echo.Context) error {
+		return GetStatus(c, deploymentStatusService)
+	})
+
 	v1.POST("/apps", func(c echo.Context) error {
 		return PostApp(c, appService)
 	})
@@ -57,21 +61,15 @@ func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
 		return PostDeployment(c, repo, appService, deploymentService, stageService)
 	})
 
+	v1.PUT("/deployments/:deploymentName/status/:stageName", func(c echo.Context) error {
+		return PutDeploymentStatus(c, deploymentStatusService)
+	})
+
 	v1.PUT("/secrets", func(c echo.Context) error {
 		return PutSecret(c, repo, secretService, stageService)
 	})
 	v1.GET("/secrets/:appName/:stageName", func(c echo.Context) error {
 		return GetSecrets(c, secretService, stageService)
-	})
-
-	v1.POST("/status", func(c echo.Context) error {
-		return PostStatus(c, deploymentStatusService)
-	})
-	v1.PUT("/status", func(c echo.Context) error {
-		return PostStatus(c, deploymentStatusService)
-	})
-	v1.GET("/status", func(c echo.Context) error {
-		return GetStatus(c, deploymentStatusService)
 	})
 
 	v1.PUT("/stages/:stageName/config", func(c echo.Context) error {

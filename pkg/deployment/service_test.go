@@ -17,7 +17,7 @@ import (
 
 func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "mydep",
+		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
 			Name: "myapp",
@@ -52,7 +52,7 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 
 func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "mydep",
+		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
 			Name: "myapp",
@@ -86,7 +86,7 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 
 func Test_prepareForDeployment_whenIncrementGenerationFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "mydep",
+		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
 			Name: "myapp",
@@ -114,11 +114,11 @@ func Test_prepareForDeployment_whenIncrementGenerationFails(t *testing.T) {
 	app
 	app-foo
 
-	app decides to deploy with suffix "foo", resulting in a duplicate deployment name of "app-foo"
+	app decides to deploy with the deployment name "app-foo", resulting in a duplicate deployment name of "app-foo" of the app "app-foo"
 */
 func Test_prepareForDeployment_whenAppDoesNotOwnDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "mydep",
+		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
 			Name: "myapp",
@@ -141,7 +141,7 @@ func Test_prepareForDeployment_whenAppDoesNotOwnDeployment(t *testing.T) {
 
 func Test_prepareForDeployment_whenGetFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "mydep",
+		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
 			Name: "myapp",
@@ -163,7 +163,7 @@ func Test_prepareForDeployment_whenGetFails(t *testing.T) {
 
 func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "mydep",
+		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
 			Name: "myapp",
@@ -188,17 +188,35 @@ func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 	assert.Equal(t, `Error creating deployment "myapp-mydep" in stage "mystage": test`, err.Error())
 }
 
-func Test_deploy_ValidatesName(t *testing.T) {
-	deployment := &core.DeploymentConfig{
-		Name: "app-b@d",
-		App: &model.AppConfig{
-			Name: "app",
-		},
+func Test_validateDeploymentConfig_ValidatesName(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{"app", nil},
+		{"app-good", nil},
+		{"app-", core.NewValidationError(`invalid deployment name "app-"`, errors.New(`must be either "app" or start with "app-"`))},
+		{"mydep", core.NewValidationError(`invalid deployment name "mydep"`, errors.New(`must be either "app" or start with "app-"`))},
+		{"app-b@d", core.NewValidationError(`invalid deployment name "app-b@d"`, errors.New("must be lowercase, alphanumeric, and start with a letter"))},
 	}
 
-	result := deploy(&core.DeploymentContext{Deployment: deployment}, nil)
+	for _, tt := range tests {
+		deployment := &core.DeploymentConfig{
+			Name: tt.name,
+			App: &model.AppConfig{
+				Name: "app",
+			},
+		}
 
-	assert.IsType(t, &core.ValidationError{}, result)
-	ve := result.(*core.ValidationError)
-	assert.Equal(t, "invalid deployment name \"app-b@d\": must be lowercase, alphanumeric, and start with a letter", ve.Error())
+		result := validateDeploymentConfig(deployment)
+
+		if tt.err == nil {
+			assert.Nil(t, result, tt.name)
+		} else {
+			assert.IsType(t, &core.ValidationError{}, result, tt.name)
+			ve := result.(*core.ValidationError)
+			ttve := tt.err.(*core.ValidationError)
+			assert.Equal(t, ttve.Error(), ve.Error(), tt.name)
+		}
+	}
 }

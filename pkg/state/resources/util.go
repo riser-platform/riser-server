@@ -7,7 +7,8 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-func commonLabels(ctx *core.DeploymentContext) map[string]string {
+// deploymentLabels are labels common to Riser deployment resources
+func deploymentLabels(ctx *core.DeploymentContext) map[string]string {
 	return map[string]string{
 		riserLabel("deployment"): ctx.Deployment.Name,
 		riserLabel("stage"):      ctx.Deployment.Stage,
@@ -15,7 +16,8 @@ func commonLabels(ctx *core.DeploymentContext) map[string]string {
 	}
 }
 
-func commonAnnotations(ctx *core.DeploymentContext) map[string]string {
+// deploymentAnnotations are annotations common to Riser deployment resources
+func deploymentAnnotations(ctx *core.DeploymentContext) map[string]string {
 	return map[string]string{
 		riserLabel("generation"): strconv.FormatInt(ctx.RiserGeneration, 10),
 	}

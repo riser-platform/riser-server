@@ -104,22 +104,27 @@ func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
 		// confusion (e.g. the suffix may be short enough but not <appName>-<deploymentSuffix>)
 		return core.NewValidationError(fmt.Sprintf("invalid deployment name %q", ctx.Deployment.Name), err)
 	}
-	deploymentResource, err := resources.CreateDeployment(ctx)
-	if err != nil {
-		return err
-	}
 
-	serviceResource, err := resources.CreateService(ctx)
-	if err != nil {
-		return err
-	}
+	// TODO: Flag on ctx.Stage.KNativeEnabled
+	// deploymentResource, err := resources.CreateDeployment(ctx)
+	// if err != nil {
+	// 	return err
+	// }
 
-	virtualServiceResource, err := resources.CreateVirtualService(ctx)
-	if err != nil {
-		return err
-	}
+	// serviceResource, err := resources.CreateService(ctx)
+	// if err != nil {
+	// 	return err
+	// }
 
-	resourceFiles, err := state.RenderDeployment(ctx.Deployment, deploymentResource, serviceResource, virtualServiceResource)
+	// virtualServiceResource, err := resources.CreateVirtualService(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	knativeServiceResource := resources.CreateKNativeService(ctx)
+
+	// resourceFiles, err := state.RenderDeployment(ctx.Deployment, deploymentResource, serviceResource, virtualServiceResource)
+	resourceFiles, err := state.RenderDeployment(ctx.Deployment, knativeServiceResource)
 	if err != nil {
 		return err
 	}

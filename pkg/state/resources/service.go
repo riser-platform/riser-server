@@ -11,8 +11,8 @@ func CreateService(ctx *core.DeploymentContext) (*corev1.Service, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        ctx.Deployment.Name,
 			Namespace:   ctx.Deployment.Namespace,
-			Annotations: commonAnnotations(ctx),
-			Labels:      commonLabels(ctx),
+			Annotations: deploymentAnnotations(ctx),
+			Labels:      deploymentLabels(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",

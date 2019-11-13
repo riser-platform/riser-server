@@ -100,7 +100,7 @@ func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, st
 
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
-		return errors.New("Deployment not found")
+		return errors.New("Deployment not found or status is outdated")
 	}
 
 	return nil

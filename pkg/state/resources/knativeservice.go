@@ -6,7 +6,7 @@ import (
 )
 
 func CreateKNativeService(ctx *core.DeploymentContext) *Service {
-	labels := commonLabels(ctx)
+	labels := deploymentLabels(ctx)
 	// TODO: This won't be necessary after we move to using riser.dev/app.
 	delete(labels, "app")
 
@@ -27,7 +27,7 @@ func CreateKNativeService(ctx *core.DeploymentContext) *Service {
 			Name:        ctx.Deployment.Name,
 			Namespace:   ctx.Deployment.Namespace,
 			Labels:      labels,
-			Annotations: commonAnnotations(ctx),
+			Annotations: deploymentAnnotations(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",

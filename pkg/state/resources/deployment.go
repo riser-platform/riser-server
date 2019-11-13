@@ -29,8 +29,8 @@ func CreateDeployment(ctx *core.DeploymentContext) (*appsv1.Deployment, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        ctx.Deployment.Name,
 			Namespace:   ctx.Deployment.Namespace,
-			Labels:      commonLabels(ctx),
-			Annotations: commonAnnotations(ctx),
+			Labels:      deploymentLabels(ctx),
+			Annotations: deploymentAnnotations(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -52,11 +52,11 @@ func CreateDeployment(ctx *core.DeploymentContext) (*appsv1.Deployment, error) {
 }
 
 func createPodObjectMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
-	annotations := commonAnnotations(ctx)
+	annotations := deploymentAnnotations(ctx)
 	// This is required for probes to work w/mTLS on teh same port as the service port
 	annotations["sidecar.istio.io/rewriteAppHTTPProbers"] = "true"
 	return metav1.ObjectMeta{
-		Labels:      commonLabels(ctx),
+		Labels:      deploymentLabels(ctx),
 		Annotations: annotations,
 	}
 }

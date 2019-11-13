@@ -23,8 +23,8 @@ func CreateVirtualService(ctx *core.DeploymentContext) (*VirtualService, error) 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s-%d", ctx.Deployment.Namespace, ctx.Deployment.Name, ctx.Deployment.App.Expose.ContainerPort),
 			Namespace:   ctx.Deployment.Namespace,
-			Annotations: commonAnnotations(ctx),
-			Labels:      commonLabels(ctx),
+			Annotations: deploymentAnnotations(ctx),
+			Labels:      deploymentLabels(ctx),
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VirtualService",

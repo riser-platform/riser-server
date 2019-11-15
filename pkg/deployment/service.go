@@ -64,6 +64,9 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 
 func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig) (riserGeneration int64, err error) {
 	applyDefaults(deploymentConfig)
+	if err := validateDeploymentConfig(deploymentConfig); err != nil {
+		return 0, err
+	}
 	existingDeployment, err := s.deployments.Get(deploymentConfig.Name, deploymentConfig.Stage)
 	if err != nil && err != sql.ErrNoRows {
 		return 0, errors.Wrap(err, fmt.Sprintf("Error retrieving deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
@@ -92,18 +95,23 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig) 
 	return riserGeneration, nil
 }
 
-func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
-	// This is a one-off validation until we rationalize our validation strategy.
+// This is a one-off validation until we rationalize our validation strategy (API layer or service layer).
+func validateDeploymentConfig(deployment *core.DeploymentConfig) error {
 	// TODO: Once rules are factored out of api/v1/model use RulesNamingIdentifier (creates a circular dep)
-	err := validation.Validate(ctx.Deployment.Name,
+	err := validation.Validate(deployment.Name,
 		validation.Required,
 		validation.RuneLength(3, 63),
+		validation.
+			Match(regexp.MustCompile(fmt.Sprintf("^%s(-.+)?$", deployment.App.Name))).
+			Error(fmt.Sprintf("must be either %q or start with \"%s-\"", deployment.App.Name, deployment.App.Name)),
 		validation.Match(regexp.MustCompile("^[a-z][a-z0-9-]+$")).Error("must be lowercase, alphanumeric, and start with a letter"))
 	if err != nil {
-		// It's important that we print the full deployment name here as the end user can use short hand and just provide the suffix, which can cause
-		// confusion (e.g. the suffix may be short enough but not <appName>-<deploymentSuffix>)
-		return core.NewValidationError(fmt.Sprintf("invalid deployment name %q", ctx.Deployment.Name), err)
+		return core.NewValidationError(fmt.Sprintf("invalid deployment name %q", deployment.Name), err)
 	}
+	return nil
+}
+
+func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
 
 	// TODO: Flag on ctx.Stage.KNativeEnabled
 	// deploymentResource, err := resources.CreateDeployment(ctx)

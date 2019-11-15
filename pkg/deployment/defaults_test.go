@@ -17,7 +17,7 @@ func Test_applyDefaults_Defaults(t *testing.T) {
 
 	applyDefaults(deployment)
 
-	assert.Equal(t, "myapp", deployment.Name)
+	assert.Empty(t, deployment.Name)
 	assert.Equal(t, "apps", deployment.Namespace)
 	assert.Equal(t, "http", deployment.App.Expose.Protocol)
 }
@@ -37,7 +37,8 @@ func Test_applyDefaults_AllowValues(t *testing.T) {
 	applyDefaults(deployment)
 
 	assert.Equal(t, "apps", deployment.Namespace)
-	assert.Equal(t, "myapp-mydeployment", deployment.Name)
+	// Not a valid name but the defaults should not change it.
+	assert.Equal(t, "mydeployment", deployment.Name)
 	assert.Equal(t, "grpc", deployment.App.Expose.Protocol)
 }
 

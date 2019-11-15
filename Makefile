@@ -1,4 +1,5 @@
-IMG ?= riserplatform/riser-server:latest
+IMG ?= riserplatform/riser-server
+TAG ?= latest
 
 # Run tests.
 test: fmt lint tidy test-cmd
@@ -36,10 +37,10 @@ watch:
 
 docker-build:
 	docker build . -t riser-server
-	docker tag riser-server ${IMG}
+	docker tag riser-server ${IMG}:${TAG}
 
 docker-push:
-	docker push ${IMG}
+	docker push ${IMG}:${TAG}
 
 docker-run: docker-build
 	docker run -it --rm -p 8000:8000 -e "TEST_DIR=/riser-server" riser-server

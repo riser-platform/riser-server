@@ -21,11 +21,17 @@ type DeploymentStatus struct {
 
 type DeploymentStatusMutable struct {
 	ObservedRiserGeneration int64                     `json:"observedRiserGeneration"`
-	RolloutStatus           string                    `json:"rolloutStatus"`
-	RolloutRevision         int64                     `json:"rolloutRevision"`
-	RolloutStatusReason     string                    `json:"rolloutStatusReason"`
-	DockerImage             string                    `json:"dockerImage"`
 	Problems                []DeploymentStatusProblem `json:"problems"`
+	Revisions               []DeploymentRevision      `json:"revisions"`
+	LatestReadyRevisionName string                    `json:"latestReadyRevisionName"`
+}
+
+type DeploymentRevision struct {
+	Name                string `json:"name"`
+	DockerImage         string `json:"dockerImage"`
+	RiserGeneration     int64  `json:"riserGeneration"`
+	RolloutStatus       string `json:"rolloutStatus"`
+	RolloutStatusReason string `json:"rolloutStatusReason"`
 }
 
 type DeploymentStatusProblem struct {

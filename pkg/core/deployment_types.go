@@ -39,11 +39,7 @@ type DeploymentStatus struct {
 	Problems                []DeploymentStatusProblem `json:"problems"`
 	LastUpdated             time.Time                 `json:"lastUpdated"`
 	Revisions               []DeploymentRevision      `json:"revisions"`
-	// TODO: Deprecate the below for knative
-	RolloutStatus       string `json:"rolloutStatus"`
-	RolloutStatusReason string `json:"rolloutStatusReason"`
-	RolloutRevision     int64  `json:"revision"`
-	DockerImage         string `json:"dockerImage"`
+	LatestReadyRevisionName string                    `json:"latestReadyRevisionName"`
 }
 
 type DeploymentRevision struct {

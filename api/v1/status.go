@@ -49,21 +49,27 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 		RiserGeneration: domain.RiserGeneration,
 	}
 	if domain.Doc.Status == nil {
-		status.DeploymentStatusMutable = model.DeploymentStatusMutable{
-			RolloutStatus: model.RolloutStatusUnknown,
-		}
+		status.DeploymentStatusMutable = model.DeploymentStatusMutable{}
 	} else {
 		status.DeploymentStatusMutable = model.DeploymentStatusMutable{
 			ObservedRiserGeneration: domain.Doc.Status.ObservedRiserGeneration,
-			RolloutStatus:           domain.Doc.Status.RolloutStatus,
-			RolloutStatusReason:     domain.Doc.Status.RolloutStatusReason,
-			RolloutRevision:         domain.Doc.Status.RolloutRevision,
-			DockerImage:             domain.Doc.Status.DockerImage,
+			LatestReadyRevisionName: domain.Doc.Status.LatestReadyRevisionName,
 		}
 
 		status.Problems = []model.DeploymentStatusProblem{}
 		for _, problem := range domain.Doc.Status.Problems {
 			status.Problems = append(status.Problems, model.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
+		}
+
+		status.Revisions = []model.DeploymentRevision{}
+		for _, revision := range domain.Doc.Status.Revisions {
+			status.Revisions = append(status.Revisions, model.DeploymentRevision{
+				Name:                revision.Name,
+				DockerImage:         revision.DockerImage,
+				RiserGeneration:     revision.RiserGeneration,
+				RolloutStatus:       revision.RolloutStatus,
+				RolloutStatusReason: revision.RolloutStatusReason,
+			})
 		}
 	}
 	return status
@@ -72,16 +78,24 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.DeploymentStatus {
 	out := &core.DeploymentStatus{
 		ObservedRiserGeneration: in.ObservedRiserGeneration,
-		RolloutStatus:           in.RolloutStatus,
-		RolloutStatusReason:     in.RolloutStatusReason,
-		RolloutRevision:         in.RolloutRevision,
-		DockerImage:             in.DockerImage,
+		LatestReadyRevisionName: "rev2",
 		LastUpdated:             time.Now().UTC(),
 	}
 
 	out.Problems = []core.DeploymentStatusProblem{}
 	for _, problem := range in.Problems {
 		out.Problems = append(out.Problems, core.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
+	}
+
+	out.Revisions = []core.DeploymentRevision{}
+	for _, revision := range in.Revisions {
+		out.Revisions = append(out.Revisions, core.DeploymentRevision{
+			Name:                revision.Name,
+			DockerImage:         revision.DockerImage,
+			RiserGeneration:     revision.RiserGeneration,
+			RolloutStatus:       revision.RolloutStatus,
+			RolloutStatusReason: revision.RolloutStatusReason,
+		})
 	}
 
 	return out

@@ -36,12 +36,22 @@ type DeploymentDoc struct {
 
 type DeploymentStatus struct {
 	ObservedRiserGeneration int64                     `json:"observedRiserGeneration"`
-	RolloutStatus           string                    `json:"rolloutStatus"`
-	RolloutStatusReason     string                    `json:"rolloutStatusReason"`
-	RolloutRevision         int64                     `json:"revision"`
-	DockerImage             string                    `json:"dockerImage"`
 	Problems                []DeploymentStatusProblem `json:"problems"`
 	LastUpdated             time.Time                 `json:"lastUpdated"`
+	Revisions               []DeploymentRevision      `json:"revisions"`
+	// TODO: Deprecate the below for knative
+	RolloutStatus       string `json:"rolloutStatus"`
+	RolloutStatusReason string `json:"rolloutStatusReason"`
+	RolloutRevision     int64  `json:"revision"`
+	DockerImage         string `json:"dockerImage"`
+}
+
+type DeploymentRevision struct {
+	Name                string `json:"name"`
+	DockerImage         string `json:"dockerImage"`
+	RiserGeneration     int64  `json:"riserGeneration"`
+	RolloutStatus       string `json:"rolloutStatus"`
+	RolloutStatusReason string `json:"rolloutStatusReason"`
 }
 
 type DeploymentStatusProblem struct {

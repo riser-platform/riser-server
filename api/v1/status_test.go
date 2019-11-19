@@ -23,6 +23,7 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 				Revisions: []core.DeploymentRevisionStatus{
 					core.DeploymentRevisionStatus{
 						Name:                "rev1",
+						AvailableReplicas:   1,
 						RolloutStatus:       "myrolloutstatus",
 						RolloutStatusReason: "myrolloutstatusreason",
 						DockerImage:         "mydockerimage",
@@ -30,6 +31,7 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 					},
 					core.DeploymentRevisionStatus{
 						Name:                "rev2",
+						AvailableReplicas:   1,
 						RolloutStatus:       "myrolloutstatus2",
 						RolloutStatusReason: "myrolloutstatusreason2",
 						DockerImage:         "mydockerimage2",
@@ -61,11 +63,13 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 	// Revisions
 	assert.Len(t, result.Revisions, 2)
 	assert.Equal(t, "rev1", result.Revisions[0].Name)
+	assert.Equal(t, int32(1), result.Revisions[0].AvailableReplicas)
 	assert.Equal(t, "myrolloutstatus", result.Revisions[0].RolloutStatus)
 	assert.Equal(t, "myrolloutstatusreason", result.Revisions[0].RolloutStatusReason)
 	assert.Equal(t, "mydockerimage", result.Revisions[0].DockerImage)
 	assert.Equal(t, int64(3), result.Revisions[0].RiserGeneration)
 	assert.Equal(t, "rev2", result.Revisions[1].Name)
+	assert.Equal(t, int32(1), result.Revisions[1].AvailableReplicas)
 	assert.Equal(t, "myrolloutstatus2", result.Revisions[1].RolloutStatus)
 	assert.Equal(t, "myrolloutstatusreason2", result.Revisions[1].RolloutStatusReason)
 	assert.Equal(t, "mydockerimage2", result.Revisions[1].DockerImage)
@@ -99,6 +103,7 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 		Revisions: []model.DeploymentRevisionStatus{
 			model.DeploymentRevisionStatus{
 				Name:                "rev1",
+				AvailableReplicas:   1,
 				RiserGeneration:     2,
 				RolloutStatus:       "myrolloutstatus",
 				RolloutStatusReason: "myrolloutstatusreason",
@@ -106,6 +111,7 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 			},
 			model.DeploymentRevisionStatus{
 				Name:                "rev2",
+				AvailableReplicas:   1,
 				RiserGeneration:     3,
 				RolloutStatus:       "myrolloutstatus2",
 				RolloutStatusReason: "myrolloutstatusreason2",
@@ -135,10 +141,12 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	// Revisions
 	assert.Len(t, result.Revisions, 2)
 	assert.Equal(t, int64(2), result.Revisions[0].RiserGeneration)
+	assert.Equal(t, int32(1), result.Revisions[0].AvailableReplicas)
 	assert.Equal(t, "myrolloutstatus", result.Revisions[0].RolloutStatus)
 	assert.Equal(t, "myrolloutstatusreason", result.Revisions[0].RolloutStatusReason)
 	assert.Equal(t, "mydockerimage", result.Revisions[0].DockerImage)
 	assert.Equal(t, int64(3), result.Revisions[1].RiserGeneration)
+	assert.Equal(t, int32(1), result.Revisions[1].AvailableReplicas)
 	assert.Equal(t, "myrolloutstatus2", result.Revisions[1].RolloutStatus)
 	assert.Equal(t, "myrolloutstatusreason2", result.Revisions[1].RolloutStatusReason)
 	assert.Equal(t, "mydockerimage2", result.Revisions[1].DockerImage)

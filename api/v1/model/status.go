@@ -28,6 +28,7 @@ type DeploymentStatusMutable struct {
 
 type DeploymentRevisionStatus struct {
 	Name                string `json:"name"`
+	AvailableReplicas int32 `json:"availableReplicas"`
 	DockerImage         string `json:"dockerImage"`
 	RiserGeneration     int64  `json:"riserGeneration"`
 	RolloutStatus       string `json:"rolloutStatus"`

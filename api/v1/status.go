@@ -79,7 +79,7 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.DeploymentStatus {
 	out := &core.DeploymentStatus{
 		ObservedRiserGeneration: in.ObservedRiserGeneration,
-		LatestReadyRevisionName: "rev2",
+		LatestReadyRevisionName: in.LatestReadyRevisionName,
 		LastUpdated:             time.Now().UTC(),
 	}
 

@@ -35,17 +35,19 @@ type DeploymentDoc struct {
 }
 
 type DeploymentStatus struct {
-	ObservedRiserGeneration int64                     `json:"observedRiserGeneration"`
-	Problems                []DeploymentStatusProblem `json:"problems"`
-	LastUpdated             time.Time                 `json:"lastUpdated"`
-	Revisions               []DeploymentRevision      `json:"revisions"`
-	LatestReadyRevisionName string                    `json:"latestReadyRevisionName"`
+	ObservedRiserGeneration int64                      `json:"observedRiserGeneration"`
+	Problems                []DeploymentStatusProblem  `json:"problems"`
+	LastUpdated             time.Time                  `json:"lastUpdated"`
+	Revisions               []DeploymentRevisionStatus `json:"revisions"`
+	LatestReadyRevisionName string                     `json:"latestReadyRevisionName"`
 }
 
-type DeploymentRevision struct {
-	Name                string `json:"name"`
-	DockerImage         string `json:"dockerImage"`
-	RiserGeneration     int64  `json:"riserGeneration"`
+type DeploymentRevisionStatus struct {
+	Name              string `json:"name"`
+	AvailableReplicas int32  `json:"availableReplicas"`
+	DockerImage       string `json:"dockerImage"`
+	RiserGeneration   int64  `json:"riserGeneration"`
+	// TODO: Probably delete in favor of reporting traffic  at the status level
 	RolloutStatus       string `json:"rolloutStatus"`
 	RolloutStatusReason string `json:"rolloutStatusReason"`
 }

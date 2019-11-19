@@ -20,13 +20,13 @@ type DeploymentStatus struct {
 }
 
 type DeploymentStatusMutable struct {
-	ObservedRiserGeneration int64                     `json:"observedRiserGeneration"`
-	Problems                []DeploymentStatusProblem `json:"problems"`
-	Revisions               []DeploymentRevision      `json:"revisions"`
-	LatestReadyRevisionName string                    `json:"latestReadyRevisionName"`
+	ObservedRiserGeneration int64                      `json:"observedRiserGeneration"`
+	Problems                []DeploymentStatusProblem  `json:"problems"`
+	Revisions               []DeploymentRevisionStatus `json:"revisions"`
+	LatestReadyRevisionName string                     `json:"latestReadyRevisionName"`
 }
 
-type DeploymentRevision struct {
+type DeploymentRevisionStatus struct {
 	Name                string `json:"name"`
 	DockerImage         string `json:"dockerImage"`
 	RiserGeneration     int64  `json:"riserGeneration"`

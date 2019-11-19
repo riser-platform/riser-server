@@ -19,8 +19,8 @@ func Test_GetByApp(t *testing.T) {
 		AppName:   "myapp",
 		Doc: core.DeploymentDoc{
 			Status: &core.DeploymentStatus{
-				Revisions: []core.DeploymentRevision{
-					core.DeploymentRevision{
+				Revisions: []core.DeploymentRevisionStatus{
+					core.DeploymentRevisionStatus{
 						Name:                "rev1",
 						RiserGeneration:     1,
 						RolloutStatus:       "InProgress",

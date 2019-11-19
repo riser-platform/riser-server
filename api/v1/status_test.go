@@ -20,15 +20,15 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 			Status: &core.DeploymentStatus{
 				ObservedRiserGeneration: 3,
 				LatestReadyRevisionName: "rev2",
-				Revisions: []core.DeploymentRevision{
-					core.DeploymentRevision{
+				Revisions: []core.DeploymentRevisionStatus{
+					core.DeploymentRevisionStatus{
 						Name:                "rev1",
 						RolloutStatus:       "myrolloutstatus",
 						RolloutStatusReason: "myrolloutstatusreason",
 						DockerImage:         "mydockerimage",
 						RiserGeneration:     3,
 					},
-					core.DeploymentRevision{
+					core.DeploymentRevisionStatus{
 						Name:                "rev2",
 						RolloutStatus:       "myrolloutstatus2",
 						RolloutStatusReason: "myrolloutstatusreason2",
@@ -96,15 +96,15 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	deploymentStatus := &model.DeploymentStatusMutable{
 		ObservedRiserGeneration: 3,
 		LatestReadyRevisionName: "rev2",
-		Revisions: []model.DeploymentRevision{
-			model.DeploymentRevision{
+		Revisions: []model.DeploymentRevisionStatus{
+			model.DeploymentRevisionStatus{
 				Name:                "rev1",
 				RiserGeneration:     2,
 				RolloutStatus:       "myrolloutstatus",
 				RolloutStatusReason: "myrolloutstatusreason",
 				DockerImage:         "mydockerimage",
 			},
-			model.DeploymentRevision{
+			model.DeploymentRevisionStatus{
 				Name:                "rev2",
 				RiserGeneration:     3,
 				RolloutStatus:       "myrolloutstatus2",

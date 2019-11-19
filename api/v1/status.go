@@ -61,9 +61,9 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 			status.Problems = append(status.Problems, model.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
 		}
 
-		status.Revisions = []model.DeploymentRevision{}
+		status.Revisions = []model.DeploymentRevisionStatus{}
 		for _, revision := range domain.Doc.Status.Revisions {
-			status.Revisions = append(status.Revisions, model.DeploymentRevision{
+			status.Revisions = append(status.Revisions, model.DeploymentRevisionStatus{
 				Name:                revision.Name,
 				DockerImage:         revision.DockerImage,
 				RiserGeneration:     revision.RiserGeneration,
@@ -87,9 +87,9 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 		out.Problems = append(out.Problems, core.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
 	}
 
-	out.Revisions = []core.DeploymentRevision{}
+	out.Revisions = []core.DeploymentRevisionStatus{}
 	for _, revision := range in.Revisions {
-		out.Revisions = append(out.Revisions, core.DeploymentRevision{
+		out.Revisions = append(out.Revisions, core.DeploymentRevisionStatus{
 			Name:                revision.Name,
 			DockerImage:         revision.DockerImage,
 			RiserGeneration:     revision.RiserGeneration,

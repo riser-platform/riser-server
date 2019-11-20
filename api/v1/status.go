@@ -56,21 +56,30 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 			LatestReadyRevisionName: domain.Doc.Status.LatestReadyRevisionName,
 		}
 
-		status.Problems = []model.DeploymentStatusProblem{}
-		for _, problem := range domain.Doc.Status.Problems {
-			status.Problems = append(status.Problems, model.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
+		status.Problems = make([]model.DeploymentStatusProblem, len(domain.Doc.Status.Problems))
+		for idx, problem := range domain.Doc.Status.Problems {
+			status.Problems[idx] = model.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message}
 		}
 
-		status.Revisions = []model.DeploymentRevisionStatus{}
-		for _, revision := range domain.Doc.Status.Revisions {
-			status.Revisions = append(status.Revisions, model.DeploymentRevisionStatus{
+		status.Revisions = make([]model.DeploymentRevisionStatus, len(domain.Doc.Status.Revisions))
+		for idx, revision := range domain.Doc.Status.Revisions {
+			status.Revisions[idx] = model.DeploymentRevisionStatus{
 				Name:                revision.Name,
 				AvailableReplicas:   revision.AvailableReplicas,
 				DockerImage:         revision.DockerImage,
 				RiserGeneration:     revision.RiserGeneration,
 				RolloutStatus:       revision.RolloutStatus,
 				RolloutStatusReason: revision.RolloutStatusReason,
-			})
+			}
+		}
+
+		status.Traffic = make([]model.DeploymentTrafficStatus, len(domain.Doc.Status.Traffic))
+		for idx, traffic := range domain.Doc.Status.Traffic {
+			status.Traffic[idx] = model.DeploymentTrafficStatus{
+				Latest:       traffic.Latest,
+				Percent:      traffic.Percent,
+				RevisionName: traffic.RevisionName,
+			}
 		}
 	}
 	return status
@@ -83,21 +92,30 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 		LastUpdated:             time.Now().UTC(),
 	}
 
-	out.Problems = []core.DeploymentStatusProblem{}
-	for _, problem := range in.Problems {
-		out.Problems = append(out.Problems, core.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message})
+	out.Problems = make([]core.DeploymentStatusProblem, len(in.Problems))
+	for idx, problem := range in.Problems {
+		out.Problems[idx] = core.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message}
 	}
 
-	out.Revisions = []core.DeploymentRevisionStatus{}
-	for _, revision := range in.Revisions {
-		out.Revisions = append(out.Revisions, core.DeploymentRevisionStatus{
+	out.Revisions = make([]core.DeploymentRevisionStatus, len(in.Revisions))
+	for idx, revision := range in.Revisions {
+		out.Revisions[idx] = core.DeploymentRevisionStatus{
 			Name:                revision.Name,
 			AvailableReplicas:   revision.AvailableReplicas,
 			DockerImage:         revision.DockerImage,
 			RiserGeneration:     revision.RiserGeneration,
 			RolloutStatus:       revision.RolloutStatus,
 			RolloutStatusReason: revision.RolloutStatusReason,
-		})
+		}
+	}
+
+	out.Traffic = make([]core.DeploymentTrafficStatus, len(in.Traffic))
+	for idx, traffic := range in.Traffic {
+		out.Traffic[idx] = core.DeploymentTrafficStatus{
+			Latest:       traffic.Latest,
+			Percent:      traffic.Percent,
+			RevisionName: traffic.RevisionName,
+		}
 	}
 
 	return out

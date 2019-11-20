@@ -23,12 +23,19 @@ type DeploymentStatusMutable struct {
 	ObservedRiserGeneration int64                      `json:"observedRiserGeneration"`
 	Problems                []DeploymentStatusProblem  `json:"problems"`
 	Revisions               []DeploymentRevisionStatus `json:"revisions"`
+	Traffic                 []DeploymentTrafficStatus  `json:"traffic"`
 	LatestReadyRevisionName string                     `json:"latestReadyRevisionName"`
+}
+
+type DeploymentTrafficStatus struct {
+	Latest       *bool  `json:"latest,omitempty"`
+	Percent      *int64 `json:"percent,omitempty"`
+	RevisionName string `json:"revisionName"`
 }
 
 type DeploymentRevisionStatus struct {
 	Name                string `json:"name"`
-	AvailableReplicas int32 `json:"availableReplicas"`
+	AvailableReplicas   int32  `json:"availableReplicas"`
 	DockerImage         string `json:"dockerImage"`
 	RiserGeneration     int64  `json:"riserGeneration"`
 	RolloutStatus       string `json:"rolloutStatus"`

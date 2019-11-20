@@ -28,6 +28,7 @@ func riserLabel(labelName string) string {
 	return fmt.Sprintf("riser.dev/%s", labelName)
 }
 
+// TODO: MOve to pkg/util
 func int32Ptr(val int32) *int32 {
 	return &val
 }

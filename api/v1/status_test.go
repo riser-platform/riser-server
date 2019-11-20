@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/riser-platform/riser-server/pkg/util"
 	"testing"
 	"time"
 
@@ -38,6 +39,17 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 						RiserGeneration:     4,
 					},
 				},
+				Traffic: []core.DeploymentTrafficStatus{
+					core.DeploymentTrafficStatus{
+						Percent:      util.PtrInt64(90),
+						RevisionName: "rev1",
+					},
+					core.DeploymentTrafficStatus{
+						Latest:       util.PtrBool(true),
+						Percent:      util.PtrInt64(10),
+						RevisionName: "rev2",
+					},
+				},
 				Problems: []core.DeploymentStatusProblem{
 					core.DeploymentStatusProblem{
 						Message: "myproblem1",
@@ -59,6 +71,15 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 	assert.Equal(t, int64(3), result.ObservedRiserGeneration)
 	assert.Equal(t, int64(4), result.RiserGeneration)
 	assert.Equal(t, "rev2", result.LatestReadyRevisionName)
+
+	// Traffic
+	assert.Len(t, result.Traffic, 2)
+	assert.Equal(t, "rev1", result.Traffic[0].RevisionName)
+	assert.Equal(t, int64(90), *result.Traffic[0].Percent)
+	assert.Nil(t, result.Traffic[0].Latest)
+	assert.Equal(t, "rev2", result.Traffic[1].RevisionName)
+	assert.Equal(t, int64(10), *result.Traffic[1].Percent)
+	assert.True(t, *result.Traffic[1].Latest)
 
 	// Revisions
 	assert.Len(t, result.Revisions, 2)
@@ -118,6 +139,17 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 				DockerImage:         "mydockerimage2",
 			},
 		},
+		Traffic: []model.DeploymentTrafficStatus{
+			model.DeploymentTrafficStatus{
+				Percent:      util.PtrInt64(90),
+				RevisionName: "rev1",
+			},
+			model.DeploymentTrafficStatus{
+				Latest:       util.PtrBool(true),
+				Percent:      util.PtrInt64(10),
+				RevisionName: "rev2",
+			},
+		},
 		Problems: []model.DeploymentStatusProblem{
 			model.DeploymentStatusProblem{
 				Message: "myproblem1",
@@ -150,6 +182,15 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	assert.Equal(t, "myrolloutstatus2", result.Revisions[1].RolloutStatus)
 	assert.Equal(t, "myrolloutstatusreason2", result.Revisions[1].RolloutStatusReason)
 	assert.Equal(t, "mydockerimage2", result.Revisions[1].DockerImage)
+
+	// Traffic
+	assert.Len(t, result.Traffic, 2)
+	assert.Equal(t, "rev1", result.Traffic[0].RevisionName)
+	assert.Equal(t, int64(90), *result.Traffic[0].Percent)
+	assert.Nil(t, result.Traffic[0].Latest)
+	assert.Equal(t, "rev2", result.Traffic[1].RevisionName)
+	assert.Equal(t, int64(10), *result.Traffic[1].Percent)
+	assert.True(t, *result.Traffic[1].Latest)
 
 	// Problems
 	assert.Len(t, result.Problems, 2)

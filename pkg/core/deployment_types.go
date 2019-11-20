@@ -40,6 +40,13 @@ type DeploymentStatus struct {
 	LastUpdated             time.Time                  `json:"lastUpdated"`
 	Revisions               []DeploymentRevisionStatus `json:"revisions"`
 	LatestReadyRevisionName string                     `json:"latestReadyRevisionName"`
+	Traffic                 []DeploymentTrafficStatus  `json:"traffic"`
+}
+
+type DeploymentTrafficStatus struct {
+	Latest       *bool  `json:"latest,omitempty"`
+	Percent      *int64 `json:"percent,omitempty"`
+	RevisionName string `json:"revisionName"`
 }
 
 type DeploymentRevisionStatus struct {

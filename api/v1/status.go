@@ -52,8 +52,9 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 		status.DeploymentStatusMutable = model.DeploymentStatusMutable{}
 	} else {
 		status.DeploymentStatusMutable = model.DeploymentStatusMutable{
-			ObservedRiserGeneration: domain.Doc.Status.ObservedRiserGeneration,
-			LatestReadyRevisionName: domain.Doc.Status.LatestReadyRevisionName,
+			ObservedRiserGeneration:   domain.Doc.Status.ObservedRiserGeneration,
+			LatestCreatedRevisionName: domain.Doc.Status.LatestCreatedRevisionName,
+			LatestReadyRevisionName:   domain.Doc.Status.LatestReadyRevisionName,
 		}
 
 		status.Problems = make([]model.DeploymentStatusProblem, len(domain.Doc.Status.Problems))
@@ -87,9 +88,10 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 
 func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.DeploymentStatus {
 	out := &core.DeploymentStatus{
-		ObservedRiserGeneration: in.ObservedRiserGeneration,
-		LatestReadyRevisionName: in.LatestReadyRevisionName,
-		LastUpdated:             time.Now().UTC(),
+		ObservedRiserGeneration:   in.ObservedRiserGeneration,
+		LatestCreatedRevisionName: in.LatestCreatedRevisionName,
+		LatestReadyRevisionName:   in.LatestReadyRevisionName,
+		LastUpdated:               time.Now().UTC(),
 	}
 
 	out.Problems = make([]core.DeploymentStatusProblem, len(in.Problems))

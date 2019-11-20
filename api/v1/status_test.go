@@ -19,8 +19,9 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 		RiserGeneration: 4,
 		Doc: core.DeploymentDoc{
 			Status: &core.DeploymentStatus{
-				ObservedRiserGeneration: 3,
-				LatestReadyRevisionName: "rev2",
+				ObservedRiserGeneration:   3,
+				LatestCreatedRevisionName: "rev2",
+				LatestReadyRevisionName:   "rev1",
 				Revisions: []core.DeploymentRevisionStatus{
 					core.DeploymentRevisionStatus{
 						Name:                "rev1",
@@ -70,7 +71,8 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 	assert.Equal(t, "mystage", result.StageName)
 	assert.Equal(t, int64(3), result.ObservedRiserGeneration)
 	assert.Equal(t, int64(4), result.RiserGeneration)
-	assert.Equal(t, "rev2", result.LatestReadyRevisionName)
+	assert.Equal(t, "rev2", result.LatestCreatedRevisionName)
+	assert.Equal(t, "rev1", result.LatestReadyRevisionName)
 
 	// Traffic
 	assert.Len(t, result.Traffic, 2)
@@ -119,8 +121,9 @@ func Test_mapDeploymentToStatusModel_NilStatus(t *testing.T) {
 
 func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	deploymentStatus := &model.DeploymentStatusMutable{
-		ObservedRiserGeneration: 3,
-		LatestReadyRevisionName: "rev2",
+		ObservedRiserGeneration:   3,
+		LatestReadyRevisionName:   "rev1",
+		LatestCreatedRevisionName: "rev2",
 		Revisions: []model.DeploymentRevisionStatus{
 			model.DeploymentRevisionStatus{
 				Name:                "rev1",
@@ -168,7 +171,8 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 
 	assert.InDelta(t, now, result.LastUpdated.Unix(), 3)
 	assert.Equal(t, int64(3), result.ObservedRiserGeneration)
-	assert.Equal(t, "rev2", result.LatestReadyRevisionName)
+	assert.Equal(t, "rev2", result.LatestCreatedRevisionName)
+	assert.Equal(t, "rev1", result.LatestReadyRevisionName)
 
 	// Revisions
 	assert.Len(t, result.Revisions, 2)

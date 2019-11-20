@@ -20,11 +20,12 @@ type DeploymentStatus struct {
 }
 
 type DeploymentStatusMutable struct {
-	ObservedRiserGeneration int64                      `json:"observedRiserGeneration"`
-	Problems                []DeploymentStatusProblem  `json:"problems"`
-	Revisions               []DeploymentRevisionStatus `json:"revisions"`
-	Traffic                 []DeploymentTrafficStatus  `json:"traffic"`
-	LatestReadyRevisionName string                     `json:"latestReadyRevisionName"`
+	ObservedRiserGeneration   int64                      `json:"observedRiserGeneration"`
+	Problems                  []DeploymentStatusProblem  `json:"problems"`
+	Revisions                 []DeploymentRevisionStatus `json:"revisions"`
+	Traffic                   []DeploymentTrafficStatus  `json:"traffic"`
+	LatestCreatedRevisionName string                     `json:"latestCreatedRevisionName"`
+	LatestReadyRevisionName   string                     `json:"latestReadyRevisionName"`
 }
 
 type DeploymentTrafficStatus struct {

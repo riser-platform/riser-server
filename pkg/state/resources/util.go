@@ -27,16 +27,3 @@ func deploymentAnnotations(ctx *core.DeploymentContext) map[string]string {
 func riserLabel(labelName string) string {
 	return fmt.Sprintf("riser.dev/%s", labelName)
 }
-
-// TODO: MOve to pkg/util
-func int32Ptr(val int32) *int32 {
-	return &val
-}
-
-func float32Ptr(val float32) *float32 {
-	return &val
-}
-
-func boolPtr(val bool) *bool {
-	return &val
-}

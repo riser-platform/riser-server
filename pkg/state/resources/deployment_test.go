@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"github.com/riser-platform/riser-server/pkg/util"
 	"testing"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
@@ -113,7 +114,7 @@ func Test_readinessProbe_httpGet(t *testing.T) {
 	app := &model.AppConfig{
 		HealthCheck: &model.AppConfigHealthCheck{
 			Path: "/health",
-			Port: int32Ptr(8080),
+			Port: util.PtrInt32(8080),
 		},
 	}
 
@@ -126,8 +127,8 @@ func Test_readinessProbe_httpGet(t *testing.T) {
 func Test_resources(t *testing.T) {
 	app := &model.AppConfig{
 		Resources: &model.AppConfigResources{
-			CpuCores: float32Ptr(1.5),
-			MemoryMB: int32Ptr(4096),
+			CpuCores: util.PtrFloat32(1.5),
+			MemoryMB: util.PtrInt32(4096),
 		},
 	}
 

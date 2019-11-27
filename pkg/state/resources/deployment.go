@@ -8,6 +8,7 @@ import (
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -55,7 +56,7 @@ func createPodObjectMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
 
 func createPodSpec(ctx *core.DeploymentContext) corev1.PodSpec {
 	return corev1.PodSpec{
-		EnableServiceLinks: boolPtr(false),
+		EnableServiceLinks: util.PtrBool(false),
 		Containers: []corev1.Container{
 			corev1.Container{
 				Name:           ctx.Deployment.Name,

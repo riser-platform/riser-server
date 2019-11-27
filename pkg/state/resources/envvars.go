@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"github.com/riser-platform/riser-server/pkg/util"
 	"sort"
 	"strings"
 
@@ -24,7 +25,7 @@ func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					Key:      "data",
-					Optional: boolPtr(false),
+					Optional: util.PtrBool(false),
 					LocalObjectReference: corev1.LocalObjectReference{
 						Name: fmt.Sprintf("%s-%s", ctx.Deployment.App.Name, secretName),
 					},

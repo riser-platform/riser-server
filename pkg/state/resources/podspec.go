@@ -12,37 +12,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
-
-// CreateDeployment creates a kubernetes Deployment from a riser deployment
-func CreateDeployment(ctx *core.DeploymentContext) (*appsv1.Deployment, error) {
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        ctx.Deployment.Name,
-			Namespace:   ctx.Deployment.Namespace,
-			Labels:      deploymentLabels(ctx),
-			Annotations: deploymentAnnotations(ctx),
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Deployment",
-			APIVersion: "apps/v1",
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: ctx.Deployment.App.Replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					riserLabel("deployment"): ctx.Deployment.Name,
-				},
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: createPodObjectMeta(ctx),
-				Spec:       createPodSpec(ctx),
-			},
-		},
-	}, nil
-}
 
 func createPodObjectMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
 	annotations := deploymentAnnotations(ctx)

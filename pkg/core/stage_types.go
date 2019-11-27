@@ -19,7 +19,6 @@ type StageDoc struct {
 type StageConfig struct {
 	SealedSecretCert  []byte `json:"sealedSecretCert"`
 	PublicGatewayHost string `json:"publicGatewayHost"`
-	KNativeEnabled    bool   `json:"knativeEnabled"`
 }
 
 // Needed for sql.Scanner interface

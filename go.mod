@@ -8,7 +8,9 @@ require (
 	github.com/bitnami-labs/sealed-secrets v0.7.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
+	github.com/gogo/protobuf v1.2.2-0.20190730201129-28a6bbf47e48 // indirect
 	github.com/golang-migrate/migrate/v4 v4.6.2
+	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/imdario/mergo v0.3.8
 	github.com/joho/godotenv v1.3.0
@@ -20,8 +22,8 @@ require (
 	github.com/riser-platform/riser-server/api/v1/model v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
+	google.golang.org/grpc v1.21.0 // indirect
 	gopkg.in/src-d/go-git.v4 v4.13.1
-	istio.io/api v0.0.0-20190924012112-a90f8772954b
 	k8s.io/api v0.0.0-20190627205229-acea843d18eb
 	k8s.io/apimachinery v0.0.0-20190629005116-7ae370969693
 	k8s.io/client-go v11.0.0+incompatible

@@ -112,26 +112,8 @@ func validateDeploymentConfig(deployment *core.DeploymentConfig) error {
 }
 
 func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
-
-	// TODO: Flag on ctx.Stage.KNativeEnabled
-	// deploymentResource, err := resources.CreateDeployment(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// serviceResource, err := resources.CreateService(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// virtualServiceResource, err := resources.CreateVirtualService(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-
 	knativeServiceResource := resources.CreateKNativeService(ctx)
 
-	// resourceFiles, err := state.RenderDeployment(ctx.Deployment, deploymentResource, serviceResource, virtualServiceResource)
 	resourceFiles, err := state.RenderDeployment(ctx.Deployment, knativeServiceResource)
 	if err != nil {
 		return err

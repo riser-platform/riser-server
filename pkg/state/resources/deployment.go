@@ -15,14 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// TODO: Configure these defaults per stage
-const (
-	DefaultResourceCPUCores            = float32(0.5)
-	DefaultResourceMemoryMB            = int32(256)
-	DefaultResourceRequestFactorCPU    = 0.25
-	DefaultResourceRequestFactorMemory = 0.5
-)
-
 // CreateDeployment creates a kubernetes Deployment from a riser deployment
 func CreateDeployment(ctx *core.DeploymentContext) (*appsv1.Deployment, error) {
 	return &appsv1.Deployment{
@@ -106,24 +98,15 @@ func readinessProbe(appConfig *model.AppConfig) *corev1.Probe {
 }
 
 func resources(appConfig *model.AppConfig) corev1.ResourceRequirements {
-	cpuCores := DefaultResourceCPUCores
-	memoryMB := DefaultResourceMemoryMB
+	res := corev1.ResourceRequirements{}
 	if appConfig.Resources != nil {
+		res.Limits = corev1.ResourceList{}
 		if appConfig.Resources.CpuCores != nil {
-			cpuCores = *appConfig.Resources.CpuCores
+			res.Limits[corev1.ResourceCPU] = *resource.NewScaledQuantity(int64(*appConfig.Resources.CpuCores*float32(1000)), resource.Milli)
 		}
 		if appConfig.Resources.MemoryMB != nil {
-			memoryMB = *appConfig.Resources.MemoryMB
+			res.Limits[corev1.ResourceMemory] = *resource.NewScaledQuantity(int64(*appConfig.Resources.MemoryMB), resource.Mega)
 		}
 	}
-	return corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    *resource.NewScaledQuantity(int64(cpuCores*float32(1000)), resource.Milli),
-			corev1.ResourceMemory: *resource.NewScaledQuantity(int64(memoryMB), resource.Mega),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    *resource.NewScaledQuantity(int64(cpuCores*float32(1000)*DefaultResourceRequestFactorCPU), resource.Milli),
-			corev1.ResourceMemory: *resource.NewScaledQuantity(int64(float32(memoryMB)*DefaultResourceRequestFactorMemory), resource.Mega),
-		},
-	}
+	return res
 }

@@ -89,11 +89,8 @@ func Test_CreateDeployment(t *testing.T) {
 	assert.Equal(t, "/health", container.ReadinessProbe.HTTPGet.Path)
 	assert.Empty(t, container.ReadinessProbe.HTTPGet.Port)
 
-	// Resource Defaults
-	assert.EqualValues(t, 500, container.Resources.Limits.Cpu().MilliValue(), "millicores")
-	assert.EqualValues(t, 256000000, container.Resources.Limits.Memory().Value(), "bytes")
-	assert.EqualValues(t, 125, container.Resources.Requests.Cpu().MilliValue(), "millicores")
-	assert.EqualValues(t, 128000000, container.Resources.Requests.Memory().Value(), "bytes")
+	// Resources
+	assert.Empty(t, container.Resources)
 }
 
 func Test_readinessProbe_nilDeploy(t *testing.T) {

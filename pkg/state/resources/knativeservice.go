@@ -7,8 +7,6 @@ import (
 
 func CreateKNativeService(ctx *core.DeploymentContext) *Service {
 	labels := deploymentLabels(ctx)
-	// TODO: This won't be necessary after we move to using riser.dev/app.
-	delete(labels, "app")
 
 	podSpec := createPodSpec(ctx)
 	// KNative does not allow setting this

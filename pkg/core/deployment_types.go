@@ -36,7 +36,6 @@ type DeploymentDoc struct {
 
 type DeploymentStatus struct {
 	ObservedRiserGeneration   int64                      `json:"observedRiserGeneration"`
-	Problems                  []DeploymentStatusProblem  `json:"problems"`
 	LastUpdated               time.Time                  `json:"lastUpdated"`
 	Revisions                 []DeploymentRevisionStatus `json:"revisions"`
 	LatestReadyRevisionName   string                     `json:"latestReadyRevisionName"`
@@ -51,15 +50,16 @@ type DeploymentTrafficStatus struct {
 }
 
 type DeploymentRevisionStatus struct {
-	Name                string `json:"name"`
-	AvailableReplicas   int32  `json:"availableReplicas"`
-	DockerImage         string `json:"dockerImage"`
-	RiserGeneration     int64  `json:"riserGeneration"`
-	RolloutStatus       string `json:"rolloutStatus"`
-	RolloutStatusReason string `json:"rolloutStatusReason"`
+	Name                string          `json:"name"`
+	AvailableReplicas   int32           `json:"availableReplicas"`
+	DockerImage         string          `json:"dockerImage"`
+	RiserGeneration     int64           `json:"riserGeneration"`
+	RolloutStatus       string          `json:"rolloutStatus"`
+	RolloutStatusReason string          `json:"rolloutStatusReason"`
+	Problems            []StatusProblem `json:"problems"`
 }
 
-type DeploymentStatusProblem struct {
+type StatusProblem struct {
 	Count   int    `json:"count"`
 	Message string `json:"message"`
 }

@@ -26,10 +26,10 @@ func Test_GetByApp(t *testing.T) {
 						RolloutStatus:       "InProgress",
 						RolloutStatusReason: "Deploying",
 						DockerImage:         "foo:v1.0",
+						Problems: []core.StatusProblem{
+							core.StatusProblem{Count: 1, Message: "testProblem"},
+						},
 					},
-				},
-				Problems: []core.DeploymentStatusProblem{
-					core.DeploymentStatusProblem{Count: 1, Message: "testProblem"},
 				},
 			},
 		},

@@ -30,6 +30,16 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 						RolloutStatusReason: "myrolloutstatusreason",
 						DockerImage:         "mydockerimage",
 						RiserGeneration:     3,
+						Problems: []core.StatusProblem{
+							core.StatusProblem{
+								Message: "myproblem1",
+								Count:   1,
+							},
+							core.StatusProblem{
+								Message: "myproblem2",
+								Count:   2,
+							},
+						},
 					},
 					core.DeploymentRevisionStatus{
 						Name:                "rev2",
@@ -49,16 +59,6 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 						Latest:       util.PtrBool(true),
 						Percent:      util.PtrInt64(10),
 						RevisionName: "rev2",
-					},
-				},
-				Problems: []core.DeploymentStatusProblem{
-					core.DeploymentStatusProblem{
-						Message: "myproblem1",
-						Count:   1,
-					},
-					core.DeploymentStatusProblem{
-						Message: "myproblem2",
-						Count:   2,
 					},
 				},
 			},
@@ -99,11 +99,11 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 	assert.Equal(t, int64(4), result.Revisions[1].RiserGeneration)
 
 	// Problems
-	assert.Len(t, result.Problems, 2)
-	assert.Equal(t, "myproblem1", result.Problems[0].Message)
-	assert.Equal(t, 1, result.Problems[0].Count)
-	assert.Equal(t, "myproblem2", result.Problems[1].Message)
-	assert.Equal(t, 2, result.Problems[1].Count)
+	assert.Len(t, result.Revisions[0].Problems, 2)
+	assert.Equal(t, "myproblem1", result.Revisions[0].Problems[0].Message)
+	assert.Equal(t, 1, result.Revisions[0].Problems[0].Count)
+	assert.Equal(t, "myproblem2", result.Revisions[0].Problems[1].Message)
+	assert.Equal(t, 2, result.Revisions[0].Problems[1].Count)
 }
 
 func Test_mapDeploymentToStatusModel_NilStatus(t *testing.T) {
@@ -132,6 +132,16 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 				RolloutStatus:       "myrolloutstatus",
 				RolloutStatusReason: "myrolloutstatusreason",
 				DockerImage:         "mydockerimage",
+				Problems: []model.StatusProblem{
+					model.StatusProblem{
+						Message: "myproblem1",
+						Count:   1,
+					},
+					model.StatusProblem{
+						Message: "myproblem2",
+						Count:   2,
+					},
+				},
 			},
 			model.DeploymentRevisionStatus{
 				Name:                "rev2",
@@ -151,16 +161,6 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 				Latest:       util.PtrBool(true),
 				Percent:      util.PtrInt64(10),
 				RevisionName: "rev2",
-			},
-		},
-		Problems: []model.DeploymentStatusProblem{
-			model.DeploymentStatusProblem{
-				Message: "myproblem1",
-				Count:   1,
-			},
-			model.DeploymentStatusProblem{
-				Message: "myproblem2",
-				Count:   2,
 			},
 		},
 	}
@@ -197,9 +197,9 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	assert.True(t, *result.Traffic[1].Latest)
 
 	// Problems
-	assert.Len(t, result.Problems, 2)
-	assert.Equal(t, "myproblem1", result.Problems[0].Message)
-	assert.Equal(t, 1, result.Problems[0].Count)
-	assert.Equal(t, "myproblem2", result.Problems[1].Message)
-	assert.Equal(t, 2, result.Problems[1].Count)
+	assert.Len(t, result.Revisions[0].Problems, 2)
+	assert.Equal(t, "myproblem1", result.Revisions[0].Problems[0].Message)
+	assert.Equal(t, 1, result.Revisions[0].Problems[0].Count)
+	assert.Equal(t, "myproblem2", result.Revisions[0].Problems[1].Message)
+	assert.Equal(t, 2, result.Revisions[0].Problems[1].Count)
 }

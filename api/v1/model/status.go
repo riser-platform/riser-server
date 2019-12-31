@@ -21,9 +21,8 @@ type DeploymentStatus struct {
 
 type DeploymentStatusMutable struct {
 	ObservedRiserGeneration   int64                      `json:"observedRiserGeneration"`
-	Problems                  []DeploymentStatusProblem  `json:"problems"`
-	Revisions                 []DeploymentRevisionStatus `json:"revisions"`
-	Traffic                   []DeploymentTrafficStatus  `json:"traffic"`
+	Revisions                 []DeploymentRevisionStatus `json:"revisions,omitempty"`
+	Traffic                   []DeploymentTrafficStatus  `json:"traffic,omitempty"`
 	LatestCreatedRevisionName string                     `json:"latestCreatedRevisionName"`
 	LatestReadyRevisionName   string                     `json:"latestReadyRevisionName"`
 }
@@ -35,15 +34,18 @@ type DeploymentTrafficStatus struct {
 }
 
 type DeploymentRevisionStatus struct {
-	Name                string `json:"name"`
-	AvailableReplicas   int32  `json:"availableReplicas"`
-	DockerImage         string `json:"dockerImage"`
-	RiserGeneration     int64  `json:"riserGeneration"`
-	RolloutStatus       string `json:"rolloutStatus"`
+	Name              string          `json:"name"`
+	AvailableReplicas int32           `json:"availableReplicas"`
+	DockerImage       string          `json:"dockerImage"`
+	RiserGeneration   int64           `json:"riserGeneration"`
+	Problems          []StatusProblem `json:"problems,omitempty"`
+	// TODO: Probably rename and use different
+	RolloutStatus string `json:"rolloutStatus"`
+	// TODO: Probably deprecate RolloutStatusReason
 	RolloutStatusReason string `json:"rolloutStatusReason"`
 }
 
-type DeploymentStatusProblem struct {
+type StatusProblem struct {
 	Count   int    `json:"count"`
 	Message string `json:"message"`
 }

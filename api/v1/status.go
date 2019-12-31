@@ -57,11 +57,6 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 			LatestReadyRevisionName:   domain.Doc.Status.LatestReadyRevisionName,
 		}
 
-		status.Problems = make([]model.DeploymentStatusProblem, len(domain.Doc.Status.Problems))
-		for idx, problem := range domain.Doc.Status.Problems {
-			status.Problems[idx] = model.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message}
-		}
-
 		status.Revisions = make([]model.DeploymentRevisionStatus, len(domain.Doc.Status.Revisions))
 		for idx, revision := range domain.Doc.Status.Revisions {
 			status.Revisions[idx] = model.DeploymentRevisionStatus{
@@ -71,6 +66,11 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 				RiserGeneration:     revision.RiserGeneration,
 				RolloutStatus:       revision.RolloutStatus,
 				RolloutStatusReason: revision.RolloutStatusReason,
+				Problems:            make([]model.StatusProblem, len(revision.Problems)),
+			}
+
+			for problemIdx, problem := range revision.Problems {
+				status.Revisions[idx].Problems[problemIdx] = model.StatusProblem{Count: problem.Count, Message: problem.Message}
 			}
 		}
 
@@ -94,11 +94,6 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 		LastUpdated:               time.Now().UTC(),
 	}
 
-	out.Problems = make([]core.DeploymentStatusProblem, len(in.Problems))
-	for idx, problem := range in.Problems {
-		out.Problems[idx] = core.DeploymentStatusProblem{Count: problem.Count, Message: problem.Message}
-	}
-
 	out.Revisions = make([]core.DeploymentRevisionStatus, len(in.Revisions))
 	for idx, revision := range in.Revisions {
 		out.Revisions[idx] = core.DeploymentRevisionStatus{
@@ -108,6 +103,11 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 			RiserGeneration:     revision.RiserGeneration,
 			RolloutStatus:       revision.RolloutStatus,
 			RolloutStatusReason: revision.RolloutStatusReason,
+			Problems:            make([]core.StatusProblem, len(revision.Problems)),
+		}
+
+		for problemIdx, problem := range revision.Problems {
+			out.Revisions[idx].Problems[problemIdx] = core.StatusProblem{Count: problem.Count, Message: problem.Message}
 		}
 	}
 

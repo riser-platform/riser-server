@@ -1,11 +1,12 @@
 ---
   apiVersion: "apps/v1"
-  kind: "Deployment"
+  kind: "StatefulSet"
   metadata:
     name: "kube-applier"
     namespace: "kube-applier"
   spec:
     replicas: 1
+    serviceName: kube-applier
     selector:
       matchLabels:
         app: kube-applier

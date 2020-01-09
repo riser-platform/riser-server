@@ -21,9 +21,10 @@ type DryRunFile struct {
 }
 
 type DeploymentMeta struct {
-	Name   string           `json:"name"`
-	Stage  string           `json:"stage"`
-	Docker DeploymentDocker `json:"docker"`
+	Name          string           `json:"name"`
+	Stage         string           `json:"stage"`
+	Docker        DeploymentDocker `json:"docker"`
+	ManualRollout bool             `json:"manualRollout"`
 }
 
 type DeploymentDocker struct {

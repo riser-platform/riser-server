@@ -52,6 +52,7 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 			Docker: model.DeploymentDocker{
 				Tag: "mytag",
 			},
+			ManualRollout: true,
 		},
 		App: &model.AppConfigWithOverrides{
 			AppConfig: model.AppConfig{
@@ -68,6 +69,7 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 	assert.Equal(t, "mystage", result.Stage)
 	assert.Equal(t, "mytag", result.Docker.Tag)
 	assert.Equal(t, request.App.AppConfig, *result.App)
+	assert.True(t, result.ManualRollout)
 }
 
 func Test_mapDeploymentRequestToDomain_Overrides(t *testing.T) {

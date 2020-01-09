@@ -28,9 +28,11 @@ type DeploymentStatusMutable struct {
 }
 
 type DeploymentTrafficStatus struct {
+	// TODO: Deprecate Latest
 	Latest       *bool  `json:"latest,omitempty"`
 	Percent      *int64 `json:"percent,omitempty"`
 	RevisionName string `json:"revisionName"`
+	// TODO: Add Tag
 }
 
 type DeploymentRevisionStatus struct {

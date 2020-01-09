@@ -22,6 +22,7 @@ spec:
         riser.dev/app: myapp
         riser.dev/deployment: myapp
         riser.dev/stage: dev
+      name: myapp-3
     spec:
       containers:
       - env:

@@ -137,6 +137,7 @@ func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*
 		Docker: core.DeploymentDocker{
 			Tag: deploymentRequest.Docker.Tag,
 		},
-		App: app,
+		App:           app,
+		ManualRollout: deploymentRequest.ManualRollout,
 	}, nil
 }

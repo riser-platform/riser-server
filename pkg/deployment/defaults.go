@@ -8,15 +8,14 @@ import (
 
 const DefaultExposeProtocol = "http"
 
-func applyDefaults(deployment *core.DeploymentConfig) {
-
+func applyDefaults(deploymentConfig *core.DeploymentConfig) {
 	// Hard coded until we implement namespace support
-	deployment.Namespace = "apps"
+	deploymentConfig.Namespace = "apps"
 
-	if deployment.App.Expose == nil {
-		deployment.App.Expose = &model.AppConfigExpose{}
+	if deploymentConfig.App.Expose == nil {
+		deploymentConfig.App.Expose = &model.AppConfigExpose{}
 	}
-	if deployment.App.Expose.Protocol == "" {
-		deployment.App.Expose.Protocol = DefaultExposeProtocol
+	if deploymentConfig.App.Expose.Protocol == "" {
+		deploymentConfig.App.Expose.Protocol = DefaultExposeProtocol
 	}
 }

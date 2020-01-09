@@ -105,3 +105,22 @@ func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, st
 
 	return nil
 }
+
+func (r *deploymentRepository) UpdateTraffic(deploymentName, stageName string, riserGeneration int64, traffic core.TrafficConfig) error {
+	result, err := r.db.Exec(`
+		UPDATE DEPLOYMENT
+		SET doc = jsonb_set(doc, '{traffic}', $4)
+		WHERE Name = $1 AND stage_name = $2 AND riser_generation = $3
+	`, deploymentName, stageName, riserGeneration, traffic)
+
+	if err != nil {
+		return err
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return errors.New("Deployment not found or has been updated by another process")
+	}
+
+	return nil
+}

@@ -42,7 +42,7 @@ func Test_applyDefaults_AllowValues(t *testing.T) {
 	assert.Equal(t, "grpc", deployment.App.Expose.Protocol)
 }
 
-func Test_ApplyDefaults_WhenDeploymentNameSpecified_DoesNotAddPrefixIfNamesMatch(t *testing.T) {
+func Test_applyDefaults_WhenDeploymentNameSpecified_DoesNotAddPrefixIfNamesMatch(t *testing.T) {
 	deployment := &core.DeploymentConfig{
 		Name: "myapp",
 		App: &model.AppConfig{

@@ -60,7 +60,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 		RiserGeneration: 3,
 		SecretNames:     secretNames,
 	}
-	// TODO: Refactor
+	// TODO: Refactor prepareDeployment and call first
 	applyDefaults(newDeployment)
 	err = deploy(ctx, committer)
 

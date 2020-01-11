@@ -38,7 +38,7 @@ type TrafficConfig []TrafficConfigRule
 type TrafficConfigRule struct {
 	RiserGeneration int64
 	RevisionName    string
-	Percent         int64
+	Percent         int
 }
 
 type DeploymentDoc struct {

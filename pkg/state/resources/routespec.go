@@ -15,7 +15,7 @@ func createRouteSpec(trafficConfig core.TrafficConfig) RouteSpec {
 	for _, rule := range trafficConfig {
 		spec.Traffic = append(spec.Traffic, TrafficTarget{
 			RevisionName: rule.RevisionName,
-			Percent:      util.PtrInt64(rule.Percent),
+			Percent:      util.PtrInt64(int64(rule.Percent)),
 			Tag:          fmt.Sprintf("r%d", rule.RiserGeneration),
 		})
 	}

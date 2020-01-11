@@ -124,7 +124,6 @@ func computeTraffic(riserGeneration int64, deploymentConfig *core.DeploymentConf
 
 	newRule.Percent = 100
 	return core.TrafficConfig{newRule}
-
 }
 
 // This is a one-off validation until we rationalize our validation strategy (API layer or service layer).

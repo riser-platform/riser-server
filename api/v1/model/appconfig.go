@@ -1,8 +1,6 @@
 package model
 
 import (
-	"fmt"
-
 	"github.com/docker/distribution/reference"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/imdario/mergo"
@@ -79,33 +77,6 @@ func (appConfig *AppConfig) Validate() error {
 	}
 
 	return err
-}
-
-func mergeValidationErrors(baseError error, toMerge error, fieldPrefix string) error {
-	if toMerge == nil {
-		return baseError
-	}
-
-	var isValidationErrors bool
-	baseValidationErrors := validation.Errors{}
-
-	if baseError != nil {
-		baseValidationErrors, isValidationErrors = baseError.(validation.Errors)
-		if !isValidationErrors {
-			return baseError
-		}
-	}
-
-	toMergeValidationErrors, isValidationErrors := toMerge.(validation.Errors)
-	if !isValidationErrors {
-		return toMerge
-	}
-
-	for k, v := range toMergeValidationErrors {
-		baseValidationErrors[fmt.Sprintf("%s.%s", fieldPrefix, k)] = v
-	}
-
-	return baseValidationErrors
 }
 
 func validDockerImageWithoutTagOrDigest(value interface{}) error {

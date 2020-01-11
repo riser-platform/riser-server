@@ -2,6 +2,7 @@ package v1
 
 import (
 	"database/sql"
+	"github.com/riser-platform/riser-server/pkg/rollout"
 
 	"github.com/labstack/echo/v4/middleware"
 
@@ -30,6 +31,7 @@ func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
 	deploymentRepository := postgres.NewDeploymentRepository(db)
 	deploymentService := deployment.NewService(secretService, stageRepository, deploymentRepository)
 	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
+	rolloutService := rollout.NewService(deploymentRepository)
 	userRepository := postgres.NewUserRepository(db)
 	apiKeyRepository := postgres.NewApiKeyRepository(db)
 	loginService := login.NewService(userRepository, apiKeyRepository)
@@ -63,6 +65,10 @@ func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
 
 	v1.PUT("/deployments/:deploymentName/status/:stageName", func(c echo.Context) error {
 		return PutDeploymentStatus(c, deploymentStatusService)
+	})
+
+	v1.PUT("/rollout/:deploymentName/:stageName", func(c echo.Context) error {
+		return PutRollout(c, rolloutService)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {

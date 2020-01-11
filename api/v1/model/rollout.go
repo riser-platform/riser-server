@@ -19,8 +19,15 @@ type TrafficRule struct {
 func (rolloutRequest *RolloutRequest) Validate() error {
 	var err error
 	percentage := 0
+	revisions := map[int64]bool{}
 	for idx, rule := range rolloutRequest.Traffic {
 		percentage += rule.Percent
+		if _, ok := revisions[rule.RiserGeneration]; ok {
+			err = mergeValidationErrors(err,
+				validation.Errors{"riserGeneration": fmt.Errorf("revision \"%d\" specified twice. You may only specify one rule per revision", rule.RiserGeneration)},
+				fmt.Sprintf("traffic[%d]", idx))
+		}
+		revisions[rule.RiserGeneration] = true
 		ruleErr := rule.Validate()
 		if ruleErr != nil {
 			err = mergeValidationErrors(err, ruleErr, fmt.Sprintf("traffic[%d]", idx))

@@ -13,11 +13,11 @@ func Test_RolloutRequest_Valid(t *testing.T) {
 		Traffic: []TrafficRule{
 			TrafficRule{
 				RiserGeneration: 1,
-				Percent:      10,
+				Percent:         10,
 			},
 			TrafficRule{
 				RiserGeneration: 2,
-				Percent:      90,
+				Percent:         90,
 			},
 		},
 	}
@@ -40,11 +40,11 @@ func Test_RolloutRequest_ValidateTraffic100Percent(t *testing.T) {
 		Traffic: []TrafficRule{
 			TrafficRule{
 				RiserGeneration: 1,
-				Percent:      10,
+				Percent:         10,
 			},
 			TrafficRule{
 				RiserGeneration: 2,
-				Percent:      80,
+				Percent:         80,
 			},
 		},
 	}
@@ -52,6 +52,32 @@ func Test_RolloutRequest_ValidateTraffic100Percent(t *testing.T) {
 	err := rolloutRequest.Validate()
 
 	assert.Equal(t, "traffic: rule percentages must add up to 100.", err.Error())
+}
+
+func Test_RolloutRequest_Validate_NoDupeGenerations(t *testing.T) {
+	rolloutRequest := &RolloutRequest{
+		Traffic: []TrafficRule{
+			TrafficRule{
+				RiserGeneration: 1,
+				Percent:         10,
+			},
+			TrafficRule{
+				RiserGeneration: 2,
+				Percent:         70,
+			},
+			TrafficRule{
+				RiserGeneration: 1,
+				Percent:         20,
+			},
+		},
+	}
+
+	err := rolloutRequest.Validate()
+	require.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+
+	assert.Len(t, validationErrors, 1)
+	assert.Equal(t, "revision \"1\" specified twice. You may only specify one rule per revision", validationErrors["traffic[2].riserGeneration"].Error())
 }
 
 func Test_RolloutRequest_ValidateTrafficRule(t *testing.T) {
@@ -62,7 +88,7 @@ func Test_RolloutRequest_ValidateTrafficRule(t *testing.T) {
 			},
 			TrafficRule{
 				RiserGeneration: 2,
-				Percent:      -5,
+				Percent:         -5,
 			},
 		},
 	}

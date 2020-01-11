@@ -2,6 +2,8 @@ package v1
 
 import (
 	"fmt"
+	"github.com/riser-platform/riser-server/pkg/stage"
+	"net/http"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/echo/v4"
@@ -10,7 +12,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/rollout"
 )
 
-func PutRollout(c echo.Context, rolloutService rollout.Service) error {
+func PutRollout(c echo.Context, rolloutService rollout.Service, stageService stage.Service) error {
 	rolloutRequest := &model.RolloutRequest{}
 
 	err := c.Bind(rolloutRequest)
@@ -18,13 +20,18 @@ func PutRollout(c echo.Context, rolloutService rollout.Service) error {
 		return err
 	}
 
-	err = validation.Validate(&rolloutRequest)
-	if err != nil {
-		return err
-	}
-
 	deploymentName := c.Param("deploymentName")
 	stageName := c.Param("stageName")
+
+	err = stageService.ValidateDeployable(stageName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	err = validation.Validate(&rolloutRequest)
+	if err != nil {
+		return core.NewValidationError("Invalid rollout request", err)
+	}
 
 	return rolloutService.UpdateTraffic(deploymentName, stageName, mapTrafficRulesToDomain(deploymentName, rolloutRequest.Traffic))
 }

@@ -68,7 +68,7 @@ func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
 	})
 
 	v1.PUT("/rollout/:deploymentName/:stageName", func(c echo.Context) error {
-		return PutRollout(c, rolloutService)
+		return PutRollout(c, rolloutService, stageService)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {

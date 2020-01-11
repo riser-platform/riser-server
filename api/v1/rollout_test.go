@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+	"github.com/riser-platform/riser-server/pkg/stage"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,15 +12,41 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_PutRollout_Validates(t *testing.T) {
+func Test_PutRollout_ValidatesStage(t *testing.T) {
 	rollout := model.RolloutRequest{}
 	req := httptest.NewRequest(http.MethodPut, "/", testMarshal(rollout))
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, _ := newContextWithRecorder(req)
 
-	err := PutRollout(ctx, nil)
+	stageService := &stage.FakeService{
+		ValidateDeployableFn: func(stageName string) error {
+			return errors.New("test")
+		},
+	}
 
-	assert.Equal(t, "traffic: must specify one or more traffic rules.", err.Error())
+	err := PutRollout(ctx, nil, stageService)
+
+	assert.IsType(t, &echo.HTTPError{}, err)
+	echoErr := err.(*echo.HTTPError)
+	assert.Equal(t, http.StatusBadRequest, echoErr.Code)
+	assert.Equal(t, "test", echoErr.Message)
+}
+
+func Test_PutRollout_ValidatesTraffic(t *testing.T) {
+	rollout := model.RolloutRequest{}
+	req := httptest.NewRequest(http.MethodPut, "/", testMarshal(rollout))
+	req.Header.Add("CONTENT-TYPE", "application/json")
+	ctx, _ := newContextWithRecorder(req)
+
+	stageService := &stage.FakeService{
+		ValidateDeployableFn: func(stageName string) error {
+			return nil
+		},
+	}
+
+	err := PutRollout(ctx, nil, stageService)
+
+	assert.Equal(t, "Invalid rollout request: traffic: must specify one or more traffic rules.", err.Error())
 }
 
 func Test_mapTrafficRulesToDomain(t *testing.T) {

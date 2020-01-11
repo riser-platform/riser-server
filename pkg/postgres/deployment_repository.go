@@ -28,6 +28,9 @@ func (r *deploymentRepository) Get(deploymentName, stageName string) (*core.Depl
 	WHERE name = $1 AND stage_name = $2
 	`, deploymentName, stageName).Scan(&deployment.Name, &deployment.StageName, &deployment.AppName, &deployment.RiserGeneration, &deployment.Doc)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			err = core.ErrNotFound
+		}
 		return nil, err
 	}
 	return deployment, nil

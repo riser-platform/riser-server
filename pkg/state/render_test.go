@@ -91,3 +91,29 @@ func Test_renderDeploymentResources(t *testing.T) {
 	assert.Equal(t, "stages/dev/configs/apps/myapp01/mydeployment.yaml", result[1].Name)
 	assert.Contains(t, string(result[1].Contents), "name: myapp01")
 }
+
+func Test_getFileNameFromResource(t *testing.T) {
+	objectMeta := metav1.ObjectMeta{
+		Name: "testname",
+	}
+	resourceTests := []struct {
+		r        KubeResource
+		expected string
+	}{
+		{&resources.SealedSecret{
+			ObjectMeta: objectMeta,
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "SealedSecret",
+				APIVersion: "bitnami.com/v1alpha1",
+			}}, "bitnami.com.sealedsecret.testname.yaml"},
+		{&resources.SealedSecret{
+			ObjectMeta: objectMeta,
+			TypeMeta: metav1.TypeMeta{
+				Kind: "SealedSecret",
+			}}, "sealedsecret.testname.yaml"},
+	}
+
+	for _, tt := range resourceTests {
+		assert.Equal(t, tt.expected, getFileNameFromResource(tt.r))
+	}
+}

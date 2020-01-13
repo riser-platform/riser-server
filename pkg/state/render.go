@@ -131,5 +131,10 @@ func getGenericResourcesPath(stageName string, resource KubeResource) string {
 }
 
 func getFileNameFromResource(resource KubeResource) string {
-	return strings.ToLower(fmt.Sprintf("%s.%s.yaml", resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
+	group := resource.GetObjectKind().GroupVersionKind().GroupVersion().Group
+	if group == "" {
+		return strings.ToLower(fmt.Sprintf("%s.%s.yaml", resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
+	}
+
+	return strings.ToLower(fmt.Sprintf("%s.%s.%s.yaml", group, resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
 }

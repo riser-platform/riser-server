@@ -1,0 +1,1 @@
+This folder provides a couple of example scripts for working with GKE. You may wish to review and modify them and/or use the Google Cloud Console to manage your Kubernetes cluster and permissions.

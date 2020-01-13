@@ -27,8 +27,35 @@ import (
 	"knative.dev/pkg/apis"
 )
 
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// Configuration represents the "floating HEAD" of a linear history of Revisions.
+// Users create new Revisions by updating the Configuration's spec.
+// The "latest created" revision's name is available under status, as is the
+// "latest ready" revision's name.
+// See also: https://github.com/knative/serving/blob/master/docs/spec/overview.md#configuration
+type Configuration struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// +optional
+	Spec ConfigurationSpec `json:"spec,omitempty"`
+}
+
+// Route is responsible for configuring ingress over a collection of Revisions.
+// Some of the Revisions a Route distributes traffic over may be specified by
+// referencing the Configuration responsible for creating them; in these cases
+// the Route is additionally responsible for monitoring the Configuration for
+// "latest ready revision" changes, and smoothly rolling out latest revisions.
+// See also: https://github.com/knative/serving/blob/master/docs/spec/overview.md#route
+type Route struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Spec holds the desired state of the Route (from the client).
+	// +optional
+	Spec RouteSpec `json:"spec,omitempty"`
+}
 
 // Service acts as a top-level container that manages a Route and Configuration
 // which implement a network service. Service exists to provide a singular

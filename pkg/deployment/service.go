@@ -143,9 +143,9 @@ func validateDeploymentConfig(deployment *core.DeploymentConfig) error {
 }
 
 func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
-	knativeServiceResource := resources.CreateKNativeService(ctx)
-
-	resourceFiles, err := state.RenderDeployment(ctx.Deployment, knativeServiceResource)
+	resourceFiles, err := state.RenderDeployment(ctx.Deployment,
+		resources.CreateKNativeConfiguration(ctx),
+		resources.CreateKNativeRoute(ctx))
 	if err != nil {
 		return err
 	}

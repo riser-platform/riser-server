@@ -37,6 +37,13 @@ func Test_update_snapshot_simple(t *testing.T) {
 				ContainerPort: 8080,
 			},
 		},
+		Traffic: core.TrafficConfig{
+			core.TrafficConfigRule{
+				RiserGeneration: 1,
+				RevisionName:    "myapp-1",
+				Percent:         100,
+			},
+		},
 	}
 
 	secretNames := []string{"mysecret"}

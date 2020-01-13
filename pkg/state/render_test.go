@@ -26,13 +26,8 @@ func Test_getDeploymentScmPath(t *testing.T) {
 			Kind: "Deployment",
 		},
 	}
-	deploymentCfg := &core.DeploymentConfig{
-		Namespace: "apps",
-		Name:      "myapp01",
-		Stage:     "dev",
-	}
 
-	result := getDeploymentScmPath(deploymentCfg, deployment)
+	result := getDeploymentScmPath("myapp01", "apps", "dev", deployment)
 
 	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/myapp01/deployment.myapp01.yaml", result)
 }

@@ -25,7 +25,7 @@ func Test_Commit(t *testing.T) {
 			return nil
 		},
 	}
-	committer := NewGitComitter(gitProvider)
+	committer := NewGitCommitter(gitProvider)
 
 	resources := []core.ResourceFile{
 		core.ResourceFile{
@@ -53,7 +53,7 @@ func Test_Commit_NoChanges_DoesNotPush(t *testing.T) {
 			return nil
 		},
 	}
-	committer := NewGitComitter(gitProvider)
+	committer := NewGitCommitter(gitProvider)
 
 	resources := []core.ResourceFile{
 		core.ResourceFile{
@@ -88,7 +88,7 @@ func Test_Commit_Serialized(t *testing.T) {
 		},
 	}
 
-	committer := NewGitComitter(gitProvider)
+	committer := NewGitCommitter(gitProvider)
 
 	wg := sync.WaitGroup{}
 

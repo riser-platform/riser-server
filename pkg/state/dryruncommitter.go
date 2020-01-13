@@ -11,7 +11,7 @@ type DryRunComitter struct {
 	Commits []DryRunCommit
 }
 
-func NewDryRunComitter() *DryRunComitter {
+func NewDryRunCommitter() *DryRunComitter {
 	return &DryRunComitter{
 		Commits: []DryRunCommit{},
 	}

@@ -150,5 +150,5 @@ func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
 		return err
 	}
 
-	return committer.Commit(fmt.Sprintf("Updating resources for %q in stage %q", ctx.Deployment.App.Name, ctx.Deployment.Stage), resourceFiles)
+	return committer.Commit(fmt.Sprintf("Updating resources for %q in stage %q", ctx.Deployment.Name, ctx.Deployment.Stage), resourceFiles)
 }

@@ -24,7 +24,7 @@ func Test_PutRollout_ValidatesStage(t *testing.T) {
 		},
 	}
 
-	err := PutRollout(ctx, nil, stageService)
+	err := PutRollout(ctx, nil, stageService, nil)
 
 	assert.IsType(t, &echo.HTTPError{}, err)
 	echoErr := err.(*echo.HTTPError)
@@ -44,7 +44,7 @@ func Test_PutRollout_ValidatesTraffic(t *testing.T) {
 		},
 	}
 
-	err := PutRollout(ctx, nil, stageService)
+	err := PutRollout(ctx, nil, stageService, nil)
 
 	assert.Equal(t, "Invalid rollout request: traffic: must specify one or more traffic rules.", err.Error())
 }

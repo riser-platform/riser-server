@@ -103,7 +103,7 @@ func Test_SealAndSave(t *testing.T) {
 		SecretName: "mysecret",
 	}
 
-	comitter := state.NewDryRunComitter()
+	comitter := state.NewDryRunCommitter()
 
 	service := service{secretMetas: secretMetaRepository, stages: stageRepository}
 

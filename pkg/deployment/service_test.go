@@ -1,8 +1,6 @@
 package deployment
 
 import (
-	"database/sql"
-
 	"github.com/pkg/errors"
 
 	"testing"
@@ -28,7 +26,7 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
 			assert.Equal(t, "myapp-mydep", deploymentNameArg)
 			assert.Equal(t, "mystage", stageNameArg)
-			return nil, sql.ErrNoRows
+			return nil, core.ErrNotFound
 		},
 		CreateFn: func(deploymentArg *core.Deployment) error {
 			assert.Equal(t, "myapp-mydep", deploymentArg.Name)
@@ -208,7 +206,7 @@ func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
 			assert.Equal(t, "myapp-mydep", deploymentNameArg)
 			assert.Equal(t, "mystage", stageNameArg)
-			return nil, sql.ErrNoRows
+			return nil, core.ErrNotFound
 		},
 		CreateFn: func(newDeploymentArg *core.Deployment) error {
 			return errors.New("test")

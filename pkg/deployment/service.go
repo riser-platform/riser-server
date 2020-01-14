@@ -1,7 +1,6 @@
 package deployment
 
 import (
-	"database/sql"
 	"fmt"
 	"regexp"
 
@@ -68,10 +67,10 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig) 
 		return 0, err
 	}
 	existingDeployment, err := s.deployments.Get(deploymentConfig.Name, deploymentConfig.Stage)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != core.ErrNotFound {
 		return 0, errors.Wrap(err, fmt.Sprintf("Error retrieving deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
 	}
-	if err == sql.ErrNoRows {
+	if err == core.ErrNotFound {
 		riserGeneration = 1
 		deploymentConfig.Traffic = computeTraffic(riserGeneration, deploymentConfig, nil)
 		// TODO: Ensure that the deployment name does not exist in another stage by another app (edge case)

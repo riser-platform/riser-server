@@ -1,0 +1,1 @@
+Generated using `make kube-resources` from https://github.com/riserplatform/riser-controller

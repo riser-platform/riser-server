@@ -4,8 +4,7 @@ The files in the [apply](./apply) folder provide a basic install of the KNative 
 Like Kubernetes, KNative configuration is vast (although much more constrained) and is dependant largely on your needs. The following is meant to help get you started with a basic demo of Riser and is not intended as being exhaustive.
 
 ### Domain Name
-You should configure a wildcard domain for each stage and namespace using a pattern like `<namespace>.<stage>.riser.<your-domain>` (e.g. for the `dev` stage `apps.dev.riser.your-domain.org` At the time of writing the namespace must be `apps` as Riser does not yet support multiple namespaces.
-To do this, create a ConfigMap like the following example:
+You should configure a wildcard domain for each stage and namespace using a pattern like `<stage>.riser.<your-domain>` (e.g. for the `dev` stage `dev.riser.your-domain.org`. To do this, create a ConfigMap like the following example:
 
 ```yaml
 apiVersion: v1
@@ -14,7 +13,7 @@ metadata:
   name: config-domain
   namespace: knative-serving
 data:
-  apps.dev.riser.your-domain.org: ""
+  dev.riser.your-domain.org: ""
 ```
 
 If hosting the riser server you can add the riser domain as another line e.g. `api.riser.your-domain.org`.

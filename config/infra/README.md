@@ -2,7 +2,6 @@
 
 This folder contains demo infrastructure for components required by Riser. These are configured for demonstration purposes only and have not been rigorously tested for stability or security. It is recommended that you configure and install these dependencies using the recommended approach by each respective dependency. This documentation assumes that the reader already has prior experience installing Kubernetes.
 
-
 ### Riser Server
 The Riser Server spans all stages and only needs to be installed on one stage. Please review the [server README](../server/README.md) for installing the riser server.
 
@@ -11,6 +10,9 @@ While Riser is supported on theoretically any kubernetes cluster, the demo has b
 
 ## Install and configure kube-applier
 See the [README](kubeapplier/README.md). Once resources are added `riser-state` git repo.
+
+# Install and configure KNative
+See the [README](knative/README.md).
 
 ## Creating a new stage (one per cluster)
 Riser requires a git repo to manage all of its state, referred to as the `riser-state` repo. It is recommended that you use it to manage Riser required infrastructure as well. Note that

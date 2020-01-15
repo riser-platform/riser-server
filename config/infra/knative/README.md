@@ -1,4 +1,12 @@
-The files in the [apply](./apply) folder provide a basic install of the KNative Serving components from [this release](https://github.com/knative/serving/releases/tag/v0.11.1). See the [KNative installation](https://knative.dev/docs/install/) documentation which contains detailed guides depending on your Kubernetes environment. Note that Riser only requires that the Serving components are installed. Due to a bug in `kubectl` you may have to run `kubectl apply` again after a few moments after the CRDs are finished registering.
+We do not recommend using Gitops to install Knative as the official KNative yamls contain configuration which can overwrite any custom configuration which you may have. Hopefully this will change in the future. A quick way to get up and running is to run the following:
+
+```
+kubectl apply -l knative.dev/crd-install=true -f https://github.com/knative/serving/releases/download/v0.11.1/serving.yaml
+kubectl apply -f https://github.com/knative/serving/releases/download/v0.11.1/serving.yaml
+```
+
+
+See the [KNative installation](https://knative.dev/docs/install/) documentation which contains detailed installation guides depending on your Kubernetes environment. Note that Riser only requires that the Serving components are installed. Y
 
 ## Configuring KNative
 Like Kubernetes, KNative configuration is vast (although much more constrained) and is dependant largely on your needs. The following is meant to help get you started with a basic demo of Riser and is not intended as being exhaustive.

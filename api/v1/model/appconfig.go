@@ -40,10 +40,8 @@ type AppConfig struct {
 	Expose      *AppConfigExpose              `json:"expose,omitempty"`
 	HealthCheck *AppConfigHealthCheck         `json:"healthcheck,omitempty"`
 	// Id is a random id used to prevent collisions (two apps with the same name and namespace)
-	Id string `json:"id"`
-	// TODO: Remove Image in favor of convention based docker image names
+	Id        string              `json:"id"`
 	Image     string              `json:"image"`
-	Replicas  *int32              `json:"replicas,omitempty"`
 	Resources *AppConfigResources `json:"resources,omitempty"`
 }
 

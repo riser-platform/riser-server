@@ -105,16 +105,20 @@ func Test_ApplyOverrides_NoOverrides(t *testing.T) {
 }
 
 func Test_ApplyOverrides_NoOverridesForStage(t *testing.T) {
-	replicas := int32(3)
-	replicasDev := int32(1)
+	cpuCores := float32(2)
+	cpuCoresDev := float32(0.1)
 	appConfig := &AppConfigWithOverrides{
 		AppConfig: AppConfig{
-			Name:     "myapp",
-			Replicas: &replicas,
+			Name: "myapp",
+			Resources: &AppConfigResources{
+				CpuCores: &cpuCores,
+			},
 		},
 		Overrides: map[string]AppConfig{
 			"dev": AppConfig{
-				Replicas: &replicasDev,
+				Resources: &AppConfigResources{
+					CpuCores: &cpuCoresDev,
+				},
 			},
 		},
 	}
@@ -123,17 +127,19 @@ func Test_ApplyOverrides_NoOverridesForStage(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "myapp", result.Name)
-	assert.Equal(t, replicas, *result.Replicas)
+	assert.Equal(t, cpuCores, *result.Resources.CpuCores)
 }
 
 func Test_ApplyOverrides_WithOverrides(t *testing.T) {
-	replicas := int32(3)
-	replicasDev := int32(1)
+	cpuCores := float32(2)
+	cpuCoresDev := float32(0.1)
 	appConfig := &AppConfigWithOverrides{
 		AppConfig: AppConfig{
-			Name:     "myapp",
-			Image:    "hashicorp/http-echo",
-			Replicas: &replicas,
+			Name:  "myapp",
+			Image: "hashicorp/http-echo",
+			Resources: &AppConfigResources{
+				CpuCores: &cpuCores,
+			},
 			HealthCheck: &AppConfigHealthCheck{
 				Path: "/health",
 			},
@@ -147,7 +153,9 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 		},
 		Overrides: map[string]AppConfig{
 			"dev": AppConfig{
-				Replicas: &replicasDev,
+				Resources: &AppConfigResources{
+					CpuCores: &cpuCoresDev,
+				},
 				Environment: map[string]intstr.IntOrString{
 					"envKey":    intstr.Parse("envValDevOverride"),
 					"envKeyDev": intstr.Parse("envValDev"),
@@ -169,7 +177,7 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 	assert.Equal(t, "envValDev", result.Environment["envKeyDev"].StrVal)
 	assert.Equal(t, "envValBase", result.Environment["envKeyBase"].StrVal)
 	assert.EqualValues(t, 8080, result.Expose.ContainerPort)
-	assert.EqualValues(t, 1, *result.Replicas)
+	assert.EqualValues(t, cpuCoresDev, *result.Resources.CpuCores)
 	assert.Equal(t, "/health", result.HealthCheck.Path)
 }
 

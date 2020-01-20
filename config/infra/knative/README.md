@@ -6,7 +6,7 @@ kubectl apply -f https://github.com/knative/serving/releases/download/v0.11.1/se
 ```
 
 
-See the [KNative installation](https://knative.dev/docs/install/) documentation which contains detailed installation guides depending on your Kubernetes environment. Note that Riser only requires that the Serving components are installed. Y
+See the [KNative installation](https://knative.dev/docs/install/) documentation which contains detailed installation guides depending on your Kubernetes environment. Note that Riser only requires that the Serving components are installed.
 
 ## Configuring KNative
 Like Kubernetes, KNative configuration is vast (although much more constrained) and is dependant largely on your needs. The following is meant to help get you started with a basic demo of Riser and is not intended as being exhaustive.
@@ -44,7 +44,14 @@ Your app will be accessible via https and http requests will 301 redirect to the
 
 ### CertManager
 
-Managing TLS certificates is a complicated subject. You will have to assess your own certificate management strategy along with your security requirements to determine the best approach. The easiest way to manage certificates is with the installed CertManager. The following is an example configuration that uses LetsEncrypt. It assumes that you have created a LetsEncrypt ClusterIssuer.
+Managing TLS certificates is a complicated subject. You will have to assess your own certificate management strategy along with your security requirements to determine the best approach. The easiest way to manage certificates is with the installed CertManager. First, install the certmanager component:
+
+```
+kubectl apply -f https://github.com/knative/serving/releases/download/v0.11.1/serving-cert-manager.yaml
+```
+
+Then configure the issuer. For this example we'll use [LetsEncrypt](https://letsencrypt.org/). It assumes that you already have a LetsEncrypt ClusterIssuer named `letsencrypt`.
+
 
 ```yaml
 apiVersion: v1

@@ -9,10 +9,7 @@ The Riser Server spans all stages and only needs to be installed on one stage. P
 While Riser is supported on theoretically any kubernetes cluster, the demo has been tested with GKE. You may wish review the example script in `gke/create.sh`. Once the cluster is created you may continue.
 
 ## Install and configure kube-applier
-See the [README](kubeapplier/README.md). Once resources are added `riser-state` git repo.
-
-# Install and configure KNative
-See the [README](knative/README.md).
+See the [README](kubeapplier/README.md).
 
 ## Creating a new stage (one per cluster)
 Riser requires a git repo to manage all of its state, referred to as the `riser-state` repo. It is recommended that you use it to manage Riser required infrastructure as well. Note that
@@ -21,6 +18,10 @@ a single repo between multiple Riser stages.
 
 Review each required component's README in this folder. With the exception of kube-applier, the final yaml for each component should be placed in your `riser-state` git repo in the
  `/stages/<stageName>/kube-resources/infra` folder. Kube-applier must be installed manually after the cluster is ready. Once you push your changes, `kube-applier` should begin installing the remaining components. This may take a few minutes depending on cluster capacity and internet speed.
+
+
+# Install and configure KNative
+See the [README](knative/README.md).
 
 ### Update DNS to point to the istio ingress gateway external IP
 Create an A record for your domain (e.g. `*.apps.<stage>.riser.<your-domain>`) using the IP from the command below.

@@ -1,5 +1,9 @@
 package util
 
+func PtrInt(v int) *int {
+	return &v
+}
+
 func PtrInt32(v int32) *int32 {
 	return &v
 }

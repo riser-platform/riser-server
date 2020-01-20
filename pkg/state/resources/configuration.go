@@ -12,11 +12,8 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 	// KNative does not allow setting this
 	podSpec.EnableServiceLinks = nil
 
-	revisionMeta := createPodObjectMeta(ctx)
-	revisionMeta.Name = fmt.Sprintf("%s-%d", ctx.Deployment.Name, ctx.RiserGeneration)
-	// We should consider exposing this in the app config. We don't want to disable scale-to-zero cluster wide as we
-	// want to eventually support that on an app by app basis.
-	revisionMeta.Annotations["autoscaling.knative.dev/minScale"] = "1"
+	revisionMeta := createRevisionMeta(ctx)
+
 	// Not sure yet if we want this with KNative since KNative seems to handle readiness probes differently via the queue-proxy.
 
 	return &Configuration{
@@ -39,4 +36,22 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 			},
 		},
 	}
+}
+
+func createRevisionMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
+	revisionMeta := metav1.ObjectMeta{
+		Name:        fmt.Sprintf("%s-%d", ctx.Deployment.Name, ctx.RiserGeneration),
+		Labels:      deploymentLabels(ctx),
+		Annotations: deploymentAnnotations(ctx),
+	}
+	if ctx.Deployment.App.Autoscale != nil {
+		if ctx.Deployment.App.Autoscale.Min != nil {
+			revisionMeta.Annotations["autoscaling.knative.dev/minScale"] = fmt.Sprintf("%d", *ctx.Deployment.App.Autoscale.Min)
+		}
+		if ctx.Deployment.App.Autoscale.Max != nil {
+			revisionMeta.Annotations["autoscaling.knative.dev/maxScale"] = fmt.Sprintf("%d", *ctx.Deployment.App.Autoscale.Max)
+		}
+	}
+
+	return revisionMeta
 }

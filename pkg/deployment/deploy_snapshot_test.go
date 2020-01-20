@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"github.com/riser-platform/riser-server/pkg/util"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -33,6 +34,10 @@ func Test_update_snapshot_simple(t *testing.T) {
 		App: &model.AppConfig{
 			Name: "myapp",
 			Id:   "myid",
+			Autoscale: &model.AppConfigAutoscale{
+				Min: util.PtrInt(0),
+				Max: util.PtrInt(1),
+			},
 			Expose: &model.AppConfigExpose{
 				ContainerPort: 8080,
 			},

@@ -9,18 +9,8 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/riser-platform/riser-server/pkg/util"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	corev1 "k8s.io/api/core/v1"
 )
-
-func createPodObjectMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
-	annotations := deploymentAnnotations(ctx)
-	return metav1.ObjectMeta{
-		Labels:      deploymentLabels(ctx),
-		Annotations: annotations,
-	}
-}
 
 func createPodSpec(ctx *core.DeploymentContext) corev1.PodSpec {
 	return corev1.PodSpec{

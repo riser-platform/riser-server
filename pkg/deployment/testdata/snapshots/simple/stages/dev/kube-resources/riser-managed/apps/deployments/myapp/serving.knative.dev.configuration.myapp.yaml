@@ -15,7 +15,8 @@ spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "1"
+        autoscaling.knative.dev/minScale: "0"
         riser.dev/generation: "3"
       creationTimestamp: null
       labels:

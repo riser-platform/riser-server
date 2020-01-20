@@ -34,14 +34,14 @@ func Test_readinessProbe_httpGet(t *testing.T) {
 	app := &model.AppConfig{
 		HealthCheck: &model.AppConfigHealthCheck{
 			Path: "/health",
-			Port: util.PtrInt32(8080),
 		},
 	}
 
 	result := readinessProbe(app)
 
 	assert.Equal(t, "/health", result.HTTPGet.Path)
-	assert.EqualValues(t, 8080, result.HTTPGet.Port.IntVal)
+	// KNative does not allow setting the port on a probe
+	assert.Empty(t, result.HTTPGet.Port)
 }
 
 func Test_resources(t *testing.T) {

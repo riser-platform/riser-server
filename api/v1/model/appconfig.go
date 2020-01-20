@@ -53,7 +53,6 @@ type AppConfigExpose struct {
 // Mode is not yet implemented (httpGet = default)
 type AppConfigHealthCheck struct {
 	Path string `json:"path,omitempty"`
-	Port *int32 `json:"port,omitempty"`
 }
 
 type AppConfigResources struct {

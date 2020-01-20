@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -60,19 +59,12 @@ func readinessProbe(appConfig *model.AppConfig) *corev1.Probe {
 		return nil
 	}
 
-	port := appConfig.HealthCheck.Port
-
 	probe := &corev1.Probe{
 		Handler: corev1.Handler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: appConfig.HealthCheck.Path,
 			},
 		},
-	}
-
-	// TODO: KNative doesn't appear to allow setting this, need to investigate further
-	if port != nil {
-		probe.Handler.HTTPGet.Port = intstr.FromInt(int(*port))
 	}
 
 	return probe

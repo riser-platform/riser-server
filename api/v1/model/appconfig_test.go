@@ -67,7 +67,7 @@ var protocolTests = []struct {
 	valid    bool
 }{
 	{"http", true},
-	{"grpc", true},
+	{"http2", true},
 	{"", true},
 	{"redis", false},
 }
@@ -86,7 +86,7 @@ func Test_AppConfig_ValidateProtocol(t *testing.T) {
 			validationErrors := err.(validation.Errors)
 			assert.Len(t, validationErrors, 1, tt.protocol)
 			require.Contains(t, validationErrors, "expose.protocol", tt.protocol)
-			assert.Equal(t, "must be one of: http, grpc", validationErrors["expose.protocol"].Error(), tt.protocol)
+			assert.Equal(t, "must be one of: http, http2", validationErrors["expose.protocol"].Error(), tt.protocol)
 		}
 	}
 }

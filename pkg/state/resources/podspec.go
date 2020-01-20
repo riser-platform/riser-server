@@ -35,15 +35,26 @@ func createPodSpec(ctx *core.DeploymentContext) corev1.PodSpec {
 				Resources:      resources(ctx.Deployment.App),
 				ReadinessProbe: readinessProbe(ctx.Deployment.App),
 				Env:            k8sEnvVars(ctx),
-				Ports: []corev1.ContainerPort{
-					corev1.ContainerPort{
-						Protocol:      corev1.ProtocolTCP,
-						ContainerPort: ctx.Deployment.App.Expose.ContainerPort,
-					},
-				},
+				Ports:          createPodPorts(ctx.Deployment.App.Expose),
 			},
 		},
 	}
+}
+
+func createPodPorts(expose *model.AppConfigExpose) []corev1.ContainerPort {
+	containerPortName := ""
+	// See https://github.com/knative/serving/blob/master/docs/runtime-contract.md#protocols-and-ports
+	if expose.Protocol == "http2" {
+		containerPortName = "h2c"
+	}
+	ports := []corev1.ContainerPort{
+		corev1.ContainerPort{
+			Protocol:      corev1.ProtocolTCP,
+			ContainerPort: expose.ContainerPort,
+			Name:          containerPortName,
+		},
+	}
+	return ports
 }
 
 func readinessProbe(appConfig *model.AppConfig) *corev1.Probe {

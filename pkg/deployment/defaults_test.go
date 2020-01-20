@@ -29,7 +29,7 @@ func Test_applyDefaults_AllowValues(t *testing.T) {
 		App: &model.AppConfig{
 			Name: "myapp",
 			Expose: &model.AppConfigExpose{
-				Protocol: "grpc",
+				Protocol: "http2",
 			},
 		},
 	}
@@ -39,7 +39,7 @@ func Test_applyDefaults_AllowValues(t *testing.T) {
 	assert.Equal(t, "apps", deployment.Namespace)
 	// Not a valid name but the defaults should not change it.
 	assert.Equal(t, "mydeployment", deployment.Name)
-	assert.Equal(t, "grpc", deployment.App.Expose.Protocol)
+	assert.Equal(t, "http2", deployment.App.Expose.Protocol)
 }
 
 func Test_applyDefaults_WhenDeploymentNameSpecified_DoesNotAddPrefixIfNamesMatch(t *testing.T) {

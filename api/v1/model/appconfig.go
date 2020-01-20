@@ -70,7 +70,7 @@ func (appConfig *AppConfig) Validate() error {
 
 	if appConfig.Expose != nil {
 		exposeError := validation.ValidateStruct(appConfig.Expose,
-			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "grpc").Error("must be one of: http, grpc")))
+			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "http2").Error("must be one of: http, http2")))
 		err = mergeValidationErrors(err, exposeError, "expose")
 	}
 

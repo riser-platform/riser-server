@@ -71,7 +71,6 @@ func validateTrafficRules(traffic core.TrafficConfig, deployment *core.Deploymen
 	}
 	for _, rule := range traffic {
 		if _, ok := revisions[rule.RiserGeneration]; !ok {
-			// TODO: Consider validating if the revision is ready or not
 			return &core.ValidationError{Message: fmt.Sprintf(`revision "%d" either does not exist or has not reported its status yet`, rule.RiserGeneration)}
 		}
 	}

@@ -17,8 +17,6 @@ import (
 
 func createPodObjectMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
 	annotations := deploymentAnnotations(ctx)
-	// This is required for probes to work w/mTLS on teh same port as the service port
-	annotations["sidecar.istio.io/rewriteAppHTTPProbers"] = "true"
 	return metav1.ObjectMeta{
 		Labels:      deploymentLabels(ctx),
 		Annotations: annotations,

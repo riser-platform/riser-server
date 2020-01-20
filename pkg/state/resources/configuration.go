@@ -18,8 +18,6 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 	// want to eventually support that on an app by app basis.
 	revisionMeta.Annotations["autoscaling.knative.dev/minScale"] = "1"
 	// Not sure yet if we want this with KNative since KNative seems to handle readiness probes differently via the queue-proxy.
-	// TODO: Test KNative w/ Istio mTLS to see if we still need this attribute.
-	delete(revisionMeta.Annotations, "sidecar.istio.io/rewriteAppHTTPProbers")
 
 	return &Configuration{
 		ObjectMeta: metav1.ObjectMeta{

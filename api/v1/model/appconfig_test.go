@@ -16,6 +16,9 @@ var minimumValidAppConfig = &AppConfig{
 	Name:  "myapp",
 	Id:    "myid",
 	Image: "myimage",
+	Expose: &AppConfigExpose{
+		ContainerPort: 80,
+	},
 }
 
 func Test_AppConfig_ValidateRequired(t *testing.T) {
@@ -24,8 +27,19 @@ func Test_AppConfig_ValidateRequired(t *testing.T) {
 
 	assert.IsType(t, validation.Errors{}, err)
 	validationErrors := err.(validation.Errors)
-	assert.Len(t, validationErrors, 3)
-	assertFieldsRequired(t, validationErrors, "name", "id", "image")
+	assert.Len(t, validationErrors, 4)
+	assertFieldsRequired(t, validationErrors, "name", "id", "image", "expose")
+}
+
+func Test_AppConfig_ValidateExposeRequired(t *testing.T) {
+	appConfig := &AppConfig{}
+	_ = copier.Copy(appConfig, minimumValidAppConfig)
+	appConfig.Expose.ContainerPort = 0
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 1)
 }
 
 // Note: We may not allow registry to be set here - it may be dictated by an admin on a per stage basis instead.
@@ -72,11 +86,11 @@ var protocolTests = []struct {
 	{"redis", false},
 }
 
-func Test_AppConfig_ValidateProtocol(t *testing.T) {
+func Test_AppConfig_ValidateExposeProtocol(t *testing.T) {
 	for _, tt := range protocolTests {
 		appConfig := &AppConfig{}
 		_ = copier.Copy(appConfig, minimumValidAppConfig)
-		appConfig.Expose = &AppConfigExpose{Protocol: tt.protocol}
+		appConfig.Expose.Protocol = tt.protocol
 		err := appConfig.Validate()
 
 		if tt.valid {

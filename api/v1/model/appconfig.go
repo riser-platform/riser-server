@@ -65,12 +65,17 @@ func (appConfig *AppConfig) Validate() error {
 		validation.Field(&appConfig.Name, RulesAppName()...),
 		validation.Field(&appConfig.Id, validation.Required),
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
+		validation.Field(&appConfig.Expose, validation.Required),
 	)
 
+	// Break out each struct so that we can have better error messages than the default
+	// This has the downside of not allowing nested structs to implement their own Validate.
 	if appConfig.Expose != nil {
-		exposeError := validation.ValidateStruct(appConfig.Expose,
-			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "http2").Error("must be one of: http, http2")))
-		err = mergeValidationErrors(err, exposeError, "expose")
+		exposeErr := validation.ValidateStruct(appConfig.Expose,
+			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "http2").Error("must be one of: http, http2")),
+			validation.Field(&appConfig.Expose.ContainerPort, validation.Required, validation.Min(1), validation.Max(65535)),
+		)
+		err = mergeValidationErrors(err, exposeErr, "expose")
 	}
 
 	return err

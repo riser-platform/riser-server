@@ -18,7 +18,7 @@ func Migrate(postgresConn string, logger *logrus.Logger) error {
 	err = m.Up()
 	if err != nil {
 		if err == migrate.ErrNoChange {
-			logger.Info("No postgres migrations found")
+			logger.Info("No new postgres migrations found")
 		}
 	} else {
 		return err

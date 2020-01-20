@@ -36,6 +36,7 @@ func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig,
 // AppConfig is the root of the application config object graph without stage overrides
 type AppConfig struct {
 	Name        string                        `json:"name"`
+	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
 	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
 	Expose      *AppConfigExpose              `json:"expose,omitempty"`
 	HealthCheck *AppConfigHealthCheck         `json:"healthcheck,omitempty"`
@@ -43,6 +44,11 @@ type AppConfig struct {
 	Id        string              `json:"id"`
 	Image     string              `json:"image"`
 	Resources *AppConfigResources `json:"resources,omitempty"`
+}
+
+type AppConfigAutoscale struct {
+	Min *int `json:"min,omitempty"`
+	Max *int `json:"max,omitempty"`
 }
 
 type AppConfigExpose struct {
@@ -70,12 +76,27 @@ func (appConfig *AppConfig) Validate() error {
 
 	// Break out each struct so that we can have better error messages than the default
 	// This has the downside of not allowing nested structs to implement their own Validate.
+
 	if appConfig.Expose != nil {
 		exposeErr := validation.ValidateStruct(appConfig.Expose,
 			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "http2").Error("must be one of: http, http2")),
 			validation.Field(&appConfig.Expose.ContainerPort, validation.Required, validation.Min(1), validation.Max(65535)),
 		)
 		err = mergeValidationErrors(err, exposeErr, "expose")
+	}
+
+	if appConfig.Autoscale != nil {
+		maxMinRule := validation.Min(1)
+		if appConfig.Autoscale.Min != nil {
+			maxMinRule = validation.Min(*appConfig.Autoscale.Min).Error("must be greater than or equal to autoscale.min")
+		}
+		autoscaleErr := validation.ValidateStruct(appConfig.Autoscale,
+			validation.Field(&appConfig.Autoscale.Min, validation.Min(0)),
+			// We have to customize the NilOrEmpty error to match "Min since "Min" does not get applied to nillable 0 value
+			validation.Field(&appConfig.Autoscale.Max, validation.NilOrNotEmpty.Error("must be no less than 1"), maxMinRule),
+		)
+
+		err = mergeValidationErrors(err, autoscaleErr, "autoscale")
 	}
 
 	return err

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Define the minimum valid config here. Don't reference it directly though. Use createMinAppConfig instead to get a deep clone
 var minimumValidAppConfig = &AppConfig{
 	Name:  "myapp",
 	Id:    "myid",
@@ -32,14 +33,64 @@ func Test_AppConfig_ValidateRequired(t *testing.T) {
 }
 
 func Test_AppConfig_ValidateExposeRequired(t *testing.T) {
-	appConfig := &AppConfig{}
-	_ = copier.Copy(appConfig, minimumValidAppConfig)
+	appConfig := createMinAppConfig()
 	appConfig.Expose.ContainerPort = 0
 	err := appConfig.Validate()
 
 	assert.IsType(t, validation.Errors{}, err)
 	validationErrors := err.(validation.Errors)
 	assert.Len(t, validationErrors, 1)
+}
+
+func Test_AppConfig_ValidateAutoscaleRange(t *testing.T) {
+	min := -1
+	max := 0
+	appConfig := createMinAppConfig()
+	appConfig.Autoscale = &AppConfigAutoscale{
+		Min: &min,
+		Max: &max,
+	}
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 2)
+	require.Contains(t, validationErrors, "autoscale.min", validationErrors)
+	require.Contains(t, validationErrors, "autoscale.max", validationErrors)
+	assert.Equal(t, "must be no less than 0", validationErrors["autoscale.min"].Error())
+	assert.Equal(t, "must be no less than 1", validationErrors["autoscale.max"].Error())
+}
+
+func Test_AppConfig_ValidateAutoscaleMaxGtMin(t *testing.T) {
+	min := 2
+	max := 1
+	appConfig := createMinAppConfig()
+	appConfig.Autoscale = &AppConfigAutoscale{
+		Min: &min,
+		Max: &max,
+	}
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 1)
+	require.Contains(t, validationErrors, "autoscale.max", validationErrors)
+	assert.Equal(t, "must be greater than or equal to autoscale.min", validationErrors["autoscale.max"].Error())
+}
+
+func Test_AppConfig_ValidateAutoscaleMax_NilMin(t *testing.T) {
+	max := 0
+	appConfig := createMinAppConfig()
+	appConfig.Autoscale = &AppConfigAutoscale{
+		Max: &max,
+	}
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 1)
+	require.Contains(t, validationErrors, "autoscale.max", validationErrors)
+	assert.Equal(t, "must be no less than 1", validationErrors["autoscale.max"].Error())
 }
 
 // Note: We may not allow registry to be set here - it may be dictated by an admin on a per stage basis instead.
@@ -59,8 +110,7 @@ var imageTests = []struct {
 
 func Test_AppConfig_ValidateImage(t *testing.T) {
 	for _, tt := range imageTests {
-		appConfig := &AppConfig{}
-		_ = copier.Copy(appConfig, minimumValidAppConfig)
+		appConfig := createMinAppConfig()
 		appConfig.Image = tt.image
 		err := appConfig.Validate()
 
@@ -88,8 +138,7 @@ var protocolTests = []struct {
 
 func Test_AppConfig_ValidateExposeProtocol(t *testing.T) {
 	for _, tt := range protocolTests {
-		appConfig := &AppConfig{}
-		_ = copier.Copy(appConfig, minimumValidAppConfig)
+		appConfig := createMinAppConfig()
 		appConfig.Expose.Protocol = tt.protocol
 		err := appConfig.Validate()
 
@@ -200,4 +249,10 @@ func assertFieldsRequired(t *testing.T, errors validation.Errors, fieldNames ...
 		require.Contains(t, errors, fieldName, "missing required field %q", fieldName)
 		assert.Equal(t, "cannot be blank", errors[fieldName].Error())
 	}
+}
+
+func createMinAppConfig() *AppConfig {
+	appConfig := &AppConfig{}
+	_ = copier.Copy(appConfig, minimumValidAppConfig)
+	return appConfig
 }

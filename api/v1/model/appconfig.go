@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/docker/distribution/reference"
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"

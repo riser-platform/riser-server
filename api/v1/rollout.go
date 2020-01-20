@@ -8,7 +8,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/stage"
 	"github.com/riser-platform/riser-server/pkg/state"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 	"github.com/labstack/echo/v4"
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"

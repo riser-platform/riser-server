@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 

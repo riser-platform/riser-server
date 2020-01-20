@@ -7,7 +7,7 @@ go 1.13
 require (
 	github.com/bitnami-labs/sealed-secrets v0.7.0
 	github.com/dustin/go-humanize v1.0.0
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
+	github.com/go-ozzo/ozzo-validation/v3 v3.8.1
 	github.com/gogo/protobuf v1.2.2-0.20190730201129-28a6bbf47e48 // indirect
 	github.com/golang-migrate/migrate/v4 v4.6.2
 	github.com/golang/protobuf v1.3.2 // indirect

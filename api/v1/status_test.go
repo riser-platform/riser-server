@@ -54,11 +54,12 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 					core.DeploymentTrafficStatus{
 						Percent:      util.PtrInt64(90),
 						RevisionName: "rev1",
+						Tag:          "r1",
 					},
 					core.DeploymentTrafficStatus{
-						Latest:       util.PtrBool(true),
 						Percent:      util.PtrInt64(10),
 						RevisionName: "rev2",
+						Tag:          "r2",
 					},
 				},
 			},
@@ -78,10 +79,10 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 	assert.Len(t, result.Traffic, 2)
 	assert.Equal(t, "rev1", result.Traffic[0].RevisionName)
 	assert.Equal(t, int64(90), *result.Traffic[0].Percent)
-	assert.Nil(t, result.Traffic[0].Latest)
+	assert.Equal(t, "r1", result.Traffic[0].Tag)
 	assert.Equal(t, "rev2", result.Traffic[1].RevisionName)
 	assert.Equal(t, int64(10), *result.Traffic[1].Percent)
-	assert.True(t, *result.Traffic[1].Latest)
+	assert.Equal(t, "r2", result.Traffic[1].Tag)
 
 	// Revisions
 	assert.Len(t, result.Revisions, 2)
@@ -156,11 +157,12 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 			model.DeploymentTrafficStatus{
 				Percent:      util.PtrInt64(90),
 				RevisionName: "rev1",
+				Tag:          "r1",
 			},
 			model.DeploymentTrafficStatus{
-				Latest:       util.PtrBool(true),
 				Percent:      util.PtrInt64(10),
 				RevisionName: "rev2",
+				Tag:          "r2",
 			},
 		},
 	}
@@ -191,10 +193,10 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	assert.Len(t, result.Traffic, 2)
 	assert.Equal(t, "rev1", result.Traffic[0].RevisionName)
 	assert.Equal(t, int64(90), *result.Traffic[0].Percent)
-	assert.Nil(t, result.Traffic[0].Latest)
+	assert.Equal(t, "r1", result.Traffic[0].Tag)
 	assert.Equal(t, "rev2", result.Traffic[1].RevisionName)
 	assert.Equal(t, int64(10), *result.Traffic[1].Percent)
-	assert.True(t, *result.Traffic[1].Latest)
+	assert.Equal(t, "r2", result.Traffic[1].Tag)
 
 	// Problems
 	assert.Len(t, result.Revisions[0].Problems, 2)

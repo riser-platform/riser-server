@@ -77,9 +77,9 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 		status.Traffic = make([]model.DeploymentTrafficStatus, len(domain.Doc.Status.Traffic))
 		for idx, traffic := range domain.Doc.Status.Traffic {
 			status.Traffic[idx] = model.DeploymentTrafficStatus{
-				Latest:       traffic.Latest,
 				Percent:      traffic.Percent,
 				RevisionName: traffic.RevisionName,
+				Tag:          traffic.Tag,
 			}
 		}
 	}
@@ -114,9 +114,9 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 	out.Traffic = make([]core.DeploymentTrafficStatus, len(in.Traffic))
 	for idx, traffic := range in.Traffic {
 		out.Traffic[idx] = core.DeploymentTrafficStatus{
-			Latest:       traffic.Latest,
 			Percent:      traffic.Percent,
 			RevisionName: traffic.RevisionName,
+			Tag:          traffic.Tag,
 		}
 	}
 

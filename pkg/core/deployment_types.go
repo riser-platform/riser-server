@@ -56,10 +56,9 @@ type DeploymentStatus struct {
 }
 
 type DeploymentTrafficStatus struct {
-	// TODO: Consider removing Latest as we will no longer use it in traffic
-	Latest       *bool  `json:"latest,omitempty"`
 	Percent      *int64 `json:"percent,omitempty"`
 	RevisionName string `json:"revisionName"`
+	Tag          string `json:"tag,omitempty"`
 }
 
 type DeploymentRevisionStatus struct {

@@ -36,9 +36,9 @@ type DeploymentDocker struct {
 type TrafficConfig []TrafficConfigRule
 
 type TrafficConfigRule struct {
-	RiserGeneration int64
-	RevisionName    string
-	Percent         int
+	RiserGeneration int64  `json:"riserGeneration"`
+	RevisionName    string `json:"revisionName"`
+	Percent         int    `json:"percent"`
 }
 
 type DeploymentDoc struct {

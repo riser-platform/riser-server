@@ -3,7 +3,7 @@ package model
 import (
 	"regexp"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 )
 
 // Ideally these rules would be in pkg/... for reuse with the service layer but this causes a circular dependency.

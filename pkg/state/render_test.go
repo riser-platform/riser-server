@@ -26,13 +26,8 @@ func Test_getDeploymentScmPath(t *testing.T) {
 			Kind: "Deployment",
 		},
 	}
-	deploymentCfg := &core.DeploymentConfig{
-		Namespace: "apps",
-		Name:      "myapp01",
-		Stage:     "dev",
-	}
 
-	result := getDeploymentScmPath(deploymentCfg, deployment)
+	result := getDeploymentScmPath("myapp01", "apps", "dev", deployment)
 
 	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/myapp01/deployment.myapp01.yaml", result)
 }
@@ -77,33 +72,48 @@ func Test_renderDeploymentResources(t *testing.T) {
 			Name: "myapp01",
 		},
 	}
-	resource1 := &resources.VirtualService{
+	resource := &resources.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "mydeployment-public-ingress-443",
+			Name: "mydeployment",
 		},
 		TypeMeta: metav1.TypeMeta{
-			Kind: "VirtualService",
+			Kind: "Service",
 		},
 	}
 
-	resource2 := &resources.VirtualService{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "mydeployment-private-ingress-443",
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind: "VirtualService",
-		},
-	}
-
-	result, err := RenderDeployment(deployment, resource1, resource2)
+	result, err := RenderDeployment(deployment, resource)
 
 	require.NoError(t, err)
 	// Sanity check output - we'll use snapshot testing for exhaustive serialization and file system tests
-	assert.Len(t, result, 3)
-	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/mydeployment/virtualservice.mydeployment-public-ingress-443.yaml", result[0].Name)
-	assert.Contains(t, string(result[0].Contents), "name: mydeployment-public-ingress-443")
-	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/mydeployment/virtualservice.mydeployment-private-ingress-443.yaml", result[1].Name)
-	assert.Contains(t, string(result[1].Contents), "name: mydeployment-private-ingress-443")
-	assert.Equal(t, "stages/dev/configs/apps/myapp01/mydeployment.yaml", result[2].Name)
-	assert.Contains(t, string(result[2].Contents), "name: myapp01")
+	assert.Len(t, result, 2)
+	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/mydeployment/service.mydeployment.yaml", result[0].Name)
+	assert.Contains(t, string(result[0].Contents), "name: mydeployment")
+	assert.Equal(t, "stages/dev/configs/apps/myapp01/mydeployment.yaml", result[1].Name)
+	assert.Contains(t, string(result[1].Contents), "name: myapp01")
+}
+
+func Test_getFileNameFromResource(t *testing.T) {
+	objectMeta := metav1.ObjectMeta{
+		Name: "testname",
+	}
+	resourceTests := []struct {
+		r        KubeResource
+		expected string
+	}{
+		{&resources.SealedSecret{
+			ObjectMeta: objectMeta,
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "SealedSecret",
+				APIVersion: "bitnami.com/v1alpha1",
+			}}, "bitnami.com.sealedsecret.testname.yaml"},
+		{&resources.SealedSecret{
+			ObjectMeta: objectMeta,
+			TypeMeta: metav1.TypeMeta{
+				Kind: "SealedSecret",
+			}}, "sealedsecret.testname.yaml"},
+	}
+
+	for _, tt := range resourceTests {
+		assert.Equal(t, tt.expected, getFileNameFromResource(tt.r))
+	}
 }

@@ -27,9 +27,10 @@ func RenderSealedSecret(app, stage string, sealedSecret *resources.SealedSecret)
 	}, sealedSecret)
 }
 
+// RenderDeployment renders resources that target a deployment's git folder
 func RenderDeployment(deployment *core.DeploymentConfig, deploymentResources ...KubeResource) ([]core.ResourceFile, error) {
 	files, err := renderKubeResources(func(resource KubeResource) string {
-		return getDeploymentScmPath(deployment, resource)
+		return getDeploymentScmPath(deployment.Name, deployment.Namespace, deployment.Stage, resource)
 	}, deploymentResources...)
 
 	if err != nil {
@@ -41,6 +42,19 @@ func RenderDeployment(deployment *core.DeploymentConfig, deploymentResources ...
 		return nil, err
 	}
 	files = append(files, *appConfigFile)
+
+	return files, nil
+}
+
+// RenderRoute renders just the route resource.
+func RenderRoute(deploymentName, namespace, stage string, resource KubeResource) ([]core.ResourceFile, error) {
+	files, err := renderKubeResources(func(resource KubeResource) string {
+		return getDeploymentScmPath(deploymentName, namespace, stage, resource)
+	}, resource)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return files, nil
 }
@@ -71,12 +85,12 @@ func renderKubeResources(pathFunc getResourcePathFunc, resources ...KubeResource
 	return files, nil
 }
 
-func getDeploymentScmPath(deploymentMeta *core.DeploymentConfig, resource KubeResource) string {
+func getDeploymentScmPath(deploymentName, namespace, stage string, resource KubeResource) string {
 	return strings.ToLower(filepath.Join(
-		getPlatformResourcesPath(deploymentMeta.Stage),
-		deploymentMeta.Namespace,
+		getPlatformResourcesPath(stage),
+		namespace,
 		"deployments",
-		deploymentMeta.Name,
+		deploymentName,
 		getFileNameFromResource(resource)))
 }
 
@@ -117,5 +131,10 @@ func getGenericResourcesPath(stageName string, resource KubeResource) string {
 }
 
 func getFileNameFromResource(resource KubeResource) string {
-	return strings.ToLower(fmt.Sprintf("%s.%s.yaml", resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
+	group := resource.GetObjectKind().GroupVersionKind().GroupVersion().Group
+	if group == "" {
+		return strings.ToLower(fmt.Sprintf("%s.%s.yaml", resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
+	}
+
+	return strings.ToLower(fmt.Sprintf("%s.%s.%s.yaml", group, resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
 }

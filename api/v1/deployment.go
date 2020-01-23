@@ -64,9 +64,9 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 	var committer state.Committer
 
 	if isDryRun {
-		committer = state.NewDryRunComitter()
+		committer = state.NewDryRunCommitter()
 	} else {
-		committer = state.NewGitComitter(stateRepo)
+		committer = state.NewGitCommitter(stateRepo)
 	}
 
 	// TODO: This is a hack that exists for ease of use since we only support the "apps" namespace.
@@ -137,6 +137,7 @@ func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*
 		Docker: core.DeploymentDocker{
 			Tag: deploymentRequest.Docker.Tag,
 		},
-		App: app,
+		App:           app,
+		ManualRollout: deploymentRequest.ManualRollout,
 	}, nil
 }

@@ -5,10 +5,11 @@ import (
 )
 
 type FakeService struct {
-	PingFn             func(string) error
-	PingCallCount      int
-	GetStatusFn        func(stageName string) (*core.StageStatus, error)
-	GetStatusCallCount int
+	PingFn               func(string) error
+	PingCallCount        int
+	GetStatusFn          func(stageName string) (*core.StageStatus, error)
+	GetStatusCallCount   int
+	ValidateDeployableFn func(stageName string) error
 }
 
 func (fake *FakeService) Ping(stageName string) error {
@@ -26,5 +27,5 @@ func (fake *FakeService) SetConfig(stageName string, stage *core.StageConfig) er
 }
 
 func (fake *FakeService) ValidateDeployable(stageName string) error {
-	panic("NI")
+	return fake.ValidateDeployableFn(stageName)
 }

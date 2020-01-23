@@ -3,7 +3,7 @@ package v1
 import (
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 

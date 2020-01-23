@@ -27,7 +27,7 @@ type KubeResource interface {
 	GetObjectKind() schema.ObjectKind
 }
 
-func NewGitComitter(gitRepo git.GitRepoProvider) *GitCommitter {
+func NewGitCommitter(gitRepo git.GitRepoProvider) *GitCommitter {
 	return &GitCommitter{gitRepo, sync.Mutex{}}
 }
 

@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"fmt"
+	"github.com/riser-platform/riser-server/pkg/util"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -33,15 +34,26 @@ func Test_update_snapshot_simple(t *testing.T) {
 		App: &model.AppConfig{
 			Name: "myapp",
 			Id:   "myid",
+			Autoscale: &model.AppConfigAutoscale{
+				Min: util.PtrInt(0),
+				Max: util.PtrInt(1),
+			},
 			Expose: &model.AppConfigExpose{
 				ContainerPort: 8080,
+			},
+		},
+		Traffic: core.TrafficConfig{
+			core.TrafficConfigRule{
+				RiserGeneration: 1,
+				RevisionName:    "myapp-1",
+				Percent:         100,
 			},
 		},
 	}
 
 	secretNames := []string{"mysecret"}
 
-	dryRunComitter := state.NewDryRunComitter()
+	dryRunCommitter := state.NewDryRunCommitter()
 	var committer state.Committer
 	snapshotDir, err := filepath.Abs("testdata/snapshots/simple")
 	require.NoError(t, err)
@@ -51,7 +63,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 		require.NoError(t, err)
 		committer = state.NewFileCommitter(snapshotDir)
 	} else {
-		committer = dryRunComitter
+		committer = dryRunCommitter
 	}
 
 	ctx := &core.DeploymentContext{
@@ -60,15 +72,15 @@ func Test_update_snapshot_simple(t *testing.T) {
 		RiserGeneration: 3,
 		SecretNames:     secretNames,
 	}
-	// TODO: Refactor
+	// TODO: Refactor prepareDeployment and call first
 	applyDefaults(newDeployment)
 	err = deploy(ctx, committer)
 
 	assert.NoError(t, err)
 	if !shouldUpdateSnapshot() {
-		require.Len(t, dryRunComitter.Commits, 1)
-		assert.Equal(t, "Updating resources for \"myapp\" in stage \"dev\"", dryRunComitter.Commits[0].Message)
-		AssertSnapshot(t, snapshotDir, dryRunComitter.Commits[0].Files)
+		require.Len(t, dryRunCommitter.Commits, 1)
+		assert.Equal(t, "Updating resources for \"myapp\" in stage \"dev\"", dryRunCommitter.Commits[0].Message)
+		AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }
 

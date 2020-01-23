@@ -3,20 +3,23 @@ package model
 import (
 	"testing"
 
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/jinzhu/copier"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// Define the minimum valid config here. Don't reference it directly though. Use createMinAppConfig instead to get a deep clone
 var minimumValidAppConfig = &AppConfig{
 	Name:  "myapp",
 	Id:    "myid",
 	Image: "myimage",
+	Expose: &AppConfigExpose{
+		ContainerPort: 80,
+	},
 }
 
 func Test_AppConfig_ValidateRequired(t *testing.T) {
@@ -25,8 +28,69 @@ func Test_AppConfig_ValidateRequired(t *testing.T) {
 
 	assert.IsType(t, validation.Errors{}, err)
 	validationErrors := err.(validation.Errors)
-	assert.Len(t, validationErrors, 3)
-	assertFieldsRequired(t, validationErrors, "name", "id", "image")
+	assert.Len(t, validationErrors, 4)
+	assertFieldsRequired(t, validationErrors, "name", "id", "image", "expose")
+}
+
+func Test_AppConfig_ValidateExposeRequired(t *testing.T) {
+	appConfig := createMinAppConfig()
+	appConfig.Expose.ContainerPort = 0
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 1)
+}
+
+func Test_AppConfig_ValidateAutoscaleRange(t *testing.T) {
+	min := -1
+	max := 0
+	appConfig := createMinAppConfig()
+	appConfig.Autoscale = &AppConfigAutoscale{
+		Min: &min,
+		Max: &max,
+	}
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 2)
+	require.Contains(t, validationErrors, "autoscale.min", validationErrors)
+	require.Contains(t, validationErrors, "autoscale.max", validationErrors)
+	assert.Equal(t, "must be no less than 0", validationErrors["autoscale.min"].Error())
+	assert.Equal(t, "must be no less than 1", validationErrors["autoscale.max"].Error())
+}
+
+func Test_AppConfig_ValidateAutoscaleMaxGtMin(t *testing.T) {
+	min := 2
+	max := 1
+	appConfig := createMinAppConfig()
+	appConfig.Autoscale = &AppConfigAutoscale{
+		Min: &min,
+		Max: &max,
+	}
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 1)
+	require.Contains(t, validationErrors, "autoscale.max", validationErrors)
+	assert.Equal(t, "must be greater than or equal to autoscale.min", validationErrors["autoscale.max"].Error())
+}
+
+func Test_AppConfig_ValidateAutoscaleMax_NilMin(t *testing.T) {
+	max := 0
+	appConfig := createMinAppConfig()
+	appConfig.Autoscale = &AppConfigAutoscale{
+		Max: &max,
+	}
+	err := appConfig.Validate()
+
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 1)
+	require.Contains(t, validationErrors, "autoscale.max", validationErrors)
+	assert.Equal(t, "must be no less than 1", validationErrors["autoscale.max"].Error())
 }
 
 // Note: We may not allow registry to be set here - it may be dictated by an admin on a per stage basis instead.
@@ -46,8 +110,7 @@ var imageTests = []struct {
 
 func Test_AppConfig_ValidateImage(t *testing.T) {
 	for _, tt := range imageTests {
-		appConfig := &AppConfig{}
-		_ = copier.Copy(appConfig, minimumValidAppConfig)
+		appConfig := createMinAppConfig()
 		appConfig.Image = tt.image
 		err := appConfig.Validate()
 
@@ -68,16 +131,15 @@ var protocolTests = []struct {
 	valid    bool
 }{
 	{"http", true},
-	{"grpc", true},
+	{"http2", true},
 	{"", true},
 	{"redis", false},
 }
 
-func Test_AppConfig_ValidateProtocol(t *testing.T) {
+func Test_AppConfig_ValidateExposeProtocol(t *testing.T) {
 	for _, tt := range protocolTests {
-		appConfig := &AppConfig{}
-		_ = copier.Copy(appConfig, minimumValidAppConfig)
-		appConfig.Expose = &AppConfigExpose{Protocol: tt.protocol}
+		appConfig := createMinAppConfig()
+		appConfig.Expose.Protocol = tt.protocol
 		err := appConfig.Validate()
 
 		if tt.valid {
@@ -87,67 +149,9 @@ func Test_AppConfig_ValidateProtocol(t *testing.T) {
 			validationErrors := err.(validation.Errors)
 			assert.Len(t, validationErrors, 1, tt.protocol)
 			require.Contains(t, validationErrors, "expose.protocol", tt.protocol)
-			assert.Equal(t, "must be one of: http, grpc", validationErrors["expose.protocol"].Error(), tt.protocol)
+			assert.Equal(t, "must be one of: http, http2", validationErrors["expose.protocol"].Error(), tt.protocol)
 		}
 	}
-}
-
-func Test_mergeValidationErrors(t *testing.T) {
-	errA := validation.Errors{}
-	errA["field1"] = errors.New("field1 error")
-	errB := validation.Errors{}
-	errB["field2"] = errors.New("field2 error")
-
-	result := mergeValidationErrors(errA, errB, "b")
-
-	require.IsType(t, validation.Errors{}, result)
-	validationErrors := result.(validation.Errors)
-	assert.Len(t, validationErrors, 2)
-	assert.Equal(t, "field1 error", validationErrors["field1"].Error())
-	assert.Equal(t, "field2 error", validationErrors["b.field2"].Error())
-}
-
-func Test_mergeValidationErrors_BaseNotValidationError(t *testing.T) {
-	errA := errors.New("internal error")
-	errB := validation.Errors{}
-	errB["field2"] = errors.New("field2 error")
-
-	result := mergeValidationErrors(errA, errB, "b")
-
-	assert.Equal(t, errA, result)
-}
-
-func Test_mergeValidationErrors_ToMergeNotValidationError(t *testing.T) {
-	errA := validation.Errors{}
-	errB := errors.New("internal error")
-
-	result := mergeValidationErrors(errA, errB, "b")
-
-	assert.Equal(t, errB, result)
-}
-
-func Test_mergeValidationErrors_NilBase(t *testing.T) {
-	errB := validation.Errors{}
-	errB["field2"] = errors.New("field2 error")
-
-	result := mergeValidationErrors(nil, errB, "b")
-
-	require.IsType(t, validation.Errors{}, result)
-	validationErrors := result.(validation.Errors)
-	assert.Len(t, validationErrors, 1)
-	assert.Equal(t, "field2 error", validationErrors["b.field2"].Error())
-}
-
-func Test_mergeValidationErrors_NilToMerge(t *testing.T) {
-	errA := validation.Errors{}
-	errA["field1"] = errors.New("field1 error")
-
-	result := mergeValidationErrors(errA, nil, "b")
-
-	require.IsType(t, validation.Errors{}, result)
-	validationErrors := result.(validation.Errors)
-	assert.Len(t, validationErrors, 1)
-	assert.Equal(t, "field1 error", validationErrors["field1"].Error())
 }
 
 func Test_ApplyOverrides_NoOverrides(t *testing.T) {
@@ -164,16 +168,20 @@ func Test_ApplyOverrides_NoOverrides(t *testing.T) {
 }
 
 func Test_ApplyOverrides_NoOverridesForStage(t *testing.T) {
-	replicas := int32(3)
-	replicasDev := int32(1)
+	cpuCores := float32(2)
+	cpuCoresDev := float32(0.1)
 	appConfig := &AppConfigWithOverrides{
 		AppConfig: AppConfig{
-			Name:     "myapp",
-			Replicas: &replicas,
+			Name: "myapp",
+			Resources: &AppConfigResources{
+				CpuCores: &cpuCores,
+			},
 		},
 		Overrides: map[string]AppConfig{
 			"dev": AppConfig{
-				Replicas: &replicasDev,
+				Resources: &AppConfigResources{
+					CpuCores: &cpuCoresDev,
+				},
 			},
 		},
 	}
@@ -182,17 +190,19 @@ func Test_ApplyOverrides_NoOverridesForStage(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "myapp", result.Name)
-	assert.Equal(t, replicas, *result.Replicas)
+	assert.Equal(t, cpuCores, *result.Resources.CpuCores)
 }
 
 func Test_ApplyOverrides_WithOverrides(t *testing.T) {
-	replicas := int32(3)
-	replicasDev := int32(1)
+	cpuCores := float32(2)
+	cpuCoresDev := float32(0.1)
 	appConfig := &AppConfigWithOverrides{
 		AppConfig: AppConfig{
-			Name:     "myapp",
-			Image:    "hashicorp/http-echo",
-			Replicas: &replicas,
+			Name:  "myapp",
+			Image: "hashicorp/http-echo",
+			Resources: &AppConfigResources{
+				CpuCores: &cpuCores,
+			},
 			HealthCheck: &AppConfigHealthCheck{
 				Path: "/health",
 			},
@@ -206,7 +216,9 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 		},
 		Overrides: map[string]AppConfig{
 			"dev": AppConfig{
-				Replicas: &replicasDev,
+				Resources: &AppConfigResources{
+					CpuCores: &cpuCoresDev,
+				},
 				Environment: map[string]intstr.IntOrString{
 					"envKey":    intstr.Parse("envValDevOverride"),
 					"envKeyDev": intstr.Parse("envValDev"),
@@ -228,7 +240,7 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 	assert.Equal(t, "envValDev", result.Environment["envKeyDev"].StrVal)
 	assert.Equal(t, "envValBase", result.Environment["envKeyBase"].StrVal)
 	assert.EqualValues(t, 8080, result.Expose.ContainerPort)
-	assert.EqualValues(t, 1, *result.Replicas)
+	assert.EqualValues(t, cpuCoresDev, *result.Resources.CpuCores)
 	assert.Equal(t, "/health", result.HealthCheck.Path)
 }
 
@@ -237,4 +249,10 @@ func assertFieldsRequired(t *testing.T, errors validation.Errors, fieldNames ...
 		require.Contains(t, errors, fieldName, "missing required field %q", fieldName)
 		assert.Equal(t, "cannot be blank", errors[fieldName].Error())
 	}
+}
+
+func createMinAppConfig() *AppConfig {
+	appConfig := &AppConfig{}
+	_ = copier.Copy(appConfig, minimumValidAppConfig)
+	return appConfig
 }

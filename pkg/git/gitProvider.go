@@ -69,7 +69,7 @@ func (provider gitRepoProvider) ResetHardRemote() error {
 
 	//	plumbing.ErrObjectNotFound is a work around for https://github.com/src-d/go-git/issues/1151
 	if err != nil && err != git.NoErrAlreadyUpToDate && err != plumbing.ErrObjectNotFound {
-		return errors.Wrap(err, "error fetching changes from repo")
+		return errors.Wrap(err, fmt.Sprintf("error fetching changes from repo (ref: %s)", fetchRefSpec))
 	}
 
 	remoteRefName := fmt.Sprintf("refs/remotes/%s/%s", remoteName, provider.repoSettings.Branch)

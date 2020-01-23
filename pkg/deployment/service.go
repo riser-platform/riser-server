@@ -1,11 +1,10 @@
 package deployment
 
 import (
-	"database/sql"
 	"fmt"
 	"regexp"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 
@@ -68,18 +67,22 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig) 
 		return 0, err
 	}
 	existingDeployment, err := s.deployments.Get(deploymentConfig.Name, deploymentConfig.Stage)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != core.ErrNotFound {
 		return 0, errors.Wrap(err, fmt.Sprintf("Error retrieving deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
 	}
-	if err == sql.ErrNoRows {
+	if err == core.ErrNotFound {
+		riserGeneration = 1
+		deploymentConfig.Traffic = computeTraffic(riserGeneration, deploymentConfig, nil)
 		// TODO: Ensure that the deployment name does not exist in another stage by another app (edge case)
 		err = s.deployments.Create(&core.Deployment{
 			Name:            deploymentConfig.Name,
 			StageName:       deploymentConfig.Stage,
 			AppName:         deploymentConfig.App.Name,
-			RiserGeneration: 1,
+			RiserGeneration: riserGeneration,
+			Doc: core.DeploymentDoc{
+				Traffic: deploymentConfig.Traffic,
+			},
 		})
-		riserGeneration = 1
 		if err != nil {
 			return 0, errors.Wrap(err, fmt.Sprintf("Error creating deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
 		}
@@ -90,9 +93,36 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig) 
 		if err != nil {
 			return 0, errors.Wrap(err, "Error incrementing deployment generation")
 		}
+		deploymentConfig.Traffic = computeTraffic(riserGeneration, deploymentConfig, existingDeployment)
+
+		err = s.deployments.UpdateTraffic(deploymentConfig.Name, deploymentConfig.Stage, riserGeneration, deploymentConfig.Traffic)
+		if err != nil {
+			return 0, errors.Wrap(err, "Error updating traffic")
+		}
 	}
 
 	return riserGeneration, nil
+}
+
+func computeTraffic(riserGeneration int64, deploymentConfig *core.DeploymentConfig, existingDeployment *core.Deployment) core.TrafficConfig {
+	newRule := core.TrafficConfigRule{
+		RiserGeneration: riserGeneration,
+		RevisionName:    fmt.Sprintf("%s-%d", deploymentConfig.Name, riserGeneration),
+	}
+
+	if deploymentConfig.ManualRollout && existingDeployment != nil {
+		newRule.Percent = 0
+		trafficConfig := core.TrafficConfig{newRule}
+		for _, rule := range existingDeployment.Doc.Traffic {
+			if rule.Percent > 0 {
+				trafficConfig = append(trafficConfig, rule)
+			}
+		}
+		return trafficConfig
+	}
+
+	newRule.Percent = 100
+	return core.TrafficConfig{newRule}
 }
 
 // This is a one-off validation until we rationalize our validation strategy (API layer or service layer).
@@ -112,25 +142,12 @@ func validateDeploymentConfig(deployment *core.DeploymentConfig) error {
 }
 
 func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
-	deploymentResource, err := resources.CreateDeployment(ctx)
+	resourceFiles, err := state.RenderDeployment(ctx.Deployment,
+		resources.CreateKNativeConfiguration(ctx),
+		resources.CreateKNativeRoute(ctx))
 	if err != nil {
 		return err
 	}
 
-	serviceResource, err := resources.CreateService(ctx)
-	if err != nil {
-		return err
-	}
-
-	virtualServiceResource, err := resources.CreateVirtualService(ctx)
-	if err != nil {
-		return err
-	}
-
-	resourceFiles, err := state.RenderDeployment(ctx.Deployment, deploymentResource, serviceResource, virtualServiceResource)
-	if err != nil {
-		return errors.Wrap(err, "Error rendering deployment resources")
-	}
-
-	return committer.Commit(fmt.Sprintf("Updating resources for %q in stage %q", ctx.Deployment.App.Name, ctx.Deployment.Stage), resourceFiles)
+	return committer.Commit(fmt.Sprintf("Updating resources for %q in stage %q", ctx.Deployment.Name, ctx.Deployment.Stage), resourceFiles)
 }

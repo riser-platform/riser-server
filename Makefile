@@ -33,7 +33,7 @@ lint:
 # compile and run unit tests on change. Always "make test" before comitting.
 # requires filewatcher and gotestsum
 watch:
-	filewatcher gotestsum
+	filewatcher -d api,pkg gotestsum
 
 docker-build:
 	docker build . -t riser-server

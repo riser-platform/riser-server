@@ -1,3 +1,4 @@
 riser-server
 cover.out
 .env
+.DS_Store

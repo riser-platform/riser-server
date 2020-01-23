@@ -1,10 +1,8 @@
 package model
 
 import (
-	"fmt"
-
 	"github.com/docker/distribution/reference"
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v3"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -38,15 +36,19 @@ func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig,
 // AppConfig is the root of the application config object graph without stage overrides
 type AppConfig struct {
 	Name        string                        `json:"name"`
+	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
 	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
 	Expose      *AppConfigExpose              `json:"expose,omitempty"`
 	HealthCheck *AppConfigHealthCheck         `json:"healthcheck,omitempty"`
 	// Id is a random id used to prevent collisions (two apps with the same name and namespace)
-	Id string `json:"id"`
-	// TODO: Remove Image in favor of convention based docker image names
+	Id        string              `json:"id"`
 	Image     string              `json:"image"`
-	Replicas  *int32              `json:"replicas,omitempty"`
 	Resources *AppConfigResources `json:"resources,omitempty"`
+}
+
+type AppConfigAutoscale struct {
+	Min *int `json:"min,omitempty"`
+	Max *int `json:"max,omitempty"`
 }
 
 type AppConfigExpose struct {
@@ -57,7 +59,6 @@ type AppConfigExpose struct {
 // Mode is not yet implemented (httpGet = default)
 type AppConfigHealthCheck struct {
 	Path string `json:"path,omitempty"`
-	Port *int32 `json:"port,omitempty"`
 }
 
 type AppConfigResources struct {
@@ -70,42 +71,35 @@ func (appConfig *AppConfig) Validate() error {
 		validation.Field(&appConfig.Name, RulesAppName()...),
 		validation.Field(&appConfig.Id, validation.Required),
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
+		validation.Field(&appConfig.Expose, validation.Required),
 	)
 
+	// Break out each struct so that we can have better error messages than the default
+	// This has the downside of not allowing nested structs to implement their own Validate.
+
 	if appConfig.Expose != nil {
-		exposeError := validation.ValidateStruct(appConfig.Expose,
-			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "grpc").Error("must be one of: http, grpc")))
-		err = mergeValidationErrors(err, exposeError, "expose")
+		exposeErr := validation.ValidateStruct(appConfig.Expose,
+			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "http2").Error("must be one of: http, http2")),
+			validation.Field(&appConfig.Expose.ContainerPort, validation.Required, validation.Min(1), validation.Max(65535)),
+		)
+		err = mergeValidationErrors(err, exposeErr, "expose")
+	}
+
+	if appConfig.Autoscale != nil {
+		maxMinRule := validation.Min(1)
+		if appConfig.Autoscale.Min != nil {
+			maxMinRule = validation.Min(*appConfig.Autoscale.Min).Error("must be greater than or equal to autoscale.min")
+		}
+		autoscaleErr := validation.ValidateStruct(appConfig.Autoscale,
+			validation.Field(&appConfig.Autoscale.Min, validation.Min(0)),
+			// We have to customize the NilOrEmpty error to match "Min since "Min" does not get applied to nillable 0 value
+			validation.Field(&appConfig.Autoscale.Max, validation.NilOrNotEmpty.Error("must be no less than 1"), maxMinRule),
+		)
+
+		err = mergeValidationErrors(err, autoscaleErr, "autoscale")
 	}
 
 	return err
-}
-
-func mergeValidationErrors(baseError error, toMerge error, fieldPrefix string) error {
-	if toMerge == nil {
-		return baseError
-	}
-
-	var isValidationErrors bool
-	baseValidationErrors := validation.Errors{}
-
-	if baseError != nil {
-		baseValidationErrors, isValidationErrors = baseError.(validation.Errors)
-		if !isValidationErrors {
-			return baseError
-		}
-	}
-
-	toMergeValidationErrors, isValidationErrors := toMerge.(validation.Errors)
-	if !isValidationErrors {
-		return toMerge
-	}
-
-	for k, v := range toMergeValidationErrors {
-		baseValidationErrors[fmt.Sprintf("%s.%s", fieldPrefix, k)] = v
-	}
-
-	return baseValidationErrors
 }
 
 func validDockerImageWithoutTagOrDigest(value interface{}) error {

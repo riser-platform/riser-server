@@ -19,12 +19,17 @@ func Test_GetByApp(t *testing.T) {
 		AppName:   "myapp",
 		Doc: core.DeploymentDoc{
 			Status: &core.DeploymentStatus{
-				RolloutStatus:       "InProgress",
-				RolloutStatusReason: "Deploying",
-				RolloutRevision:     1,
-				DockerImage:         "foo:v1.0",
-				Problems: []core.DeploymentStatusProblem{
-					core.DeploymentStatusProblem{Count: 1, Message: "testProblem"},
+				Revisions: []core.DeploymentRevisionStatus{
+					core.DeploymentRevisionStatus{
+						Name:                "rev1",
+						RiserGeneration:     1,
+						RolloutStatus:       "InProgress",
+						RolloutStatusReason: "Deploying",
+						DockerImage:         "foo:v1.0",
+						Problems: []core.StatusProblem{
+							core.StatusProblem{Count: 1, Message: "testProblem"},
+						},
+					},
 				},
 			},
 		},
@@ -103,11 +108,11 @@ func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
 }
 
 func Test_UpdateStatus(t *testing.T) {
-	status := &core.DeploymentStatus{RolloutStatus: "test"}
+	status := &core.DeploymentStatus{}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
 		UpdateStatusFn: func(deploymentNameArg string, stageNameArg string, statusArg *core.DeploymentStatus) error {
-			assert.Equal(t, status, statusArg)
+			assert.Same(t, status, statusArg)
 			assert.Equal(t, "mydeployment", deploymentNameArg)
 			assert.Equal(t, "mystage", stageNameArg)
 			return nil

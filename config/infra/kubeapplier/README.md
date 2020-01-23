@@ -1,4 +1,4 @@
-[Kube Applier](https://github.com/box/kube-applier) is used to automatically make changes to the kube cluster based on what is in git. This works in tandem with the [Git Sync](https://github.com/kubernetes/git-sync) sidecar to synchronize git changes to a kubernetes cluster.  into each service.
+[Kube Applier](https://github.com/box/kube-applier) is used to automatically make changes to the kube cluster based on what is in git. This works in tandem with the [Git Sync](https://github.com/kubernetes/git-sync) sidecar to synchronize git changes to a kubernetes cluster into each service. these resources must be applied directly to the kubernetes cluster and not committed to the `riser-state` repo.
 
 
 ## Configuration
@@ -16,4 +16,4 @@ kubectl create configmap kube-applier	--namespace kube-applier --from-literal=RE
 kubectl create secret kube-applier --namespace kube-applier --from-literal=GIT_SYNC_REPO=https://github.com/my-org/my-state-repo
 ```
 
-> :information_source: If the state repo is not public be sure to incldue the username/password or auth token with read access e.g. For github  `https://oauthtoken:<YOUR-OAUTH-TOKEN>@github.com/...`. It is possible to use a [SSH key instead](https://github.com/kubernetes/git-sync/blob/master/docs/ssh.md).
+> :information_source: If the `riser-state` is private be sure to include the username/password or auth token with read access e.g. For github  `https://oauthtoken:<YOUR-OAUTH-TOKEN>@github.com/...`. It is possible to use a [SSH key instead](https://github.com/kubernetes/git-sync/blob/master/docs/ssh.md).

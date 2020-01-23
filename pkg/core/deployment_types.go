@@ -23,28 +23,55 @@ type DeploymentConfig struct {
 	Stage     string
 	Docker    DeploymentDocker
 	// TODO: Move to core and remove api/v1/model dependency
-	App *model.AppConfig
+	App           *model.AppConfig
+	Traffic       TrafficConfig
+	ManualRollout bool
 }
 
 type DeploymentDocker struct {
 	Tag string `json:"tag"`
 }
 
+// Needed for serialization to postgres since we do partial updates on traffic
+type TrafficConfig []TrafficConfigRule
+
+type TrafficConfigRule struct {
+	RiserGeneration int64  `json:"riserGeneration"`
+	RevisionName    string `json:"revisionName"`
+	Percent         int    `json:"percent"`
+}
+
 type DeploymentDoc struct {
-	Status *DeploymentStatus `json:"status,omitempty"`
+	Status  *DeploymentStatus   `json:"status,omitempty"`
+	Traffic []TrafficConfigRule `json:"traffic"`
 }
 
 type DeploymentStatus struct {
-	ObservedRiserGeneration int64                     `json:"observedRiserGeneration"`
-	RolloutStatus           string                    `json:"rolloutStatus"`
-	RolloutStatusReason     string                    `json:"rolloutStatusReason"`
-	RolloutRevision         int64                     `json:"revision"`
-	DockerImage             string                    `json:"dockerImage"`
-	Problems                []DeploymentStatusProblem `json:"problems"`
-	LastUpdated             time.Time                 `json:"lastUpdated"`
+	ObservedRiserGeneration   int64                      `json:"observedRiserGeneration"`
+	LastUpdated               time.Time                  `json:"lastUpdated"`
+	Revisions                 []DeploymentRevisionStatus `json:"revisions"`
+	LatestReadyRevisionName   string                     `json:"latestReadyRevisionName"`
+	LatestCreatedRevisionName string                     `json:"latestCreatedRevisionName"`
+	Traffic                   []DeploymentTrafficStatus  `json:"traffic"`
 }
 
-type DeploymentStatusProblem struct {
+type DeploymentTrafficStatus struct {
+	Percent      *int64 `json:"percent,omitempty"`
+	RevisionName string `json:"revisionName"`
+	Tag          string `json:"tag,omitempty"`
+}
+
+type DeploymentRevisionStatus struct {
+	Name                string          `json:"name"`
+	AvailableReplicas   int32           `json:"availableReplicas"`
+	DockerImage         string          `json:"dockerImage"`
+	RiserGeneration     int64           `json:"riserGeneration"`
+	RolloutStatus       string          `json:"rolloutStatus"`
+	RolloutStatusReason string          `json:"rolloutStatusReason"`
+	Problems            []StatusProblem `json:"problems"`
+}
+
+type StatusProblem struct {
 	Count   int    `json:"count"`
 	Message string `json:"message"`
 }
@@ -54,6 +81,7 @@ type DeploymentContext struct {
 	Stage           *StageConfig
 	RiserGeneration int64
 	SecretNames     []string
+	ManualRollout   bool
 }
 
 // Needed for sql.Scanner interface
@@ -68,5 +96,10 @@ func (a *DeploymentDoc) Scan(value interface{}) error {
 
 // Needed for sql.Scanner interface. Normally this is only needed on the "Doc" object but we need this here since we do status only updates.
 func (a *DeploymentStatus) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
+
+// Needed for sql.Scanner interface. Normally this is only needed on the "Doc" object but we need this here since we do traffic only updates.
+func (a TrafficConfig) Value() (driver.Value, error) {
 	return json.Marshal(a)
 }

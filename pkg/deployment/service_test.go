@@ -38,7 +38,7 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 	}
 
 	service := service{deployments: deploymentRepository}
-	result, err := service.prepareForDeployment(deployment)
+	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
 	// Sanity check that defaults are tested. Exhaustive default tests are in defaults_test
@@ -71,12 +71,16 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 		UpdateTrafficFn: func(name string, stageName string, riserGeneration int64, traffic core.TrafficConfig) error {
 			assert.Equal(t, "myapp-mydep", name)
 			assert.Equal(t, "mystage", stageName)
+			assert.Len(t, traffic, 1)
+			assert.Equal(t, int64(3), traffic[0].RiserGeneration)
+			assert.Equal(t, "myapp-mydep-3", traffic[0].RevisionName)
+			assert.Equal(t, 100, traffic[0].Percent)
 			return nil
 		},
 	}
 
 	service := service{deployments: deploymentRepository}
-	result, err := service.prepareForDeployment(deployment)
+	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
 	// Sanity check that defaults are tested. Exhaustive default tests are in util_test
@@ -107,10 +111,44 @@ func Test_prepareForDeployment_whenIncrementGenerationFails(t *testing.T) {
 	}
 
 	service := service{deployments: deploymentRepository}
-	result, err := service.prepareForDeployment(deployment)
+	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
 	assert.Equal(t, "Error incrementing deployment generation: test", err.Error())
+}
+
+func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
+	deployment := &core.DeploymentConfig{
+		Name:  "myapp-mydep",
+		Stage: "mystage",
+		App: &model.AppConfig{
+			Name: "myapp",
+		},
+	}
+
+	deploymentRepository := &core.FakeDeploymentRepository{
+		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
+			assert.Equal(t, "myapp-mydep", deploymentNameArg)
+			assert.Equal(t, "mystage", stageNameArg)
+			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
+		},
+	}
+
+	service := service{deployments: deploymentRepository}
+	result, err := service.prepareForDeployment(deployment, true)
+
+	assert.NoError(t, err)
+	// The RiserGeneration is always "0" for a dry-run
+	assert.Equal(t, int64(0), result)
+	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 0, deploymentRepository.IncrementGenerationCallCount)
+	assert.Equal(t, 0, deploymentRepository.UpdateTrafficCallCount)
+	assert.Equal(t, 0, deploymentRepository.CreateCallCount)
+	// Traffic should still be computed in a dry-run, just not persisted
+	assert.Len(t, deployment.Traffic, 1)
+	assert.Equal(t, int64(0), deployment.Traffic[0].RiserGeneration)
+	assert.Equal(t, "myapp-mydep-0", deployment.Traffic[0].RevisionName)
+	assert.Equal(t, 100, deployment.Traffic[0].Percent)
 }
 
 func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
@@ -135,7 +173,7 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 	}
 
 	service := service{deployments: deploymentRepository}
-	result, err := service.prepareForDeployment(deployment)
+	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
 	assert.Equal(t, "Error updating traffic: broke", err.Error())
@@ -164,7 +202,7 @@ func Test_prepareForDeployment_whenAppDoesNotOwnDeployment(t *testing.T) {
 	}
 
 	service := service{deployments: deploymentRepository}
-	result, err := service.prepareForDeployment(deployment)
+	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
 	assert.Equal(t, `A deployment with the name "myapp-mydep" is owned by app "myapp-mydep"`, err.Error())
@@ -187,7 +225,7 @@ func Test_prepareForDeployment_whenGetFails(t *testing.T) {
 	}
 
 	service := service{deployments: deploymentRepository}
-	result, err := service.prepareForDeployment(deployment)
+	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
 	assert.Equal(t, `Error retrieving deployment "myapp-mydep" in stage "mystage": test`, err.Error())
@@ -214,7 +252,7 @@ func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 	}
 
 	service := service{deployments: deploymentRepository}
-	result, err := service.prepareForDeployment(deployment)
+	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
 	assert.Equal(t, `Error creating deployment "myapp-mydep" in stage "mystage": test`, err.Error())

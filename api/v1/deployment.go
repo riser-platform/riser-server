@@ -77,7 +77,7 @@ func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService ap
 		return err
 	}
 
-	err = deploymentService.Update(newDeployment, committer)
+	err = deploymentService.Update(newDeployment, committer, isDryRun)
 	if err != nil {
 		if err == git.ErrNoChanges {
 			return c.JSON(http.StatusOK, model.DeploymentResponse{Message: "No changes to deploy"})

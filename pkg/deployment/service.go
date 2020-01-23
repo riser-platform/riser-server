@@ -18,7 +18,7 @@ import (
 )
 
 type Service interface {
-	Update(deployment *core.DeploymentConfig, committer state.Committer) error
+	Update(deployment *core.DeploymentConfig, committer state.Committer, dryRun bool) error
 }
 
 type service struct {
@@ -31,8 +31,8 @@ func NewService(secrets secret.Service, stages core.StageRepository, deployments
 	return &service{secrets, stages, deployments}
 }
 
-func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer) error {
-	riserGeneration, err := s.prepareForDeployment(deploymentConfig)
+func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) error {
+	riserGeneration, err := s.prepareForDeployment(deploymentConfig, dryRun)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 	return nil
 }
 
-func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig) (riserGeneration int64, err error) {
+func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, dryRun bool) (riserGeneration int64, err error) {
 	applyDefaults(deploymentConfig)
 	if err := validateDeploymentConfig(deploymentConfig); err != nil {
 		return 0, err
@@ -89,15 +89,20 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig) 
 	} else if existingDeployment.AppName != deploymentConfig.App.Name {
 		return 0, &core.ValidationError{Message: fmt.Sprintf("A deployment with the name %q is owned by app %q", deploymentConfig.Name, existingDeployment.AppName)}
 	} else {
-		riserGeneration, err = s.deployments.IncrementGeneration(deploymentConfig.Name, deploymentConfig.Stage)
-		if err != nil {
-			return 0, errors.Wrap(err, "Error incrementing deployment generation")
+		if !dryRun {
+			riserGeneration, err = s.deployments.IncrementGeneration(deploymentConfig.Name, deploymentConfig.Stage)
+			if err != nil {
+				return 0, errors.Wrap(err, "Error incrementing deployment generation")
+			}
 		}
+
 		deploymentConfig.Traffic = computeTraffic(riserGeneration, deploymentConfig, existingDeployment)
 
-		err = s.deployments.UpdateTraffic(deploymentConfig.Name, deploymentConfig.Stage, riserGeneration, deploymentConfig.Traffic)
-		if err != nil {
-			return 0, errors.Wrap(err, "Error updating traffic")
+		if !dryRun {
+			err = s.deployments.UpdateTraffic(deploymentConfig.Name, deploymentConfig.Stage, riserGeneration, deploymentConfig.Traffic)
+			if err != nil {
+				return 0, errors.Wrap(err, "Error updating traffic")
+			}
 		}
 	}
 

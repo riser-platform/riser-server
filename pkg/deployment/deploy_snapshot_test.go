@@ -44,9 +44,9 @@ func Test_update_snapshot_simple(t *testing.T) {
 		},
 		Traffic: core.TrafficConfig{
 			core.TrafficConfigRule{
-				RiserGeneration: 1,
-				RevisionName:    "myapp-1",
-				Percent:         100,
+				RiserRevision: 1,
+				RevisionName:  "myapp-1",
+				Percent:       100,
 			},
 		},
 	}
@@ -67,10 +67,10 @@ func Test_update_snapshot_simple(t *testing.T) {
 	}
 
 	ctx := &core.DeploymentContext{
-		Deployment:      newDeployment,
-		Stage:           &core.StageConfig{PublicGatewayHost: "dev.riser.org"},
-		RiserGeneration: 3,
-		SecretNames:     secretNames,
+		Deployment:    newDeployment,
+		Stage:         &core.StageConfig{PublicGatewayHost: "dev.riser.org"},
+		RiserRevision: 3,
+		SecretNames:   secretNames,
 	}
 	// TODO: Refactor prepareDeployment and call first
 	applyDefaults(newDeployment)

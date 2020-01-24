@@ -44,15 +44,15 @@ func GetStatus(c echo.Context, statusService deploymentstatus.Service) error {
 
 func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus {
 	status := &model.DeploymentStatus{
-		DeploymentName:  domain.Name,
-		StageName:       domain.StageName,
-		RiserGeneration: domain.RiserGeneration,
+		DeploymentName: domain.Name,
+		StageName:      domain.StageName,
+		RiserRevision:  domain.RiserRevision,
 	}
 	if domain.Doc.Status == nil {
 		status.DeploymentStatusMutable = model.DeploymentStatusMutable{}
 	} else {
 		status.DeploymentStatusMutable = model.DeploymentStatusMutable{
-			ObservedRiserGeneration:   domain.Doc.Status.ObservedRiserGeneration,
+			ObservedRiserRevision:     domain.Doc.Status.ObservedRiserRevision,
 			LatestCreatedRevisionName: domain.Doc.Status.LatestCreatedRevisionName,
 			LatestReadyRevisionName:   domain.Doc.Status.LatestReadyRevisionName,
 		}
@@ -63,7 +63,7 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 				Name:                revision.Name,
 				AvailableReplicas:   revision.AvailableReplicas,
 				DockerImage:         revision.DockerImage,
-				RiserGeneration:     revision.RiserGeneration,
+				RiserRevision:       revision.RiserRevision,
 				RolloutStatus:       revision.RolloutStatus,
 				RolloutStatusReason: revision.RolloutStatusReason,
 				Problems:            make([]model.StatusProblem, len(revision.Problems)),
@@ -88,7 +88,7 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 
 func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.DeploymentStatus {
 	out := &core.DeploymentStatus{
-		ObservedRiserGeneration:   in.ObservedRiserGeneration,
+		ObservedRiserRevision:     in.ObservedRiserRevision,
 		LatestCreatedRevisionName: in.LatestCreatedRevisionName,
 		LatestReadyRevisionName:   in.LatestReadyRevisionName,
 		LastUpdated:               time.Now().UTC(),
@@ -100,7 +100,7 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 			Name:                revision.Name,
 			AvailableReplicas:   revision.AvailableReplicas,
 			DockerImage:         revision.DockerImage,
-			RiserGeneration:     revision.RiserGeneration,
+			RiserRevision:       revision.RiserRevision,
 			RolloutStatus:       revision.RolloutStatus,
 			RolloutStatusReason: revision.RolloutStatusReason,
 			Problems:            make([]core.StatusProblem, len(revision.Problems)),

@@ -12,13 +12,13 @@ CREATE TABLE deployment
   name character varying(63) NOT NULL,
   stage_name character varying(63) NOT NULL,
   app_name character varying(63) NOT NULL REFERENCES app(name),
-  riser_generation integer NOT NULL DEFAULT(0),
+  riser_revision integer NOT NULL DEFAULT(0),
   doc jsonb NOT NULL,
   PRIMARY KEY (name,stage_name)
 );
 
 CREATE UNIQUE INDEX ix_deployment ON deployment(name,stage_name);
-CREATE INDEX ix_deployment_riser_generation ON deployment(riser_generation);
+CREATE INDEX ix_deployment_riser_revision ON deployment(riser_revision);
 
 CREATE TABLE secret_meta (
   app_name character varying(63) NOT NULL REFERENCES app(name),

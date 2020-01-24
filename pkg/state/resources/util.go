@@ -19,7 +19,7 @@ func deploymentLabels(ctx *core.DeploymentContext) map[string]string {
 // deploymentAnnotations are annotations common to Riser deployment resources
 func deploymentAnnotations(ctx *core.DeploymentContext) map[string]string {
 	return map[string]string{
-		riserLabel("generation"): strconv.FormatInt(ctx.RiserGeneration, 10),
+		riserLabel("revision"): strconv.FormatInt(ctx.RiserRevision, 10),
 	}
 }
 

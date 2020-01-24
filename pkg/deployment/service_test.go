@@ -32,7 +32,7 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 			assert.Equal(t, "myapp-mydep", deploymentArg.Name)
 			assert.Equal(t, "mystage", deploymentArg.StageName)
 			assert.Equal(t, "myapp", deploymentArg.AppName)
-			assert.Equal(t, int64(1), deploymentArg.RiserGeneration)
+			assert.Equal(t, int64(1), deploymentArg.RiserRevision)
 			return nil
 		},
 	}
@@ -63,16 +63,16 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 			assert.Equal(t, "mystage", stageNameArg)
 			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
 		},
-		IncrementGenerationFn: func(name string, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			assert.Equal(t, "myapp-mydep", name)
 			assert.Equal(t, "mystage", stageName)
 			return 3, nil
 		},
-		UpdateTrafficFn: func(name string, stageName string, riserGeneration int64, traffic core.TrafficConfig) error {
+		UpdateTrafficFn: func(name string, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
 			assert.Equal(t, "myapp-mydep", name)
 			assert.Equal(t, "mystage", stageName)
 			assert.Len(t, traffic, 1)
-			assert.Equal(t, int64(3), traffic[0].RiserGeneration)
+			assert.Equal(t, int64(3), traffic[0].RiserRevision)
 			assert.Equal(t, "myapp-mydep-3", traffic[0].RevisionName)
 			assert.Equal(t, 100, traffic[0].Percent)
 			return nil
@@ -87,12 +87,12 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 	assert.NotNil(t, deployment.App.Expose)
 	assert.Equal(t, int64(3), result)
 	assert.Equal(t, 1, deploymentRepository.GetCallCount)
-	assert.Equal(t, 1, deploymentRepository.IncrementGenerationCallCount)
+	assert.Equal(t, 1, deploymentRepository.IncrementRevisionCallCount)
 	assert.Equal(t, 1, deploymentRepository.UpdateTrafficCallCount)
 	assert.Equal(t, 0, deploymentRepository.CreateCallCount)
 }
 
-func Test_prepareForDeployment_whenIncrementGenerationFails(t *testing.T) {
+func Test_prepareForDeployment_whenIncrementRevisionFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
 		Name:  "myapp-mydep",
 		Stage: "mystage",
@@ -105,7 +105,7 @@ func Test_prepareForDeployment_whenIncrementGenerationFails(t *testing.T) {
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
 			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
 		},
-		IncrementGenerationFn: func(name string, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			return 0, errors.New("test")
 		},
 	}
@@ -114,7 +114,7 @@ func Test_prepareForDeployment_whenIncrementGenerationFails(t *testing.T) {
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
-	assert.Equal(t, "Error incrementing deployment generation: test", err.Error())
+	assert.Equal(t, "Error incrementing deployment revision: test", err.Error())
 }
 
 func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
@@ -138,15 +138,15 @@ func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
 	result, err := service.prepareForDeployment(deployment, true)
 
 	assert.NoError(t, err)
-	// The RiserGeneration is always "0" for a dry-run
+	// The RiserRevision is always "0" for a dry-run
 	assert.Equal(t, int64(0), result)
 	assert.Equal(t, 1, deploymentRepository.GetCallCount)
-	assert.Equal(t, 0, deploymentRepository.IncrementGenerationCallCount)
+	assert.Equal(t, 0, deploymentRepository.IncrementRevisionCallCount)
 	assert.Equal(t, 0, deploymentRepository.UpdateTrafficCallCount)
 	assert.Equal(t, 0, deploymentRepository.CreateCallCount)
 	// Traffic should still be computed in a dry-run, just not persisted
 	assert.Len(t, deployment.Traffic, 1)
-	assert.Equal(t, int64(0), deployment.Traffic[0].RiserGeneration)
+	assert.Equal(t, int64(0), deployment.Traffic[0].RiserRevision)
 	assert.Equal(t, "myapp-mydep-0", deployment.Traffic[0].RevisionName)
 	assert.Equal(t, 100, deployment.Traffic[0].Percent)
 }
@@ -164,10 +164,10 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
 			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
 		},
-		IncrementGenerationFn: func(name string, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			return 1, nil
 		},
-		UpdateTrafficFn: func(name string, stageName string, riserGeneration int64, traffic core.TrafficConfig) error {
+		UpdateTrafficFn: func(name string, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
 			return errors.New("broke")
 		},
 	}
@@ -266,7 +266,7 @@ func Test_computeTraffic_NewDeployment(t *testing.T) {
 	result := computeTraffic(1, cfg, nil)
 
 	assert.Len(t, result, 1)
-	assert.EqualValues(t, result[0].RiserGeneration, 1)
+	assert.EqualValues(t, result[0].RiserRevision, 1)
 	assert.Equal(t, result[0].RevisionName, "myapp-1")
 	assert.EqualValues(t, result[0].Percent, 100)
 }
@@ -281,7 +281,7 @@ func Test_computeTraffic_NewDeployment_ManualRollout(t *testing.T) {
 	result := computeTraffic(1, cfg, nil)
 
 	assert.Len(t, result, 1)
-	assert.EqualValues(t, result[0].RiserGeneration, 1)
+	assert.EqualValues(t, result[0].RiserRevision, 1)
 	assert.Equal(t, result[0].RevisionName, "myapp-1")
 	assert.EqualValues(t, result[0].Percent, 100)
 }
@@ -296,9 +296,9 @@ func Test_computeTraffic_ExistingDeployment_ManualRollout(t *testing.T) {
 		Doc: core.DeploymentDoc{
 			Traffic: core.TrafficConfig{
 				core.TrafficConfigRule{
-					RiserGeneration: 1,
-					RevisionName:    "myapp-1",
-					Percent:         100,
+					RiserRevision: 1,
+					RevisionName:  "myapp-1",
+					Percent:       100,
 				},
 			},
 		},
@@ -307,10 +307,10 @@ func Test_computeTraffic_ExistingDeployment_ManualRollout(t *testing.T) {
 	result := computeTraffic(2, cfg, existingDeployment)
 
 	assert.Len(t, result, 2)
-	assert.EqualValues(t, result[0].RiserGeneration, 2)
+	assert.EqualValues(t, result[0].RiserRevision, 2)
 	assert.Equal(t, result[0].RevisionName, "myapp-2")
 	assert.EqualValues(t, result[0].Percent, 0)
-	assert.EqualValues(t, result[1].RiserGeneration, 1)
+	assert.EqualValues(t, result[1].RiserRevision, 1)
 	assert.Equal(t, result[1].RevisionName, "myapp-1")
 	assert.EqualValues(t, result[1].Percent, 100)
 }
@@ -325,14 +325,14 @@ func Test_computeTraffic_ExistingDeployment_ManualRollout_RemovesExistingZeroPer
 		Doc: core.DeploymentDoc{
 			Traffic: core.TrafficConfig{
 				core.TrafficConfigRule{
-					RiserGeneration: 1,
-					RevisionName:    "myapp-1",
-					Percent:         100,
+					RiserRevision: 1,
+					RevisionName:  "myapp-1",
+					Percent:       100,
 				},
 				core.TrafficConfigRule{
-					RiserGeneration: 2,
-					RevisionName:    "myapp-2",
-					Percent:         0,
+					RiserRevision: 2,
+					RevisionName:  "myapp-2",
+					Percent:       0,
 				},
 			},
 		},
@@ -341,10 +341,10 @@ func Test_computeTraffic_ExistingDeployment_ManualRollout_RemovesExistingZeroPer
 	result := computeTraffic(3, cfg, existingDeployment)
 
 	assert.Len(t, result, 2)
-	assert.EqualValues(t, result[0].RiserGeneration, 3)
+	assert.EqualValues(t, result[0].RiserRevision, 3)
 	assert.Equal(t, result[0].RevisionName, "myapp-3")
 	assert.EqualValues(t, result[0].Percent, 0)
-	assert.EqualValues(t, result[1].RiserGeneration, 1)
+	assert.EqualValues(t, result[1].RiserRevision, 1)
 	assert.Equal(t, result[1].RevisionName, "myapp-1")
 	assert.EqualValues(t, result[1].Percent, 100)
 }

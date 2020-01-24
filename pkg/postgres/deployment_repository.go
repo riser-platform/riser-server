@@ -16,17 +16,17 @@ func NewDeploymentRepository(db *sql.DB) core.DeploymentRepository {
 }
 
 func (r *deploymentRepository) Create(newDeployment *core.Deployment) error {
-	_, err := r.db.Exec(`INSERT INTO deployment (name, stage_name, app_name, riser_generation, doc) VALUES ($1,$2,$3,$4,$5)`,
-		newDeployment.Name, newDeployment.StageName, newDeployment.AppName, newDeployment.RiserGeneration, &newDeployment.Doc)
+	_, err := r.db.Exec(`INSERT INTO deployment (name, stage_name, app_name, riser_revision, doc) VALUES ($1,$2,$3,$4,$5)`,
+		newDeployment.Name, newDeployment.StageName, newDeployment.AppName, newDeployment.RiserRevision, &newDeployment.Doc)
 	return err
 }
 
 func (r *deploymentRepository) Get(deploymentName, stageName string) (*core.Deployment, error) {
 	deployment := &core.Deployment{}
 	err := r.db.QueryRow(`
-	SELECT name, stage_name, app_name, riser_generation, doc FROM deployment
+	SELECT name, stage_name, app_name, riser_revision, doc FROM deployment
 	WHERE name = $1 AND stage_name = $2
-	`, deploymentName, stageName).Scan(&deployment.Name, &deployment.StageName, &deployment.AppName, &deployment.RiserGeneration, &deployment.Doc)
+	`, deploymentName, stageName).Scan(&deployment.Name, &deployment.StageName, &deployment.AppName, &deployment.RiserRevision, &deployment.Doc)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			err = core.ErrNotFound
@@ -39,7 +39,7 @@ func (r *deploymentRepository) Get(deploymentName, stageName string) (*core.Depl
 func (r *deploymentRepository) FindByApp(appName string) ([]core.Deployment, error) {
 	deployments := []core.Deployment{}
 	rows, err := r.db.Query(`
-	SELECT name, stage_name, app_name, riser_generation, doc
+	SELECT name, stage_name, app_name, riser_revision, doc
 	FROM deployment
 	WHERE app_name = $1
 	ORDER BY stage_name, name
@@ -52,7 +52,7 @@ func (r *deploymentRepository) FindByApp(appName string) ([]core.Deployment, err
 	defer rows.Close()
 	for rows.Next() {
 		deployment := core.Deployment{}
-		err := rows.Scan(&deployment.Name, &deployment.StageName, &deployment.AppName, &deployment.RiserGeneration, &deployment.Doc)
+		err := rows.Scan(&deployment.Name, &deployment.StageName, &deployment.AppName, &deployment.RiserRevision, &deployment.Doc)
 		if err != nil {
 			return nil, err
 		}
@@ -62,30 +62,30 @@ func (r *deploymentRepository) FindByApp(appName string) ([]core.Deployment, err
 	return deployments, nil
 }
 
-func (r *deploymentRepository) IncrementGeneration(deploymentName, stageName string) (generation int64, err error) {
+func (r *deploymentRepository) IncrementRevision(deploymentName, stageName string) (revision int64, err error) {
 	err = r.db.QueryRow(`
-	UPDATE deployment SET riser_generation = riser_generation + 1
+	UPDATE deployment SET riser_revision = riser_revision + 1
 	WHERE name = $1 AND stage_name = $2
-	RETURNING riser_generation
-	`, deploymentName, stageName).Scan(&generation)
+	RETURNING riser_revision
+	`, deploymentName, stageName).Scan(&revision)
 	if err != nil {
 		return 0, err
 	}
 
-	return generation, nil
+	return revision, nil
 }
 
-func (r *deploymentRepository) RollbackGeneration(deploymentName, stageName string, failedGeneration int64) (generation int64, err error) {
+func (r *deploymentRepository) RollbackRevision(deploymentName, stageName string, failedRevision int64) (revision int64, err error) {
 	err = r.db.QueryRow(`
-	UPDATE deployment SET riser_generation = riser_generation - 1
-	WHERE name = $1 AND stage_name = $2 AND riser_generation = $3
-	RETURNING riser_generation
-	`, deploymentName, stageName, failedGeneration).Scan(&generation)
+	UPDATE deployment SET riser_revision = riser_revision - 1
+	WHERE name = $1 AND stage_name = $2 AND riser_revision = $3
+	RETURNING riser_revision
+	`, deploymentName, stageName, failedRevision).Scan(&revision)
 	if err != nil {
 		return 0, err
 	}
 
-	return generation, nil
+	return revision, nil
 }
 
 func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error {
@@ -93,9 +93,9 @@ func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, st
 	  UPDATE deployment
 		SET doc = jsonb_set(doc, '{status}', $3)
 		WHERE name = $1 AND stage_name = $2
-		-- Don't update status from an older observed generation
-		AND ((doc->'status'->>'observedRiserGeneration')::int <= $4 OR doc->'status' IS NULL OR doc->'status'->>'observedRiserGeneration' IS NULL)
-	`, deploymentName, stageName, status, status.ObservedRiserGeneration)
+		-- Don't update status from an older observed revision
+		AND ((doc->'status'->>'observedRiserRevision')::int <= $4 OR doc->'status' IS NULL OR doc->'status'->>'observedRiserRevision' IS NULL)
+	`, deploymentName, stageName, status, status.ObservedRiserRevision)
 
 	if err != nil {
 		return err
@@ -109,12 +109,12 @@ func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, st
 	return nil
 }
 
-func (r *deploymentRepository) UpdateTraffic(deploymentName, stageName string, riserGeneration int64, traffic core.TrafficConfig) error {
+func (r *deploymentRepository) UpdateTraffic(deploymentName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
 	result, err := r.db.Exec(`
 		UPDATE DEPLOYMENT
 		SET doc = jsonb_set(doc, '{traffic}', $4)
-		WHERE Name = $1 AND stage_name = $2 AND riser_generation = $3
-	`, deploymentName, stageName, riserGeneration, traffic)
+		WHERE Name = $1 AND stage_name = $2 AND riser_revision = $3
+	`, deploymentName, stageName, riserRevision, traffic)
 
 	if err != nil {
 		return err

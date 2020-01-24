@@ -15,12 +15,12 @@ type AppStatus struct {
 type DeploymentStatus struct {
 	DeploymentName          string `json:"deployment"`
 	StageName               string `json:"stage"`
-	RiserGeneration         int64  `json:"riserGeneration"`
+	RiserRevision           int64  `json:"riserRevision"`
 	DeploymentStatusMutable `json:",inline"`
 }
 
 type DeploymentStatusMutable struct {
-	ObservedRiserGeneration   int64                      `json:"observedRiserGeneration"`
+	ObservedRiserRevision     int64                      `json:"observedRiserRevision"`
 	Revisions                 []DeploymentRevisionStatus `json:"revisions,omitempty"`
 	Traffic                   []DeploymentTrafficStatus  `json:"traffic,omitempty"`
 	LatestCreatedRevisionName string                     `json:"latestCreatedRevisionName"`
@@ -37,7 +37,7 @@ type DeploymentRevisionStatus struct {
 	Name              string          `json:"name"`
 	AvailableReplicas int32           `json:"availableReplicas"`
 	DockerImage       string          `json:"dockerImage"`
-	RiserGeneration   int64           `json:"riserGeneration"`
+	RiserRevision     int64           `json:"riserRevision"`
 	Problems          []StatusProblem `json:"problems,omitempty"`
 	// TODO: Probably rename and use different
 	RolloutStatus string `json:"rolloutStatus"`

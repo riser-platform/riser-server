@@ -51,7 +51,7 @@ func (s *service) UpdateTraffic(deploymentName, stageName string, traffic core.T
 				Name: deployment.AppName,
 			},
 		},
-		RiserGeneration: deployment.RiserGeneration,
+		RiserRevision: deployment.RiserRevision,
 	}
 
 	resourceFiles, err := state.RenderRoute(deploymentName, namespace, stageName, resources.CreateKNativeRoute(ctx))
@@ -66,12 +66,12 @@ func validateTrafficRules(traffic core.TrafficConfig, deployment *core.Deploymen
 	revisions := map[int64]bool{}
 	if deployment.Doc.Status != nil {
 		for _, rev := range deployment.Doc.Status.Revisions {
-			revisions[rev.RiserGeneration] = true
+			revisions[rev.RiserRevision] = true
 		}
 	}
 	for _, rule := range traffic {
-		if _, ok := revisions[rule.RiserGeneration]; !ok {
-			return &core.ValidationError{Message: fmt.Sprintf(`revision "%d" either does not exist or has not reported its status yet`, rule.RiserGeneration)}
+		if _, ok := revisions[rule.RiserRevision]; !ok {
+			return &core.ValidationError{Message: fmt.Sprintf(`revision "%d" either does not exist or has not reported its status yet`, rule.RiserRevision)}
 		}
 	}
 

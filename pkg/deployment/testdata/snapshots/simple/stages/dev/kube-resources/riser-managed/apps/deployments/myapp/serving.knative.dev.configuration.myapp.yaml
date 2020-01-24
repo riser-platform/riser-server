@@ -3,7 +3,7 @@ apiVersion: serving.knative.dev/v1
 kind: Configuration
 metadata:
   annotations:
-    riser.dev/generation: "3"
+    riser.dev/revision: "3"
   creationTimestamp: null
   labels:
     riser.dev/app: myapp
@@ -17,7 +17,7 @@ spec:
       annotations:
         autoscaling.knative.dev/maxScale: "1"
         autoscaling.knative.dev/minScale: "0"
-        riser.dev/generation: "3"
+        riser.dev/revision: "3"
       creationTimestamp: null
       labels:
         riser.dev/app: myapp

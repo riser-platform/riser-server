@@ -40,7 +40,7 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 
 func createRevisionMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
 	revisionMeta := metav1.ObjectMeta{
-		Name:        fmt.Sprintf("%s-%d", ctx.Deployment.Name, ctx.RiserGeneration),
+		Name:        fmt.Sprintf("%s-%d", ctx.Deployment.Name, ctx.RiserRevision),
 		Labels:      deploymentLabels(ctx),
 		Annotations: deploymentAnnotations(ctx),
 	}

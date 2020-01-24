@@ -12,8 +12,8 @@ type RolloutRequest struct {
 }
 
 type TrafficRule struct {
-	RiserGeneration int64 `json:"riserGeneration"`
-	Percent         int   `json:"percent"`
+	RiserRevision int64 `json:"riserRevision"`
+	Percent       int   `json:"percent"`
 }
 
 func (rolloutRequest *RolloutRequest) Validate() error {
@@ -22,12 +22,12 @@ func (rolloutRequest *RolloutRequest) Validate() error {
 	revisions := map[int64]bool{}
 	for idx, rule := range rolloutRequest.Traffic {
 		percentage += rule.Percent
-		if _, ok := revisions[rule.RiserGeneration]; ok {
+		if _, ok := revisions[rule.RiserRevision]; ok {
 			err = mergeValidationErrors(err,
-				validation.Errors{"riserGeneration": fmt.Errorf("revision \"%d\" specified twice. You may only specify one rule per revision", rule.RiserGeneration)},
+				validation.Errors{"riserRevision": fmt.Errorf("revision \"%d\" specified twice. You may only specify one rule per revision", rule.RiserRevision)},
 				fmt.Sprintf("traffic[%d]", idx))
 		}
-		revisions[rule.RiserGeneration] = true
+		revisions[rule.RiserRevision] = true
 		ruleErr := rule.Validate()
 		if ruleErr != nil {
 			err = mergeValidationErrors(err, ruleErr, fmt.Sprintf("traffic[%d]", idx))
@@ -52,7 +52,7 @@ func (rolloutRequest *RolloutRequest) Validate() error {
 
 func (trafficRule *TrafficRule) Validate() error {
 	return validation.ValidateStruct(trafficRule,
-		validation.Field(&trafficRule.RiserGeneration, validation.Required, validation.Min(0)),
+		validation.Field(&trafficRule.RiserRevision, validation.Required, validation.Min(0)),
 		validation.Field(&trafficRule.Percent, validation.Min(0), validation.Max(100)),
 	)
 }

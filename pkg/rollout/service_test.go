@@ -21,7 +21,7 @@ func Test_UpdateTraffic(t *testing.T) {
 					Status: &core.DeploymentStatus{
 						Revisions: []core.DeploymentRevisionStatus{
 							core.DeploymentRevisionStatus{
-								RiserGeneration: 1,
+								RiserRevision: 1,
 							},
 						},
 					},
@@ -32,8 +32,8 @@ func Test_UpdateTraffic(t *testing.T) {
 
 	traffic := core.TrafficConfig{
 		core.TrafficConfigRule{
-			RiserGeneration: 1,
-			Percent:         100,
+			RiserRevision: 1,
+			Percent:       100,
 		},
 	}
 
@@ -88,7 +88,7 @@ func Test_UpdateTraffic_ValidatesRevisionStatus(t *testing.T) {
 					Status: &core.DeploymentStatus{
 						Revisions: []core.DeploymentRevisionStatus{
 							core.DeploymentRevisionStatus{
-								RiserGeneration: 1,
+								RiserRevision: 1,
 							},
 						},
 					},
@@ -99,12 +99,12 @@ func Test_UpdateTraffic_ValidatesRevisionStatus(t *testing.T) {
 
 	traffic := core.TrafficConfig{
 		core.TrafficConfigRule{
-			RiserGeneration: 1,
-			Percent:         50,
+			RiserRevision: 1,
+			Percent:       50,
 		},
 		core.TrafficConfigRule{
-			RiserGeneration: 2,
-			Percent:         50,
+			RiserRevision: 2,
+			Percent:       50,
 		},
 	}
 
@@ -127,8 +127,8 @@ func Test_UpdateTraffic_ValidatesRevisionStatus_NoStatus(t *testing.T) {
 
 	traffic := core.TrafficConfig{
 		core.TrafficConfigRule{
-			RiserGeneration: 1,
-			Percent:         100,
+			RiserRevision: 1,
+			Percent:       100,
 		},
 	}
 

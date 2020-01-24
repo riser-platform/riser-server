@@ -5,24 +5,24 @@ type DeploymentRepository interface {
 	FindByApp(appName string) ([]Deployment, error)
 	Get(name, stageName string) (*Deployment, error)
 	UpdateStatus(name, stageName string, status *DeploymentStatus) error
-	UpdateTraffic(name, stageName string, riserGeneration int64, traffic TrafficConfig) error
-	IncrementGeneration(name, stageName string) (int64, error)
-	RollbackGeneration(name, stageName string, failedGeneration int64) (int64, error)
+	UpdateTraffic(name, stageName string, riserRevision int64, traffic TrafficConfig) error
+	IncrementRevision(name, stageName string) (int64, error)
+	RollbackRevision(name, stageName string, failedRevision int64) (int64, error)
 }
 
 type FakeDeploymentRepository struct {
-	CreateFn                     func(newDeployment *Deployment) error
-	CreateCallCount              int
-	GetFn                        func(name, stageName string) (*Deployment, error)
-	GetCallCount                 int
-	FindByAppFn                  func(string) ([]Deployment, error)
-	IncrementGenerationFn        func(name, stageName string) (int64, error)
-	IncrementGenerationCallCount int
-	RollbackGenerationFn         func(name, stageName string, failedGeneration int64) (int64, error)
-	UpdateStatusFn               func(name, stageName string, status *DeploymentStatus) error
-	UpdateStatusCallCount        int
-	UpdateTrafficFn              func(name, stageName string, riserGeneration int64, traffic TrafficConfig) error
-	UpdateTrafficCallCount       int
+	CreateFn                   func(newDeployment *Deployment) error
+	CreateCallCount            int
+	GetFn                      func(name, stageName string) (*Deployment, error)
+	GetCallCount               int
+	FindByAppFn                func(string) ([]Deployment, error)
+	IncrementRevisionFn        func(name, stageName string) (int64, error)
+	IncrementRevisionCallCount int
+	RollbackRevisionFn         func(name, stageName string, failedRevision int64) (int64, error)
+	UpdateStatusFn             func(name, stageName string, status *DeploymentStatus) error
+	UpdateStatusCallCount      int
+	UpdateTrafficFn            func(name, stageName string, riserRevision int64, traffic TrafficConfig) error
+	UpdateTrafficCallCount     int
 }
 
 func (f *FakeDeploymentRepository) Create(newDeployment *Deployment) error {
@@ -39,13 +39,13 @@ func (fake *FakeDeploymentRepository) FindByApp(appName string) ([]Deployment, e
 	return fake.FindByAppFn(appName)
 }
 
-func (fake *FakeDeploymentRepository) IncrementGeneration(deploymentName, stageName string) (int64, error) {
-	fake.IncrementGenerationCallCount++
-	return fake.IncrementGenerationFn(deploymentName, stageName)
+func (fake *FakeDeploymentRepository) IncrementRevision(deploymentName, stageName string) (int64, error) {
+	fake.IncrementRevisionCallCount++
+	return fake.IncrementRevisionFn(deploymentName, stageName)
 }
 
-func (fake *FakeDeploymentRepository) RollbackGeneration(name, stageName string, failedGeneration int64) (int64, error) {
-	return fake.RollbackGenerationFn(name, stageName, failedGeneration)
+func (fake *FakeDeploymentRepository) RollbackRevision(name, stageName string, failedRevision int64) (int64, error) {
+	return fake.RollbackRevisionFn(name, stageName, failedRevision)
 }
 
 func (fake *FakeDeploymentRepository) UpdateStatus(deploymentName, stageName string, status *DeploymentStatus) error {
@@ -53,7 +53,7 @@ func (fake *FakeDeploymentRepository) UpdateStatus(deploymentName, stageName str
 	return fake.UpdateStatusFn(deploymentName, stageName, status)
 }
 
-func (fake *FakeDeploymentRepository) UpdateTraffic(name, stageName string, riserGeneration int64, traffic TrafficConfig) error {
+func (fake *FakeDeploymentRepository) UpdateTraffic(name, stageName string, riserRevision int64, traffic TrafficConfig) error {
 	fake.UpdateTrafficCallCount++
-	return fake.UpdateTrafficFn(name, stageName, riserGeneration, traffic)
+	return fake.UpdateTrafficFn(name, stageName, riserRevision, traffic)
 }

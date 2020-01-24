@@ -3,7 +3,7 @@ apiVersion: serving.knative.dev/v1
 kind: Route
 metadata:
   annotations:
-    riser.dev/generation: "3"
+    riser.dev/revision: "3"
   creationTimestamp: null
   labels:
     riser.dev/app: myapp

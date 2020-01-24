@@ -52,9 +52,9 @@ func mapTrafficRulesToDomain(deploymentName string, traffic []model.TrafficRule)
 	out := core.TrafficConfig{}
 	for _, rule := range traffic {
 		out = append(out, core.TrafficConfigRule{
-			RiserGeneration: rule.RiserGeneration,
-			RevisionName:    fmt.Sprintf("%s-%d", deploymentName, rule.RiserGeneration),
-			Percent:         rule.Percent,
+			RiserRevision: rule.RiserRevision,
+			RevisionName:  fmt.Sprintf("%s-%d", deploymentName, rule.RiserRevision),
+			Percent:       rule.Percent,
 		})
 	}
 	return out

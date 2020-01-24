@@ -22,7 +22,7 @@ func Test_GetByApp(t *testing.T) {
 				Revisions: []core.DeploymentRevisionStatus{
 					core.DeploymentRevisionStatus{
 						Name:                "rev1",
-						RiserGeneration:     1,
+						RiserRevision:       1,
 						RolloutStatus:       "InProgress",
 						RolloutStatusReason: "Deploying",
 						DockerImage:         "foo:v1.0",

@@ -18,7 +18,7 @@ func Test_createRevisionMeta(t *testing.T) {
 				Name: "myapp",
 			},
 		},
-		RiserGeneration: 1,
+		RiserRevision: 1,
 	}
 
 	result := createRevisionMeta(ctx)
@@ -41,7 +41,7 @@ func Test_createRevisionMeta_Autoscale(t *testing.T) {
 				},
 			},
 		},
-		RiserGeneration: 1,
+		RiserRevision: 1,
 	}
 
 	result := createRevisionMeta(ctx)
@@ -49,5 +49,5 @@ func Test_createRevisionMeta_Autoscale(t *testing.T) {
 	assert.Len(t, result.Annotations, 3)
 	assert.Equal(t, "1", result.Annotations["autoscaling.knative.dev/minScale"])
 	assert.Equal(t, "2", result.Annotations["autoscaling.knative.dev/maxScale"])
-	assert.Equal(t, "1", result.Annotations["riser.dev/generation"])
+	assert.Equal(t, "1", result.Annotations["riser.dev/revision"])
 }

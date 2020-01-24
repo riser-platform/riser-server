@@ -33,7 +33,7 @@ func createRouteSpec(trafficConfig core.TrafficConfig) RouteSpec {
 		spec.Traffic = append(spec.Traffic, TrafficTarget{
 			RevisionName: rule.RevisionName,
 			Percent:      util.PtrInt64(int64(rule.Percent)),
-			Tag:          fmt.Sprintf("r%d", rule.RiserGeneration),
+			Tag:          fmt.Sprintf("r%d", rule.RiserRevision),
 		})
 	}
 

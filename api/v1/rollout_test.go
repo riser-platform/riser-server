@@ -52,22 +52,22 @@ func Test_PutRollout_ValidatesTraffic(t *testing.T) {
 func Test_mapTrafficRulesToDomain(t *testing.T) {
 	in := []model.TrafficRule{
 		model.TrafficRule{
-			RiserGeneration: 1,
-			Percent:         10,
+			RiserRevision: 1,
+			Percent:       10,
 		},
 		model.TrafficRule{
-			RiserGeneration: 2,
-			Percent:         90,
+			RiserRevision: 2,
+			Percent:       90,
 		},
 	}
 
 	result := mapTrafficRulesToDomain("myapp", in)
 
 	assert.Len(t, result, 2)
-	assert.EqualValues(t, 1, result[0].RiserGeneration)
+	assert.EqualValues(t, 1, result[0].RiserRevision)
 	assert.Equal(t, "myapp-1", result[0].RevisionName)
 	assert.Equal(t, 10, result[0].Percent)
-	assert.EqualValues(t, 2, result[1].RiserGeneration)
+	assert.EqualValues(t, 2, result[1].RiserRevision)
 	assert.Equal(t, "myapp-2", result[1].RevisionName)
 	assert.Equal(t, 90, result[1].Percent)
 }

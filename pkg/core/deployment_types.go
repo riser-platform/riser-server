@@ -12,9 +12,9 @@ type Deployment struct {
 	Name      string
 	StageName string
 	AppName   string
-	// RiserGeneration is for tracking deployment changes and has no relation to a k8s Deployment generation
-	RiserGeneration int64
-	Doc             DeploymentDoc
+	// RiserRevision is for tracking deployment changes and has no relation to a k8s deployment revision
+	RiserRevision int64
+	Doc           DeploymentDoc
 }
 
 type DeploymentConfig struct {
@@ -36,9 +36,9 @@ type DeploymentDocker struct {
 type TrafficConfig []TrafficConfigRule
 
 type TrafficConfigRule struct {
-	RiserGeneration int64  `json:"riserGeneration"`
-	RevisionName    string `json:"revisionName"`
-	Percent         int    `json:"percent"`
+	RiserRevision int64  `json:"riserRevision"`
+	RevisionName  string `json:"revisionName"`
+	Percent       int    `json:"percent"`
 }
 
 type DeploymentDoc struct {
@@ -47,7 +47,7 @@ type DeploymentDoc struct {
 }
 
 type DeploymentStatus struct {
-	ObservedRiserGeneration   int64                      `json:"observedRiserGeneration"`
+	ObservedRiserRevision     int64                      `json:"observedRiserRevision"`
 	LastUpdated               time.Time                  `json:"lastUpdated"`
 	Revisions                 []DeploymentRevisionStatus `json:"revisions"`
 	LatestReadyRevisionName   string                     `json:"latestReadyRevisionName"`
@@ -65,7 +65,7 @@ type DeploymentRevisionStatus struct {
 	Name                string          `json:"name"`
 	AvailableReplicas   int32           `json:"availableReplicas"`
 	DockerImage         string          `json:"dockerImage"`
-	RiserGeneration     int64           `json:"riserGeneration"`
+	RiserRevision       int64           `json:"riserRevision"`
 	RolloutStatus       string          `json:"rolloutStatus"`
 	RolloutStatusReason string          `json:"rolloutStatusReason"`
 	Problems            []StatusProblem `json:"problems"`
@@ -77,11 +77,11 @@ type StatusProblem struct {
 }
 
 type DeploymentContext struct {
-	Deployment      *DeploymentConfig
-	Stage           *StageConfig
-	RiserGeneration int64
-	SecretNames     []string
-	ManualRollout   bool
+	Deployment    *DeploymentConfig
+	Stage         *StageConfig
+	RiserRevision int64
+	SecretNames   []string
+	ManualRollout bool
 }
 
 // Needed for sql.Scanner interface

@@ -32,7 +32,7 @@ func NewService(secrets secret.Service, stages core.StageRepository, deployments
 }
 
 func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) error {
-	riserGeneration, err := s.prepareForDeployment(deploymentConfig, dryRun)
+	riserRevision, err := s.prepareForDeployment(deploymentConfig, dryRun)
 	if err != nil {
 		return err
 	}
@@ -46,22 +46,22 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 		return err
 	}
 	ctx := &core.DeploymentContext{
-		Deployment:      deploymentConfig,
-		Stage:           &stage.Doc.Config,
-		RiserGeneration: riserGeneration,
-		SecretNames:     secretNames,
+		Deployment:    deploymentConfig,
+		Stage:         &stage.Doc.Config,
+		RiserRevision: riserRevision,
+		SecretNames:   secretNames,
 	}
 	err = deploy(ctx, committer)
 	if err != nil {
 		// TODO: Log rollback error but don't return since we want the deployment error to flow to caller
-		_, _ = s.deployments.RollbackGeneration(deploymentConfig.Name, deploymentConfig.Stage, riserGeneration)
+		_, _ = s.deployments.RollbackRevision(deploymentConfig.Name, deploymentConfig.Stage, riserRevision)
 		return err
 	}
 
 	return nil
 }
 
-func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, dryRun bool) (riserGeneration int64, err error) {
+func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, dryRun bool) (riserRevision int64, err error) {
 	applyDefaults(deploymentConfig)
 	if err := validateDeploymentConfig(deploymentConfig); err != nil {
 		return 0, err
@@ -71,14 +71,14 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 		return 0, errors.Wrap(err, fmt.Sprintf("Error retrieving deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
 	}
 	if err == core.ErrNotFound {
-		riserGeneration = 1
-		deploymentConfig.Traffic = computeTraffic(riserGeneration, deploymentConfig, nil)
+		riserRevision = 1
+		deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, nil)
 		// TODO: Ensure that the deployment name does not exist in another stage by another app (edge case)
 		err = s.deployments.Create(&core.Deployment{
-			Name:            deploymentConfig.Name,
-			StageName:       deploymentConfig.Stage,
-			AppName:         deploymentConfig.App.Name,
-			RiserGeneration: riserGeneration,
+			Name:          deploymentConfig.Name,
+			StageName:     deploymentConfig.Stage,
+			AppName:       deploymentConfig.App.Name,
+			RiserRevision: riserRevision,
 			Doc: core.DeploymentDoc{
 				Traffic: deploymentConfig.Traffic,
 			},
@@ -90,29 +90,29 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 		return 0, &core.ValidationError{Message: fmt.Sprintf("A deployment with the name %q is owned by app %q", deploymentConfig.Name, existingDeployment.AppName)}
 	} else {
 		if !dryRun {
-			riserGeneration, err = s.deployments.IncrementGeneration(deploymentConfig.Name, deploymentConfig.Stage)
+			riserRevision, err = s.deployments.IncrementRevision(deploymentConfig.Name, deploymentConfig.Stage)
 			if err != nil {
-				return 0, errors.Wrap(err, "Error incrementing deployment generation")
+				return 0, errors.Wrap(err, "Error incrementing deployment revision")
 			}
 		}
 
-		deploymentConfig.Traffic = computeTraffic(riserGeneration, deploymentConfig, existingDeployment)
+		deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, existingDeployment)
 
 		if !dryRun {
-			err = s.deployments.UpdateTraffic(deploymentConfig.Name, deploymentConfig.Stage, riserGeneration, deploymentConfig.Traffic)
+			err = s.deployments.UpdateTraffic(deploymentConfig.Name, deploymentConfig.Stage, riserRevision, deploymentConfig.Traffic)
 			if err != nil {
 				return 0, errors.Wrap(err, "Error updating traffic")
 			}
 		}
 	}
 
-	return riserGeneration, nil
+	return riserRevision, nil
 }
 
-func computeTraffic(riserGeneration int64, deploymentConfig *core.DeploymentConfig, existingDeployment *core.Deployment) core.TrafficConfig {
+func computeTraffic(riserRevision int64, deploymentConfig *core.DeploymentConfig, existingDeployment *core.Deployment) core.TrafficConfig {
 	newRule := core.TrafficConfigRule{
-		RiserGeneration: riserGeneration,
-		RevisionName:    fmt.Sprintf("%s-%d", deploymentConfig.Name, riserGeneration),
+		RiserRevision: riserRevision,
+		RevisionName:  fmt.Sprintf("%s-%d", deploymentConfig.Name, riserRevision),
 	}
 
 	if deploymentConfig.ManualRollout && existingDeployment != nil {

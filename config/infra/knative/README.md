@@ -1,8 +1,8 @@
 We do not recommend using Gitops to install Knative as the official KNative yamls contain configuration which can overwrite any custom configuration which you may have. Hopefully this will change in the future. A quick way to get up and running is to run the following:
 
 ```
-kubectl apply -l knative.dev/crd-install=true -f https://github.com/knative/serving/releases/download/v0.11.1/serving.yaml
-kubectl apply -f https://github.com/knative/serving/releases/download/v0.11.1/serving.yaml
+kubectl apply -l knative.dev/crd-install=true -f https://github.com/knative/serving/releases/download/v0.12/serving.yaml
+kubectl apply -f https://github.com/knative/serving/releases/download/v0.12/serving.yaml
 ```
 
 
@@ -47,7 +47,7 @@ Your app will be accessible via https and http requests will 301 redirect to the
 Managing TLS certificates is a complicated subject. You will have to assess your own certificate management strategy along with your security requirements to determine the best approach. The easiest way to manage certificates is with the installed CertManager. First, install the certmanager component:
 
 ```
-kubectl apply -f https://github.com/knative/serving/releases/download/v0.11.1/serving-cert-manager.yaml
+kubectl apply -f https://github.com/knative/serving/releases/download/v0.12/serving-cert-manager.yaml
 ```
 
 Then configure the issuer. For this example we'll use [LetsEncrypt](https://letsencrypt.org/). It assumes that you already have a LetsEncrypt ClusterIssuer named `letsencrypt`.

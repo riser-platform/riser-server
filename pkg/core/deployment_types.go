@@ -62,13 +62,12 @@ type DeploymentTrafficStatus struct {
 }
 
 type DeploymentRevisionStatus struct {
-	Name                string          `json:"name"`
-	AvailableReplicas   int32           `json:"availableReplicas"`
-	DockerImage         string          `json:"dockerImage"`
-	RiserRevision       int64           `json:"riserRevision"`
-	RolloutStatus       string          `json:"rolloutStatus"`
-	RolloutStatusReason string          `json:"rolloutStatusReason"`
-	Problems            []StatusProblem `json:"problems"`
+	Name                 string `json:"name"`
+	AvailableReplicas    int32  `json:"availableReplicas"`
+	DockerImage          string `json:"dockerImage"`
+	RiserRevision        int64  `json:"riserRevision"`
+	RevisionStatus       string `json:"revisionStatus"`
+	RevisionStatusReason string `json:"revisionStatusReason"`
 }
 
 type StatusProblem struct {

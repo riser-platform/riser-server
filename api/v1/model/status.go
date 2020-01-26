@@ -1,10 +1,10 @@
 package model
 
 const (
-	RolloutStatusInProgress = "InProgress"
-	RolloutStatusComplete   = "Completed"
-	RolloutStatusFailed     = "Failed"
-	RolloutStatusUnknown    = "Unknown"
+	RevisionStatusWaiting   = "Waiting"
+	RevisionStatusReady     = "Ready"
+	RevisionStatusUnhealthy = "Unhealthy"
+	RevisionStatusUnknown   = "Unknown"
 )
 
 type AppStatus struct {
@@ -34,20 +34,12 @@ type DeploymentTrafficStatus struct {
 }
 
 type DeploymentRevisionStatus struct {
-	Name              string          `json:"name"`
-	AvailableReplicas int32           `json:"availableReplicas"`
-	DockerImage       string          `json:"dockerImage"`
-	RiserRevision     int64           `json:"riserRevision"`
-	Problems          []StatusProblem `json:"problems,omitempty"`
-	// TODO: Probably rename and use different
-	RolloutStatus string `json:"rolloutStatus"`
-	// TODO: Probably deprecate RolloutStatusReason
-	RolloutStatusReason string `json:"rolloutStatusReason"`
-}
-
-type StatusProblem struct {
-	Count   int    `json:"count"`
-	Message string `json:"message"`
+	Name                 string `json:"name"`
+	AvailableReplicas    int32  `json:"availableReplicas"`
+	DockerImage          string `json:"dockerImage"`
+	RiserRevision        int64  `json:"riserRevision"`
+	RevisionStatus       string `json:"rolloutStatus"`
+	RevisionStatusReason string `json:"revisionStatusReason,omitempty"`
 }
 
 type StageStatus struct {

@@ -24,30 +24,20 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 				LatestReadyRevisionName:   "rev1",
 				Revisions: []core.DeploymentRevisionStatus{
 					core.DeploymentRevisionStatus{
-						Name:                "rev1",
-						AvailableReplicas:   1,
-						RolloutStatus:       "myrolloutstatus",
-						RolloutStatusReason: "myrolloutstatusreason",
-						DockerImage:         "mydockerimage",
-						RiserRevision:       3,
-						Problems: []core.StatusProblem{
-							core.StatusProblem{
-								Message: "myproblem1",
-								Count:   1,
-							},
-							core.StatusProblem{
-								Message: "myproblem2",
-								Count:   2,
-							},
-						},
+						Name:                 "rev1",
+						AvailableReplicas:    1,
+						RevisionStatus:       "myrevisionstatus",
+						RevisionStatusReason: "myrevisionstatusreason",
+						DockerImage:          "mydockerimage",
+						RiserRevision:        3,
 					},
 					core.DeploymentRevisionStatus{
-						Name:                "rev2",
-						AvailableReplicas:   1,
-						RolloutStatus:       "myrolloutstatus2",
-						RolloutStatusReason: "myrolloutstatusreason2",
-						DockerImage:         "mydockerimage2",
-						RiserRevision:       4,
+						Name:                 "rev2",
+						AvailableReplicas:    1,
+						RevisionStatus:       "myrevisionstatus2",
+						RevisionStatusReason: "myrevisionstatusreason2",
+						DockerImage:          "mydockerimage2",
+						RiserRevision:        4,
 					},
 				},
 				Traffic: []core.DeploymentTrafficStatus{
@@ -88,23 +78,16 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 	assert.Len(t, result.Revisions, 2)
 	assert.Equal(t, "rev1", result.Revisions[0].Name)
 	assert.Equal(t, int32(1), result.Revisions[0].AvailableReplicas)
-	assert.Equal(t, "myrolloutstatus", result.Revisions[0].RolloutStatus)
-	assert.Equal(t, "myrolloutstatusreason", result.Revisions[0].RolloutStatusReason)
+	assert.Equal(t, "myrevisionstatus", result.Revisions[0].RevisionStatus)
+	assert.Equal(t, "myrevisionstatusreason", result.Revisions[0].RevisionStatusReason)
 	assert.Equal(t, "mydockerimage", result.Revisions[0].DockerImage)
 	assert.Equal(t, int64(3), result.Revisions[0].RiserRevision)
 	assert.Equal(t, "rev2", result.Revisions[1].Name)
 	assert.Equal(t, int32(1), result.Revisions[1].AvailableReplicas)
-	assert.Equal(t, "myrolloutstatus2", result.Revisions[1].RolloutStatus)
-	assert.Equal(t, "myrolloutstatusreason2", result.Revisions[1].RolloutStatusReason)
+	assert.Equal(t, "myrevisionstatus2", result.Revisions[1].RevisionStatus)
+	assert.Equal(t, "myrevisionstatusreason2", result.Revisions[1].RevisionStatusReason)
 	assert.Equal(t, "mydockerimage2", result.Revisions[1].DockerImage)
 	assert.Equal(t, int64(4), result.Revisions[1].RiserRevision)
-
-	// Problems
-	assert.Len(t, result.Revisions[0].Problems, 2)
-	assert.Equal(t, "myproblem1", result.Revisions[0].Problems[0].Message)
-	assert.Equal(t, 1, result.Revisions[0].Problems[0].Count)
-	assert.Equal(t, "myproblem2", result.Revisions[0].Problems[1].Message)
-	assert.Equal(t, 2, result.Revisions[0].Problems[1].Count)
 }
 
 func Test_mapDeploymentToStatusModel_NilStatus(t *testing.T) {
@@ -127,30 +110,20 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 		LatestCreatedRevisionName: "rev2",
 		Revisions: []model.DeploymentRevisionStatus{
 			model.DeploymentRevisionStatus{
-				Name:                "rev1",
-				AvailableReplicas:   1,
-				RiserRevision:       2,
-				RolloutStatus:       "myrolloutstatus",
-				RolloutStatusReason: "myrolloutstatusreason",
-				DockerImage:         "mydockerimage",
-				Problems: []model.StatusProblem{
-					model.StatusProblem{
-						Message: "myproblem1",
-						Count:   1,
-					},
-					model.StatusProblem{
-						Message: "myproblem2",
-						Count:   2,
-					},
-				},
+				Name:                 "rev1",
+				AvailableReplicas:    1,
+				RiserRevision:        2,
+				RevisionStatus:       "myrevisionstatus",
+				RevisionStatusReason: "myrevisionstatusreason",
+				DockerImage:          "mydockerimage",
 			},
 			model.DeploymentRevisionStatus{
-				Name:                "rev2",
-				AvailableReplicas:   1,
-				RiserRevision:       3,
-				RolloutStatus:       "myrolloutstatus2",
-				RolloutStatusReason: "myrolloutstatusreason2",
-				DockerImage:         "mydockerimage2",
+				Name:                 "rev2",
+				AvailableReplicas:    1,
+				RiserRevision:        3,
+				RevisionStatus:       "myrevisionstatus2",
+				RevisionStatusReason: "myrevisionstatusreason2",
+				DockerImage:          "mydockerimage2",
 			},
 		},
 		Traffic: []model.DeploymentTrafficStatus{
@@ -180,13 +153,13 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	assert.Len(t, result.Revisions, 2)
 	assert.Equal(t, int64(2), result.Revisions[0].RiserRevision)
 	assert.Equal(t, int32(1), result.Revisions[0].AvailableReplicas)
-	assert.Equal(t, "myrolloutstatus", result.Revisions[0].RolloutStatus)
-	assert.Equal(t, "myrolloutstatusreason", result.Revisions[0].RolloutStatusReason)
+	assert.Equal(t, "myrevisionstatus", result.Revisions[0].RevisionStatus)
+	assert.Equal(t, "myrevisionstatusreason", result.Revisions[0].RevisionStatusReason)
 	assert.Equal(t, "mydockerimage", result.Revisions[0].DockerImage)
 	assert.Equal(t, int64(3), result.Revisions[1].RiserRevision)
 	assert.Equal(t, int32(1), result.Revisions[1].AvailableReplicas)
-	assert.Equal(t, "myrolloutstatus2", result.Revisions[1].RolloutStatus)
-	assert.Equal(t, "myrolloutstatusreason2", result.Revisions[1].RolloutStatusReason)
+	assert.Equal(t, "myrevisionstatus2", result.Revisions[1].RevisionStatus)
+	assert.Equal(t, "myrevisionstatusreason2", result.Revisions[1].RevisionStatusReason)
 	assert.Equal(t, "mydockerimage2", result.Revisions[1].DockerImage)
 
 	// Traffic
@@ -197,11 +170,4 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	assert.Equal(t, "rev2", result.Traffic[1].RevisionName)
 	assert.Equal(t, int64(10), *result.Traffic[1].Percent)
 	assert.Equal(t, "r2", result.Traffic[1].Tag)
-
-	// Problems
-	assert.Len(t, result.Revisions[0].Problems, 2)
-	assert.Equal(t, "myproblem1", result.Revisions[0].Problems[0].Message)
-	assert.Equal(t, 1, result.Revisions[0].Problems[0].Count)
-	assert.Equal(t, "myproblem2", result.Revisions[0].Problems[1].Message)
-	assert.Equal(t, 2, result.Revisions[0].Problems[1].Count)
 }

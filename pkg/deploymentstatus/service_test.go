@@ -21,14 +21,11 @@ func Test_GetByApp(t *testing.T) {
 			Status: &core.DeploymentStatus{
 				Revisions: []core.DeploymentRevisionStatus{
 					core.DeploymentRevisionStatus{
-						Name:                "rev1",
-						RiserRevision:       1,
-						RolloutStatus:       "InProgress",
-						RolloutStatusReason: "Deploying",
-						DockerImage:         "foo:v1.0",
-						Problems: []core.StatusProblem{
-							core.StatusProblem{Count: 1, Message: "testProblem"},
-						},
+						Name:                 "rev1",
+						RiserRevision:        1,
+						RevisionStatus:       "InProgress",
+						RevisionStatusReason: "Deploying",
+						DockerImage:          "foo:v1.0",
 					},
 				},
 			},

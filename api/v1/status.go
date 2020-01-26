@@ -60,17 +60,12 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 		status.Revisions = make([]model.DeploymentRevisionStatus, len(domain.Doc.Status.Revisions))
 		for idx, revision := range domain.Doc.Status.Revisions {
 			status.Revisions[idx] = model.DeploymentRevisionStatus{
-				Name:                revision.Name,
-				AvailableReplicas:   revision.AvailableReplicas,
-				DockerImage:         revision.DockerImage,
-				RiserRevision:       revision.RiserRevision,
-				RolloutStatus:       revision.RolloutStatus,
-				RolloutStatusReason: revision.RolloutStatusReason,
-				Problems:            make([]model.StatusProblem, len(revision.Problems)),
-			}
-
-			for problemIdx, problem := range revision.Problems {
-				status.Revisions[idx].Problems[problemIdx] = model.StatusProblem{Count: problem.Count, Message: problem.Message}
+				Name:                 revision.Name,
+				AvailableReplicas:    revision.AvailableReplicas,
+				DockerImage:          revision.DockerImage,
+				RiserRevision:        revision.RiserRevision,
+				RevisionStatus:       revision.RevisionStatus,
+				RevisionStatusReason: revision.RevisionStatusReason,
 			}
 		}
 
@@ -97,18 +92,14 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 	out.Revisions = make([]core.DeploymentRevisionStatus, len(in.Revisions))
 	for idx, revision := range in.Revisions {
 		out.Revisions[idx] = core.DeploymentRevisionStatus{
-			Name:                revision.Name,
-			AvailableReplicas:   revision.AvailableReplicas,
-			DockerImage:         revision.DockerImage,
-			RiserRevision:       revision.RiserRevision,
-			RolloutStatus:       revision.RolloutStatus,
-			RolloutStatusReason: revision.RolloutStatusReason,
-			Problems:            make([]core.StatusProblem, len(revision.Problems)),
+			Name:                 revision.Name,
+			AvailableReplicas:    revision.AvailableReplicas,
+			DockerImage:          revision.DockerImage,
+			RiserRevision:        revision.RiserRevision,
+			RevisionStatus:       revision.RevisionStatus,
+			RevisionStatusReason: revision.RevisionStatusReason,
 		}
 
-		for problemIdx, problem := range revision.Problems {
-			out.Revisions[idx].Problems[problemIdx] = core.StatusProblem{Count: problem.Count, Message: problem.Message}
-		}
 	}
 
 	out.Traffic = make([]core.DeploymentTrafficStatus, len(in.Traffic))

@@ -4,8 +4,8 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-type FakeGitProvider struct {
-	CommitFn                 func(message string, files []core.ResourceFile) (string, error)
+type FakeRepo struct {
+	CommitFn                 func(message string, files []core.ResourceFile) error
 	CommitCallCount          int
 	PushFn                   func() error
 	PushCallCount            int
@@ -13,17 +13,17 @@ type FakeGitProvider struct {
 	ResetHardRemoteCallCount int
 }
 
-func (fake *FakeGitProvider) Commit(message string, files []core.ResourceFile) (string, error) {
+func (fake *FakeRepo) Commit(message string, files []core.ResourceFile) error {
 	fake.CommitCallCount++
 	return fake.CommitFn(message, files)
 }
 
-func (fake *FakeGitProvider) Push() error {
+func (fake *FakeRepo) Push() error {
 	fake.PushCallCount++
 	return fake.PushFn()
 }
 
-func (fake *FakeGitProvider) ResetHardRemote() error {
+func (fake *FakeRepo) ResetHardRemote() error {
 	fake.ResetHardRemoteCallCount++
 	return fake.ResetHardRemoteFn()
 }

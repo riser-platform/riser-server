@@ -25,7 +25,7 @@ import (
 const DefaultNamespace = "apps"
 
 // TODO: Refactor and add unit test coverage
-func PostDeployment(c echo.Context, stateRepo git.GitRepoProvider, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
+func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
 	deploymentRequest := &model.DeploymentRequest{}
 	err := c.Bind(deploymentRequest)
 	if err != nil {

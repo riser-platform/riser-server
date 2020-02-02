@@ -2,6 +2,7 @@ package v1
 
 import (
 	"database/sql"
+
 	"github.com/riser-platform/riser-server/pkg/rollout"
 
 	"github.com/labstack/echo/v4/middleware"
@@ -18,7 +19,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func RegisterRoutes(e *echo.Echo, repo git.GitRepoProvider, db *sql.DB) {
+func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	v1 := e.Group("/api/v1")
 
 	// TODO: Refactor dependency management

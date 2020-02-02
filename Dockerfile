@@ -16,7 +16,9 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /go/bin/riser-server
 
-FROM scratch
+FROM alpine
+RUN apk update
+RUN apk add git
 COPY --from=builder /go/bin/riser-server /riser-server
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY ./migrations /migrations

@@ -48,6 +48,17 @@ func main() {
 		logger.Info("Developer mode active")
 	}
 
+	repoSettings := git.RepoSettings{
+		URL:         rc.GitUrl,
+		Branch:      rc.GitBranch,
+		Username:    rc.GitUsername,
+		Password:    rc.GitPassword,
+		LocalGitDir: rc.GitDir,
+	}
+
+	repo, err := git.NewRepo(repoSettings)
+	exitIfError(err, "Error initializing git")
+
 	postgresConn, err := postgres.AddAuthToConnString(rc.PostgresUrl, rc.PostgresUsername, rc.PostgresPassword)
 	exitIfError(err, "Error creating postgres connection url")
 
@@ -61,18 +72,6 @@ func main() {
 	}
 
 	bootstrapApiKey(postgresDb, &rc)
-
-	repoSettings := git.RepoSettings{
-		URL: rc.GitUrl,
-		// Note: The underlying git code has multiple bugs related to non-master branches.
-		Branch:      "master",
-		Username:    rc.GitUsername,
-		Password:    rc.GitPassword,
-		LocalGitDir: rc.GitDir,
-	}
-
-	repo, err := git.NewGitRepoProvider(repoSettings)
-	exitIfError(err, "Error initializing git")
 
 	e := echo.New()
 	e.HideBanner = true

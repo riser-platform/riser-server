@@ -22,8 +22,11 @@ require (
 	github.com/riser-platform/riser-server/api/v1/model v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
+	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80 // indirect
+	golang.org/x/sys v0.0.0-20190726091711-fc99dfbffb4e // indirect
 	google.golang.org/grpc v1.21.0 // indirect
-	gopkg.in/src-d/go-git.v4 v4.13.1
+	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.0.0-20190627205229-acea843d18eb
 	k8s.io/apimachinery v0.0.0-20190629005116-7ae370969693
 	k8s.io/client-go v11.0.0+incompatible

@@ -15,7 +15,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/state"
 )
 
-func PutSecret(c echo.Context, stateRepo git.GitRepoProvider, secretService secret.Service, stageService stage.Service) error {
+func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service, stageService stage.Service) error {
 	unsealedSecret := &model.UnsealedSecret{}
 	err := c.Bind(unsealedSecret)
 	if err != nil {
@@ -29,7 +29,11 @@ func PutSecret(c echo.Context, stateRepo git.GitRepoProvider, secretService secr
 
 	// We don't know what namespace an app is associated with yet as namespace support is not fully supported.
 	// This could get tricky if we support apps being deployed to multiple namespaces.
-	return secretService.SealAndSave(unsealedSecret.PlainText, mapSecretMetaFromModel(&unsealedSecret.SecretMeta), DefaultNamespace, state.NewGitCommitter(stateRepo))
+	return secretService.SealAndSave(
+		unsealedSecret.PlainText,
+		mapSecretMetaFromModel(&unsealedSecret.SecretMeta),
+		DefaultNamespace,
+		state.NewGitCommitter(stateRepo))
 }
 
 func GetSecrets(c echo.Context, secretService secret.Service, stageService stage.Service) error {

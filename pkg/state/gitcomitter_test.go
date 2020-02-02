@@ -11,21 +11,21 @@ import (
 )
 
 func Test_Commit(t *testing.T) {
-	gitProvider := &git.FakeGitProvider{
+	repo := &git.FakeRepo{
 		ResetHardRemoteFn: func() error {
 			return nil
 		},
-		CommitFn: func(message string, resources []core.ResourceFile) (string, error) {
+		CommitFn: func(message string, resources []core.ResourceFile) error {
 			assert.Equal(t, "test message", message)
 			assert.Len(t, resources, 1)
 			assert.Equal(t, "test.yaml", resources[0].Name)
-			return "", nil
+			return nil
 		},
 		PushFn: func() error {
 			return nil
 		},
 	}
-	committer := NewGitCommitter(gitProvider)
+	committer := NewGitCommitter(repo)
 
 	resources := []core.ResourceFile{
 		core.ResourceFile{
@@ -36,24 +36,24 @@ func Test_Commit(t *testing.T) {
 	result := committer.Commit("test message", resources)
 
 	assert.NoError(t, result)
-	assert.Equal(t, 1, gitProvider.ResetHardRemoteCallCount)
-	assert.Equal(t, 1, gitProvider.CommitCallCount)
-	assert.Equal(t, 1, gitProvider.PushCallCount)
+	assert.Equal(t, 1, repo.ResetHardRemoteCallCount)
+	assert.Equal(t, 1, repo.CommitCallCount)
+	assert.Equal(t, 1, repo.PushCallCount)
 }
 
 func Test_Commit_NoChanges_DoesNotPush(t *testing.T) {
-	gitProvider := &git.FakeGitProvider{
+	repo := &git.FakeRepo{
 		ResetHardRemoteFn: func() error {
 			return nil
 		},
-		CommitFn: func(message string, resources []core.ResourceFile) (string, error) {
-			return "", git.ErrNoChanges
+		CommitFn: func(message string, resources []core.ResourceFile) error {
+			return git.ErrNoChanges
 		},
 		PushFn: func() error {
 			return nil
 		},
 	}
-	committer := NewGitCommitter(gitProvider)
+	committer := NewGitCommitter(repo)
 
 	resources := []core.ResourceFile{
 		core.ResourceFile{
@@ -64,21 +64,21 @@ func Test_Commit_NoChanges_DoesNotPush(t *testing.T) {
 	result := committer.Commit("test message", resources)
 
 	assert.Equal(t, git.ErrNoChanges, result)
-	assert.Equal(t, 0, gitProvider.PushCallCount)
+	assert.Equal(t, 0, repo.PushCallCount)
 }
 
 func Test_Commit_Serialized(t *testing.T) {
 	inTransaction := false
-	gitProvider := &git.FakeGitProvider{
+	repo := &git.FakeRepo{
 		ResetHardRemoteFn: func() error {
 			assert.False(t, inTransaction, "Must not reset while a transaction is pending")
 			inTransaction = true
 			time.Sleep(10 * time.Millisecond)
 			return nil
 		},
-		CommitFn: func(message string, resources []core.ResourceFile) (string, error) {
+		CommitFn: func(message string, resources []core.ResourceFile) error {
 			assert.True(t, inTransaction, "Must not commit while not inside a transaction")
-			return "", nil
+			return nil
 		},
 		PushFn: func() error {
 			assert.True(t, inTransaction, "Must not push while not inside a transaction")
@@ -88,7 +88,7 @@ func Test_Commit_Serialized(t *testing.T) {
 		},
 	}
 
-	committer := NewGitCommitter(gitProvider)
+	committer := NewGitCommitter(repo)
 
 	wg := sync.WaitGroup{}
 

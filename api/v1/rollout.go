@@ -2,8 +2,9 @@ package v1
 
 import (
 	"fmt"
-	"github.com/riser-platform/riser-server/pkg/git"
 	"net/http"
+
+	"github.com/riser-platform/riser-server/pkg/git"
 
 	"github.com/riser-platform/riser-server/pkg/stage"
 	"github.com/riser-platform/riser-server/pkg/state"
@@ -15,7 +16,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/rollout"
 )
 
-func PutRollout(c echo.Context, rolloutService rollout.Service, stageService stage.Service, stateRepo git.GitRepoProvider) error {
+func PutRollout(c echo.Context, rolloutService rollout.Service, stageService stage.Service, stateRepo git.Repo) error {
 	rolloutRequest := &model.RolloutRequest{}
 
 	err := c.Bind(rolloutRequest)

@@ -17,7 +17,7 @@ type Committer interface {
 }
 
 type GitCommitter struct {
-	git git.GitRepoProvider
+	git git.Repo
 	sync.Mutex
 }
 
@@ -27,7 +27,7 @@ type KubeResource interface {
 	GetObjectKind() schema.ObjectKind
 }
 
-func NewGitCommitter(gitRepo git.GitRepoProvider) *GitCommitter {
+func NewGitCommitter(gitRepo git.Repo) *GitCommitter {
 	return &GitCommitter{gitRepo, sync.Mutex{}}
 }
 
@@ -49,7 +49,7 @@ func (committer *GitCommitter) Commit(message string, files []core.ResourceFile)
 		return errors.Wrap(err, "error resetting repo")
 	}
 
-	_, err = committer.git.Commit(message, files)
+	err = committer.git.Commit(message, files)
 	if err != nil && err != git.ErrNoChanges {
 		return errors.Wrap(err, "error committing changes")
 	}
@@ -57,7 +57,7 @@ func (committer *GitCommitter) Commit(message string, files []core.ResourceFile)
 	if err == git.ErrNoChanges {
 		return err
 	} else {
-		// TODO: There's a race condition between the reset and push if a push ocurrs outside of riser server. Need to detect this error and retry.
+		// TODO: There's a race condition between the reset and push if a change occurs in the repo. Need to detect this error and retry.
 		err = committer.git.Push()
 
 		if err != nil {

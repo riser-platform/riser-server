@@ -13,7 +13,6 @@ import (
 )
 
 var (
-	// TODO: Are we still using this?
 	// ErrNoChanges indicates that there were no changes to commit
 	ErrNoChanges = errors.New("no changes to commit")
 )

@@ -37,47 +37,6 @@ metadata:
     release: release-name
 ---
 
-
----
-# Source: istio/templates/serviceaccount.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: istio-multi
-  namespace: istio-system
-
----
-# Source: istio/templates/clusterrole.yaml
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: istio-reader
-rules:
-  - apiGroups: ['']
-    resources: ['nodes', 'pods', 'services', 'endpoints', "replicationcontrollers"]
-    verbs: ['get', 'watch', 'list']
-  - apiGroups: ["extensions", "apps"]
-    resources: ["replicasets"]
-    verbs: ["get", "list", "watch"]
-
----
-# Source: istio/templates/clusterrolebinding.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: istio-multi
-  labels:
-    chart: istio-1.1.0
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: istio-reader
-subjects:
-- kind: ServiceAccount
-  name: istio-multi
-  namespace: istio-system
-
----
 # Source: istio/charts/gateways/templates/service.yaml
 
 apiVersion: v1
@@ -157,8 +116,8 @@ spec:
       istio: cluster-local-gateway
   strategy:
     rollingUpdate:
-      maxSurge: 
-      maxUnavailable: 
+      maxSurge:
+      maxUnavailable:
   template:
     metadata:
       labels:
@@ -225,7 +184,7 @@ spec:
           resources:
             requests:
               cpu: 10m
-            
+
           env:
           - name: NODE_NAME
             valueFrom:
@@ -294,7 +253,7 @@ spec:
         secret:
           secretName: "istio-clusterlocalgateway-ca-certs"
           optional: true
-      affinity:      
+      affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
@@ -326,7 +285,7 @@ spec:
               - key: beta.kubernetes.io/arch
                 operator: In
                 values:
-                - "s390x"      
+                - "s390x"
 ---
 
 ---
@@ -363,7 +322,7 @@ spec:
 
 ---
 # Source: istio/charts/mixer/templates/deployment.yaml
- 
+
 
 ---
 # Source: istio/charts/mixer/templates/poddisruptionbudget.yaml

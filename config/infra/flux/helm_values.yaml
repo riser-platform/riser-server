@@ -1,0 +1,17 @@
+image:
+  tag: "1.18.0"
+env:
+  secretName: flux-git
+git:
+  url: $(GIT_URL)
+  path: $(GIT_PATH)
+  readonly: true
+  pollInterval: 10s
+memcached:
+  enabled: false
+registry:
+  disableScanning: true
+sync:
+  interval: 5m
+syncGarbageCollection:
+  enabled: true

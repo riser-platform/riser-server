@@ -16,6 +16,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func Test_RenderDeleteDeployment(t *testing.T) {
+	result := RenderDeleteDeployment("mydep", "apps", "dev")
+
+	require.Len(t, result, 2)
+	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/mydep", result[0].Name)
+	assert.True(t, result[0].Delete)
+	assert.Equal(t, "stages/dev/configs/apps/mydep.yaml", result[1].Name)
+	assert.True(t, result[1].Delete)
+}
+
 func Test_getDeploymentScmPath(t *testing.T) {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -33,18 +43,9 @@ func Test_getDeploymentScmPath(t *testing.T) {
 }
 
 func Test_getAppConfigScmPath(t *testing.T) {
-	deployment := &core.DeploymentConfig{
-		Name:      "myapp01-test",
-		Namespace: "apps",
-		Stage:     "dev",
-		App: &model.AppConfig{
-			Name: "myapp01",
-		},
-	}
+	result := getAppConfigScmPath("myapp01-test", "apps", "dev")
 
-	result := getAppConfigScmPath(deployment)
-
-	assert.Equal(t, "stages/dev/configs/apps/myapp01/myapp01-test.yaml", result)
+	assert.Equal(t, "stages/dev/configs/apps/myapp01-test.yaml", result)
 }
 
 func Test_getSecretScmPath(t *testing.T) {
@@ -88,7 +89,7 @@ func Test_renderDeploymentResources(t *testing.T) {
 	assert.Len(t, result, 2)
 	assert.Equal(t, "stages/dev/kube-resources/riser-managed/apps/deployments/mydeployment/service.mydeployment.yaml", result[0].Name)
 	assert.Contains(t, string(result[0].Contents), "name: mydeployment")
-	assert.Equal(t, "stages/dev/configs/apps/myapp01/mydeployment.yaml", result[1].Name)
+	assert.Equal(t, "stages/dev/configs/apps/mydeployment.yaml", result[1].Name)
 	assert.Contains(t, string(result[1].Contents), "name: myapp01")
 }
 

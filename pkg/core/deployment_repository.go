@@ -2,8 +2,9 @@ package core
 
 type DeploymentRepository interface {
 	Create(newDeployment *Deployment) error
-	FindByApp(appName string) ([]Deployment, error)
+	Delete(name, stageName string) error
 	Get(name, stageName string) (*Deployment, error)
+	FindByApp(appName string) ([]Deployment, error)
 	UpdateStatus(name, stageName string, status *DeploymentStatus) error
 	UpdateTraffic(name, stageName string, riserRevision int64, traffic TrafficConfig) error
 	IncrementRevision(name, stageName string) (int64, error)
@@ -13,6 +14,8 @@ type DeploymentRepository interface {
 type FakeDeploymentRepository struct {
 	CreateFn                   func(newDeployment *Deployment) error
 	CreateCallCount            int
+	DeleteFn                   func(name, stageName string) error
+	DeleteCallCount            int
 	GetFn                      func(name, stageName string) (*Deployment, error)
 	GetCallCount               int
 	FindByAppFn                func(string) ([]Deployment, error)
@@ -28,6 +31,11 @@ type FakeDeploymentRepository struct {
 func (f *FakeDeploymentRepository) Create(newDeployment *Deployment) error {
 	f.CreateCallCount++
 	return f.CreateFn(newDeployment)
+}
+
+func (f *FakeDeploymentRepository) Delete(name, stageName string) error {
+	f.DeleteCallCount++
+	return f.DeleteFn(name, stageName)
 }
 
 func (f *FakeDeploymentRepository) Get(name, stageName string) (*Deployment, error) {

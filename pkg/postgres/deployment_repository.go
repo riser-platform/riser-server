@@ -21,6 +21,16 @@ func (r *deploymentRepository) Create(newDeployment *core.Deployment) error {
 	return err
 }
 
+func (r *deploymentRepository) Delete(deploymentName, stageName string) error {
+	_, err := r.db.Exec(`UPDATE deployment SET deleted_at=now() WHERE name = $1 AND stage_name = $2`, deploymentName, stageName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Get returns a deployment whether or not it has been deleted.
 func (r *deploymentRepository) Get(deploymentName, stageName string) (*core.Deployment, error) {
 	deployment := &core.Deployment{}
 	err := r.db.QueryRow(`
@@ -41,7 +51,7 @@ func (r *deploymentRepository) FindByApp(appName string) ([]core.Deployment, err
 	rows, err := r.db.Query(`
 	SELECT name, stage_name, app_name, riser_revision, doc
 	FROM deployment
-	WHERE app_name = $1
+	WHERE app_name = $1 AND deleted_at IS NULL
 	ORDER BY stage_name, name
 	`, appName)
 
@@ -62,9 +72,11 @@ func (r *deploymentRepository) FindByApp(appName string) ([]core.Deployment, err
 	return deployments, nil
 }
 
+// IncrementeRevision increments the revision of a deployment. If the deployment was previously soft deleted, it will mark
+// the deployment as no longer being deleted
 func (r *deploymentRepository) IncrementRevision(deploymentName, stageName string) (revision int64, err error) {
 	err = r.db.QueryRow(`
-	UPDATE deployment SET riser_revision = riser_revision + 1
+	UPDATE deployment SET riser_revision = riser_revision + 1, deleted_at = NULL
 	WHERE name = $1 AND stage_name = $2
 	RETURNING riser_revision
 	`, deploymentName, stageName).Scan(&revision)
@@ -91,7 +103,9 @@ func (r *deploymentRepository) RollbackRevision(deploymentName, stageName string
 func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error {
 	result, err := r.db.Exec(`
 	  UPDATE deployment
-		SET doc = jsonb_set(doc, '{status}', $3)
+		SET doc = jsonb_set(doc, '{status}', $3),
+		-- If we receive a status update, we "undelete" the deployment
+		deleted_at = null
 		WHERE name = $1 AND stage_name = $2
 		-- Don't update status from an older observed revision
 		AND ((doc->'status'->>'observedRiserRevision')::int <= $4 OR doc->'status' IS NULL OR doc->'status'->>'observedRiserRevision' IS NULL)
@@ -113,7 +127,7 @@ func (r *deploymentRepository) UpdateTraffic(deploymentName, stageName string, r
 	result, err := r.db.Exec(`
 		UPDATE DEPLOYMENT
 		SET doc = jsonb_set(doc, '{traffic}', $4)
-		WHERE Name = $1 AND stage_name = $2 AND riser_revision = $3
+		WHERE Name = $1 AND stage_name = $2 AND riser_revision = $3 AND deleted_at IS NULL
 	`, deploymentName, stageName, riserRevision, traffic)
 
 	if err != nil {

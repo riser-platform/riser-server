@@ -1,12 +1,13 @@
 package v1
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
-	"github.com/riser-platform/riser-server/pkg/stage"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,7 @@ import (
 
 func Test_PutRollout_ValidatesStage(t *testing.T) {
 	rollout := model.RolloutRequest{}
-	req := httptest.NewRequest(http.MethodPut, "/", testMarshal(rollout))
+	req := httptest.NewRequest(http.MethodPut, "/", safeMarshal(rollout))
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, _ := newContextWithRecorder(req)
 
@@ -34,7 +35,7 @@ func Test_PutRollout_ValidatesStage(t *testing.T) {
 
 func Test_PutRollout_ValidatesTraffic(t *testing.T) {
 	rollout := model.RolloutRequest{}
-	req := httptest.NewRequest(http.MethodPut, "/", testMarshal(rollout))
+	req := httptest.NewRequest(http.MethodPut, "/", safeMarshal(rollout))
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, _ := newContextWithRecorder(req)
 

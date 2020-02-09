@@ -14,6 +14,19 @@ import (
 
 type getResourcePathFunc func(resource KubeResource) string
 
+func RenderDeleteDeployment(deploymentName, namespace, stage string) []core.ResourceFile {
+	return []core.ResourceFile{
+		core.ResourceFile{
+			Name:   getDeploymentScmDir(deploymentName, namespace, stage),
+			Delete: true,
+		},
+		core.ResourceFile{
+			Name:   getAppConfigScmPath(deploymentName, namespace, stage),
+			Delete: true,
+		},
+	}
+}
+
 // RenderGeneric is used for generic resources (e.g. riser app namespaces). They will be placed in the root of the namespaced folder.
 func RenderGeneric(stage string, resources ...KubeResource) ([]core.ResourceFile, error) {
 	return renderKubeResources(func(resource KubeResource) string {
@@ -65,7 +78,7 @@ func renderAppConfig(deployment *core.DeploymentConfig) (*core.ResourceFile, err
 		return nil, errors.Wrap(err, fmt.Sprintf("Error serializing app config"))
 	}
 	return &core.ResourceFile{
-		Name:     getAppConfigScmPath(deployment),
+		Name:     getAppConfigScmPath(deployment.Name, deployment.Namespace, deployment.Stage),
 		Contents: serialized,
 	}, nil
 }
@@ -85,12 +98,16 @@ func renderKubeResources(pathFunc getResourcePathFunc, resources ...KubeResource
 	return files, nil
 }
 
-func getDeploymentScmPath(deploymentName, namespace, stage string, resource KubeResource) string {
-	return strings.ToLower(filepath.Join(
-		getPlatformResourcesPath(stage),
+func getDeploymentScmDir(deploymentName, namespace, stage string) string {
+	return strings.ToLower(filepath.Join(getPlatformResourcesPath(stage),
 		namespace,
 		"deployments",
-		deploymentName,
+		deploymentName))
+}
+
+func getDeploymentScmPath(deploymentName, namespace, stage string, resource KubeResource) string {
+	return strings.ToLower(filepath.Join(
+		getDeploymentScmDir(deploymentName, namespace, stage),
 		getFileNameFromResource(resource)))
 }
 
@@ -103,14 +120,13 @@ func getSecretScmPath(app string, stage string, sealedSecret KubeResource) strin
 		getFileNameFromResource(sealedSecret)))
 }
 
-func getAppConfigScmPath(deployment *core.DeploymentConfig) string {
+func getAppConfigScmPath(deploymentName, namespace, stage string) string {
 	return strings.ToLower(filepath.Join(
 		"stages",
-		deployment.Stage,
+		stage,
 		"configs",
-		deployment.Namespace,
-		deployment.App.Name,
-		fmt.Sprintf("%s.yaml", deployment.Name)))
+		namespace,
+		fmt.Sprintf("%s.yaml", deploymentName)))
 }
 
 func getPlatformResourcesPath(stageName string) string {

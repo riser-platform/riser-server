@@ -1,6 +1,8 @@
 package deployment
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 
 	"testing"
@@ -9,9 +11,94 @@ import (
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/state"
 )
 
 // Note: See snapshot_test for state based testing of deployment artifacts
+
+func Test_Delete(t *testing.T) {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		GetFn: func(name, stageName string) (*core.Deployment, error) {
+			assert.Equal(t, "mydep", name)
+			assert.Equal(t, "mystage", stageName)
+			return &core.Deployment{}, nil
+		},
+		DeleteFn: func(name, stageName string) error {
+			assert.Equal(t, "mydep", name)
+			assert.Equal(t, "mystage", stageName)
+			return nil
+		},
+	}
+
+	committer := state.NewDryRunCommitter()
+
+	service := service{deployments: deploymentRepository}
+
+	err := service.Delete("mydep", "apps", "mystage", committer)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Len(t, committer.Commits, 1)
+	assert.Equal(t, `Deleting deployment "mydep"`, committer.Commits[0].Message)
+	assert.Len(t, committer.Commits[0].Files, 2)
+	assert.Equal(t, "stages/mystage/kube-resources/riser-managed/apps/deployments/mydep", committer.Commits[0].Files[0].Name)
+	assert.True(t, committer.Commits[0].Files[0].Delete)
+	assert.Equal(t, "stages/mystage/configs/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
+	assert.True(t, committer.Commits[0].Files[1].Delete)
+	assert.Equal(t, 1, deploymentRepository.DeleteCallCount)
+}
+
+func Test_Delete_SoftDeleteFails(t *testing.T) {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		GetFn: func(name, stageName string) (*core.Deployment, error) {
+			return &core.Deployment{}, nil
+		},
+		DeleteFn: func(name, stageName string) error {
+			return errors.New("test")
+		},
+	}
+
+	committer := state.NewDryRunCommitter()
+
+	service := service{deployments: deploymentRepository}
+
+	err := service.Delete("mydep", "apps", "mystage", committer)
+
+	assert.Equal(t, "error deleting deployment: test", err.Error())
+}
+
+func Test_Delete_DeploymentNotFound(t *testing.T) {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		GetFn: func(name, stageName string) (*core.Deployment, error) {
+			return nil, core.ErrNotFound
+		},
+	}
+
+	service := service{deployments: deploymentRepository}
+
+	err := service.Delete("mydep", "apps", "mystage", nil)
+
+	assert.Equal(t, `There is no deployment by the name "mydep" in stage "mystage"`, err.Error())
+	assert.IsType(t, &core.ValidationError{}, err)
+	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 0, deploymentRepository.DeleteCallCount)
+}
+
+func Test_Delete_GetDeploymentFails(t *testing.T) {
+	deploymentRepository := &core.FakeDeploymentRepository{
+		GetFn: func(name, stageName string) (*core.Deployment, error) {
+			return nil, errors.New("failed")
+		},
+	}
+
+	service := service{deployments: deploymentRepository}
+
+	err := service.Delete("mydep", "apps", "mystage", nil)
+
+	assert.Equal(t, `error getting deployment: failed`, err.Error())
+	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 0, deploymentRepository.DeleteCallCount)
+}
 
 func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 	deployment := &core.DeploymentConfig{
@@ -71,6 +158,71 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 		UpdateTrafficFn: func(name string, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
 			assert.Equal(t, "myapp-mydep", name)
 			assert.Equal(t, "mystage", stageName)
+			assert.Len(t, traffic, 1)
+			assert.Equal(t, int64(3), traffic[0].RiserRevision)
+			assert.Equal(t, "myapp-mydep-3", traffic[0].RevisionName)
+			assert.Equal(t, 100, traffic[0].Percent)
+			return nil
+		},
+	}
+
+	service := service{deployments: deploymentRepository}
+	result, err := service.prepareForDeployment(deployment, false)
+
+	assert.NoError(t, err)
+	// Sanity check that defaults are tested. Exhaustive default tests are in util_test
+	assert.NotNil(t, deployment.App.Expose)
+	assert.Equal(t, int64(3), result)
+	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 1, deploymentRepository.IncrementRevisionCallCount)
+	assert.Equal(t, 1, deploymentRepository.UpdateTrafficCallCount)
+	assert.Equal(t, 0, deploymentRepository.CreateCallCount)
+}
+
+// If a manual rollout is requested for a previously deleted deployment, don't try to update traffic rules with
+// the old deployment as they will not be valid. Effectively ManualRollout is ignored in this case.
+func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *testing.T) {
+	deployment := &core.DeploymentConfig{
+		Name:  "myapp-mydep",
+		Stage: "mystage",
+		App: &model.AppConfig{
+			Name: "myapp",
+		},
+		ManualRollout: true,
+	}
+
+	deploymentRepository := &core.FakeDeploymentRepository{
+		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
+			deletedAt := time.Now()
+			assert.Equal(t, "myapp-mydep", deploymentNameArg)
+			assert.Equal(t, "mystage", stageNameArg)
+			return &core.Deployment{
+				Name:      "myapp-mydep",
+				StageName: "mystage",
+				AppName:   "myapp",
+				DeletedAt: &deletedAt,
+				Doc: core.DeploymentDoc{
+					// This rule should be ignored since the deployment was previously deleted
+					Traffic: core.TrafficConfig{
+						core.TrafficConfigRule{
+							RevisionName:  "myapp-mydep-2",
+							Percent:       100,
+							RiserRevision: 2,
+						},
+					},
+				},
+			}, nil
+		},
+		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
+			assert.Equal(t, "myapp-mydep", name)
+			assert.Equal(t, "mystage", stageName)
+			return 3, nil
+		},
+		UpdateTrafficFn: func(name string, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+			assert.Equal(t, "myapp-mydep", name)
+			assert.Equal(t, "mystage", stageName)
+			// Even though a manual rollout is requested, a previously deleted deployment is treated as if there are no previous traffic rules
+			// Therefore we route all traffic to the new revision.
 			assert.Len(t, traffic, 1)
 			assert.Equal(t, int64(3), traffic[0].RiserRevision)
 			assert.Equal(t, "myapp-mydep-3", traffic[0].RevisionName)

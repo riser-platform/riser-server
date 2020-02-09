@@ -70,7 +70,7 @@ func NewRepo(repoSettings RepoSettings) (Repo, error) {
 }
 
 func (repo *repo) Commit(message string, files []core.ResourceFile) error {
-	err := writeFiles(repo.settings.LocalGitDir, files)
+	err := processFiles(repo.settings.LocalGitDir, files)
 	if err != nil {
 		return err
 	}

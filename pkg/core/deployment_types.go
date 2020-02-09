@@ -14,6 +14,7 @@ type Deployment struct {
 	AppName   string
 	// RiserRevision is for tracking deployment changes and has no relation to a k8s deployment revision
 	RiserRevision int64
+	DeletedAt     *time.Time
 	Doc           DeploymentDoc
 }
 

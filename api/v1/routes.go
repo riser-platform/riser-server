@@ -63,6 +63,9 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	v1.PUT("/deployments", func(c echo.Context) error {
 		return PostDeployment(c, repo, appService, deploymentService, stageService)
 	})
+	v1.DELETE("/deployments/:deploymentName/:stageName", func(c echo.Context) error {
+		return DeleteDeployment(c, repo, deploymentService)
+	})
 
 	v1.PUT("/deployments/:deploymentName/status/:stageName", func(c echo.Context) error {
 		return PutDeploymentStatus(c, deploymentStatusService)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -33,17 +34,24 @@ func formatUrlWithAuth(settings RepoSettings) (string, error) {
 	return parsedUrl.String(), nil
 }
 
-func writeFiles(baseDir string, files []core.ResourceFile) error {
+func processFiles(baseDir string, files []core.ResourceFile) error {
 	for _, file := range files {
 		fullFileName := filepath.Join(baseDir, file.Name)
-		err := util.EnsureDir(fullFileName, workspaceFilePerm)
-		if err != nil {
-			return err
-		}
+		if file.Delete {
+			err := os.RemoveAll(fullFileName)
+			if err != nil {
+				return errors.Wrap(err, "error deleting file or directory")
+			}
+		} else {
+			err := util.EnsureDir(fullFileName, workspaceFilePerm)
+			if err != nil {
+				return err
+			}
 
-		err = ioutil.WriteFile(fullFileName, file.Contents, workspaceFilePerm)
-		if err != nil {
-			return errors.Wrap(err, "error writing file")
+			err = ioutil.WriteFile(fullFileName, file.Contents, workspaceFilePerm)
+			if err != nil {
+				return errors.Wrap(err, "error writing file")
+			}
 		}
 	}
 

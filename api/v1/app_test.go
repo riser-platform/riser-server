@@ -17,7 +17,7 @@ func Test_PostApp_Validates(t *testing.T) {
 		Name: "0notvalid",
 	}
 
-	req := httptest.NewRequest(http.MethodPost, "/", testMarshal(newApp))
+	req := httptest.NewRequest(http.MethodPost, "/", safeMarshal(newApp))
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, _ := newContextWithRecorder(req)
 

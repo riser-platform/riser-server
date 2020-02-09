@@ -19,6 +19,7 @@ import (
 
 type Service interface {
 	Update(deployment *core.DeploymentConfig, committer state.Committer, dryRun bool) error
+	Delete(deploymentName, namespace, stageName string, committer state.Committer) error
 }
 
 type service struct {
@@ -29,6 +30,28 @@ type service struct {
 
 func NewService(secrets secret.Service, stages core.StageRepository, deployments core.DeploymentRepository) Service {
 	return &service{secrets, stages, deployments}
+}
+
+func (s *service) Delete(deploymentName, namespace, stageName string, committer state.Committer) error {
+	_, err := s.deployments.Get(deploymentName, stageName)
+	if err != nil {
+		if err == core.ErrNotFound {
+			return &core.ValidationError{
+				Message: fmt.Sprintf("There is no deployment by the name %q in stage %q", deploymentName, stageName),
+			}
+		}
+
+		return errors.Wrap(err, "error getting deployment")
+	}
+
+	// This is safe to do before we perform the commit since it's idempotent and the "Get" above returns soft deleted deployments
+	err = s.deployments.Delete(deploymentName, stageName)
+	if err != nil {
+		return errors.Wrap(err, "error deleting deployment")
+	}
+
+	files := state.RenderDeleteDeployment(deploymentName, namespace, stageName)
+	return committer.Commit(fmt.Sprintf("Deleting deployment %q", deploymentName), files)
 }
 
 func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) error {
@@ -96,7 +119,12 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 			}
 		}
 
-		deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, existingDeployment)
+		// When a deployment was previously deleted, we don't want to compute traffic with the old traffic rules
+		if existingDeployment.DeletedAt == nil {
+			deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, existingDeployment)
+		} else {
+			deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, nil)
+		}
 
 		if !dryRun {
 			err = s.deployments.UpdateTraffic(deploymentConfig.Name, deploymentConfig.Stage, riserRevision, deploymentConfig.Traffic)

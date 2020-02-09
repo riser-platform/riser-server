@@ -50,7 +50,7 @@ func Test_formatUrlWithAuth_badURL(t *testing.T) {
 	assert.Equal(t, "parse \n: net/url: invalid control character in URL", err.Error())
 }
 
-func Test_writeFiles(t *testing.T) {
+func Test_processFiles(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "riser-test")
 	if err != nil {
 		t.Fatal(err)
@@ -62,12 +62,37 @@ func Test_writeFiles(t *testing.T) {
 		Contents: []byte("contents"),
 	}
 
-	err = writeFiles(dir, []core.ResourceFile{file})
+	err = processFiles(dir, []core.ResourceFile{file})
 
 	assert.NoError(t, err)
 	contents, err := ioutil.ReadFile(filepath.Join(dir, file.Name))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "contents", contents)
+}
+
+func Test_processFiles_deletes(t *testing.T) {
+	dir, err := ioutil.TempDir(os.TempDir(), "riser-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	file := core.ResourceFile{
+		Name:     "nested/test01",
+		Contents: []byte("contents"),
+	}
+
+	err = processFiles(dir, []core.ResourceFile{file})
+	assert.NoError(t, err)
+
+	// Make sure we can delete the whole folder
+	file.Name = "nested"
+	file.Delete = true
+
+	err = processFiles(dir, []core.ResourceFile{file})
+	assert.NoError(t, err)
+	_, err = os.Stat(filepath.Join(dir, "nested/"))
+	assert.True(t, os.IsNotExist(err))
 }
 
 func Test_execWithContext(t *testing.T) {

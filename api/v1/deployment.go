@@ -97,6 +97,18 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 	return c.JSON(http.StatusAccepted, model.APIResponse{Message: "Deployment requested"})
 }
 
+func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService deployment.Service) error {
+	err := deploymentService.Delete(c.Param("deploymentName"), DefaultNamespace, c.Param("stageName"), state.NewGitCommitter(stateRepo))
+	if err != nil {
+		if err == git.ErrNoChanges {
+			return c.JSON(http.StatusNotFound, model.APIResponse{Message: "Deployment not found"})
+		}
+		return err
+	}
+
+	return c.JSON(http.StatusAccepted, model.APIResponse{Message: "Deployment deletion requested"})
+}
+
 func PutDeploymentStatus(c echo.Context, deploymentStatusService deploymentstatus.Service) error {
 	deploymentStatus := &model.DeploymentStatusMutable{}
 	err := c.Bind(deploymentStatus)

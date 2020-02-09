@@ -1,7 +1,14 @@
 package v1
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/riser-platform/riser-server/pkg/git"
+
+	"github.com/riser-platform/riser-server/pkg/deployment"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 
@@ -10,6 +17,47 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/riser-platform/riser-server/pkg/state"
 )
+
+func Test_DeleteDeployment(t *testing.T) {
+	req := httptest.NewRequest(http.MethodDelete, "/deployments/mydep/dev", nil)
+	req.Header.Add("CONTENT-TYPE", "application/json")
+	ctx, rec := newContextWithRecorder(req)
+
+	deploymentService := &deployment.FakeService{
+		DeleteFn: func(deploymentName, namespace, stageName string, committer state.Committer) error {
+			return nil
+		},
+	}
+
+	err := DeleteDeployment(ctx, nil, deploymentService)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, deploymentService.DeleteCallCount)
+	assert.Equal(t, http.StatusAccepted, rec.Result().StatusCode)
+	apiResponse := model.APIResponse{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &apiResponse))
+	assert.Equal(t, "Deployment deletion requested", apiResponse.Message)
+}
+
+func Test_DeleteDeployment_NothingToDelete(t *testing.T) {
+	req := httptest.NewRequest(http.MethodDelete, "/deployments/mydep/dev", nil)
+	req.Header.Add("CONTENT-TYPE", "application/json")
+	ctx, rec := newContextWithRecorder(req)
+
+	deploymentService := &deployment.FakeService{
+		DeleteFn: func(deploymentName, namespace, stageName string, committer state.Committer) error {
+			return git.ErrNoChanges
+		},
+	}
+
+	err := DeleteDeployment(ctx, nil, deploymentService)
+
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusNotFound, rec.Result().StatusCode)
+	apiResponse := model.APIResponse{}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &apiResponse))
+	assert.Equal(t, "Deployment not found", apiResponse.Message)
+}
 
 func Test_mapDryRunCommitsFromDomain(t *testing.T) {
 	commits := []state.DryRunCommit{

@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func testMarshal(i interface{}) io.Reader {
+func safeMarshal(i interface{}) io.Reader {
 	jsonBytes, _ := json.Marshal(i)
 	return bytes.NewBuffer(jsonBytes)
 }

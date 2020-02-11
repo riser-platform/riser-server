@@ -19,6 +19,9 @@ RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /go/bin/riser-server
 FROM alpine
 RUN apk update
 RUN apk add git
+# Riser uses the --author flag with all commits, git still requires something to be set globally
+RUN git config --global user.email "riser-server@riser.dev"
+RUN git config --global user.name "riser-server"
 COPY --from=builder /go/bin/riser-server /riser-server
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY ./migrations /migrations

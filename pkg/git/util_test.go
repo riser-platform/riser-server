@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_formatUrlWithAuth_withAuth(t *testing.T) {
+func Test_formatUrlWithAuth(t *testing.T) {
 	settings := RepoSettings{
 		Username: "user",
 		Password: "pw",
@@ -26,6 +26,18 @@ func Test_formatUrlWithAuth_withAuth(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "https://user:pw@tempuri.org", result)
+}
+
+func Test_formatUrlWithUsername(t *testing.T) {
+	settings := RepoSettings{
+		Username: "oauthtoken",
+		URL:      "https://tempuri.org",
+	}
+
+	result, err := formatUrlWithAuth(settings)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "https://oauthtoken@tempuri.org", result)
 }
 
 func Test_formatUrlWithAuth_noAuth(t *testing.T) {

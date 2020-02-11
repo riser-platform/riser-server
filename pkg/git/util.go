@@ -27,10 +27,14 @@ func formatUrlWithAuth(settings RepoSettings) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// We require both username and password to be set in order to pass auth
+
 	if settings.Username != "" && settings.Password != "" {
 		parsedUrl.User = url.UserPassword(settings.Username, settings.Password)
+	} else if settings.Username != "" {
+		// Support username only (e.g. https://<token>@domain) style auth
+		parsedUrl.User = url.User(settings.Username)
 	}
+
 	return parsedUrl.String(), nil
 }
 

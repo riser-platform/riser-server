@@ -37,6 +37,5 @@ kubectl create secret generic flux-git --namespace flux --from-literal=GIT_URL=h
 Finally, switch to the `flux` namespace and apply the resources in `apply.yaml`:
 
 ```
-kubectl config set-context --current --namespace=flux
-kubectl apply -f apply.yaml
+kubectl apply -f apply.yaml --namespace flux
 ```

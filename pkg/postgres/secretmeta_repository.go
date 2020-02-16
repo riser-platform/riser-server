@@ -21,7 +21,7 @@ func (r *secretMetaRepository) Save(secretMeta *core.SecretMeta) (int64, error) 
 		UPDATE SET
 			revision=secret_meta.revision + 1
 		RETURNING secret_meta.revision
-		`, secretMeta.AppName, secretMeta.StageName, secretMeta.SecretName)
+		`, secretMeta.AppName, secretMeta.StageName, secretMeta.Name)
 
 	var revision int64
 	err := row.Scan(&revision)
@@ -33,7 +33,7 @@ func (r *secretMetaRepository) Commit(secretMeta *core.SecretMeta) error {
 	UPDATE secret_meta
 		SET committed_revision = revision
 		WHERE app_name = $1 AND stage_name = $2 AND secret_name = $3 AND revision = $4
-	`, secretMeta.AppName, secretMeta.StageName, secretMeta.SecretName, secretMeta.Revision)
+	`, secretMeta.AppName, secretMeta.StageName, secretMeta.Name, secretMeta.Revision)
 
 	if err != nil && !ResultHasRows(result) {
 		return core.ErrConflictNewerVersion
@@ -58,7 +58,7 @@ func (r *secretMetaRepository) FindByStage(appName string, stageName string) ([]
 	defer rows.Close()
 	for rows.Next() {
 		secretMeta := core.SecretMeta{}
-		err := rows.Scan(&secretMeta.AppName, &secretMeta.StageName, &secretMeta.SecretName, &secretMeta.Revision)
+		err := rows.Scan(&secretMeta.AppName, &secretMeta.StageName, &secretMeta.Name, &secretMeta.Revision)
 		if err != nil {
 			return nil, err
 		}

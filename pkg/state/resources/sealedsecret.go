@@ -34,8 +34,7 @@ func CreateSealedSecret(plaintextSecret string, secretMeta *core.SecretMeta, nam
 		return nil, errors.Wrap(err, "Error parsing public key")
 	}
 	objectMeta := metav1.ObjectMeta{
-		// Note: For the moment secrets are shared between deployments in the same stage and namespace. Need to validate this requirement
-		Name:      fmt.Sprintf("%s-%s", secretMeta.AppName, secretMeta.SecretName),
+		Name:      fmt.Sprintf("%s-%s-%d", secretMeta.AppName, secretMeta.Name, secretMeta.Revision),
 		Namespace: namespace,
 		Annotations: map[string]string{
 			riserLabel("revision"): fmt.Sprintf("%d", secretMeta.Revision),

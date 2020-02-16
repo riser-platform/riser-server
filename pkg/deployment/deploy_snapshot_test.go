@@ -2,11 +2,12 @@ package deployment
 
 import (
 	"fmt"
-	"github.com/riser-platform/riser-server/pkg/util"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 
@@ -51,7 +52,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 		},
 	}
 
-	secretNames := []string{"mysecret"}
+	secrets := []core.SecretMeta{{AppName: "myapp", Name: "mysecret", Revision: 1}}
 
 	dryRunCommitter := state.NewDryRunCommitter()
 	var committer state.Committer
@@ -70,7 +71,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 		Deployment:    newDeployment,
 		Stage:         &core.StageConfig{PublicGatewayHost: "dev.riser.org"},
 		RiserRevision: 3,
-		SecretNames:   secretNames,
+		Secrets:       secrets,
 	}
 	// TODO: Refactor prepareDeployment and call first
 	applyDefaults(newDeployment)

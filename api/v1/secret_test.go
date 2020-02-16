@@ -92,10 +92,10 @@ func Test_PutSecret_WhenRevisionConflict(t *testing.T) {
 
 func Test_mapSecretMetaStatusFromDomain(t *testing.T) {
 	domain := core.SecretMeta{
-		AppName:    "myapp",
-		StageName:  "mystage",
-		SecretName: "mysecret",
-		Revision:   1,
+		AppName:   "myapp",
+		StageName: "mystage",
+		Name:      "mysecret",
+		Revision:  1,
 	}
 
 	result := mapSecretMetaStatusFromDomain(domain)
@@ -108,8 +108,8 @@ func Test_mapSecretMetaStatusFromDomain(t *testing.T) {
 
 func Test_mapSecretMetaStatusArrayFromDomain(t *testing.T) {
 	domainArray := []core.SecretMeta{
-		core.SecretMeta{SecretName: "secret1"},
-		core.SecretMeta{SecretName: "secret2"},
+		core.SecretMeta{Name: "secret1"},
+		core.SecretMeta{Name: "secret2"},
 	}
 
 	result := mapSecretMetaStatusArrayFromDomain(domainArray)
@@ -129,6 +129,6 @@ func Test_mapSecretMetaFromModel(t *testing.T) {
 	result := mapSecretMetaFromModel(model)
 
 	assert.Equal(t, "myapp", result.AppName)
-	assert.Equal(t, "mysecret", result.SecretName)
+	assert.Equal(t, "mysecret", result.Name)
 	assert.Equal(t, "mystage", result.StageName)
 }

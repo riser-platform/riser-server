@@ -13,7 +13,6 @@ import (
 type Service interface {
 	SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error
 	FindByStage(appName, stageName string) ([]core.SecretMeta, error)
-	FindNamesByStage(appName, stageName string) ([]string, error)
 }
 
 type service struct {
@@ -23,20 +22,6 @@ type service struct {
 
 func NewService(secretMetas core.SecretMetaRepository, stages core.StageRepository) Service {
 	return &service{secretMetas: secretMetas, stages: stages}
-}
-
-func (s *service) FindNamesByStage(appName, stageName string) ([]string, error) {
-	secretMetas, err := s.FindByStage(appName, stageName)
-	if err != nil {
-		return nil, err
-	}
-
-	names := []string{}
-	for _, secretMeta := range secretMetas {
-		names = append(names, secretMeta.SecretName)
-	}
-
-	return names, nil
 }
 
 func (s *service) FindByStage(appName, stageName string) ([]core.SecretMeta, error) {
@@ -68,12 +53,12 @@ func (s *service) sealAndSave(plaintextSecret, namespace string, sealedSecretCer
 
 	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, secretMeta, namespace, sealedSecretCert)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Error creating sealed secret %q in stage %q", secretMeta.SecretName, secretMeta.StageName))
+		return errors.Wrap(err, fmt.Sprintf("Error creating sealed secret %q in stage %q", secretMeta.Name, secretMeta.StageName))
 	}
 
 	resourceFiles, err := state.RenderSealedSecret(secretMeta.AppName, secretMeta.StageName, sealedSecret)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Error rendering sealed secret resource %q in stage %q", secretMeta.SecretName, secretMeta.StageName))
+		return errors.Wrap(err, fmt.Sprintf("Error rendering sealed secret resource %q in stage %q", secretMeta.Name, secretMeta.StageName))
 	}
 
 	err = committer.Commit(fmt.Sprintf("Updating secret %q in stage %q", sealedSecret.Name, secretMeta.StageName), resourceFiles)

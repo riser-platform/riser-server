@@ -40,10 +40,10 @@ xbU=
 
 func Test_CreateSealedSecret(t *testing.T) {
 	secret := &core.SecretMeta{
-		SecretName: "mysecretname",
-		AppName:    "myapp",
-		StageName:  "dev",
-		Revision:   1,
+		Name:      "mysecretname",
+		AppName:   "myapp",
+		StageName: "dev",
+		Revision:  1,
 	}
 
 	result, err := CreateSealedSecret("mysecretvalue", secret, "apps", []byte(testSealedSecretCert))
@@ -51,7 +51,7 @@ func Test_CreateSealedSecret(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	assert.Equal(t, "myapp-mysecretname", result.Name)
+	assert.Equal(t, "myapp-mysecretname-1", result.Name)
 	assert.Equal(t, "apps", result.Namespace)
 	assert.Equal(t, "SealedSecret", result.Kind)
 	assert.Equal(t, "bitnami.com/v1alpha1", result.APIVersion)

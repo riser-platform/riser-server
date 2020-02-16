@@ -1,8 +1,8 @@
 package core
 
 type SecretMeta struct {
-	AppName    string
-	StageName  string
-	SecretName string
-	Revision   int64
+	Name      string
+	AppName   string
+	StageName string
+	Revision  int64
 }

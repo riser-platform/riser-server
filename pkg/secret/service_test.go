@@ -51,25 +51,6 @@ func Test_FindByStage_SecretRepositoryErr_ReturnsErr(t *testing.T) {
 	assert.Equal(t, "Error retrieving secret metadata: test", err.Error())
 }
 
-func Test_FindNamesByStage(t *testing.T) {
-	secretMetas := []core.SecretMeta{
-		core.SecretMeta{SecretName: "mysecret"},
-	}
-	secretMetaRepository := &core.FakeSecretMetaRepository{
-		FindByStageFn: func(string, string) ([]core.SecretMeta, error) {
-			return secretMetas, nil
-		},
-	}
-
-	service := service{secretMetas: secretMetaRepository}
-
-	result, err := service.FindNamesByStage("myapp", "dev")
-
-	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, "mysecret", result[0])
-}
-
 func Test_getSealedSecretCert(t *testing.T) {
 	testCertBytes, _ := base64.StdEncoding.DecodeString(testCert)
 	stageRepository := &core.FakeStageRepository{
@@ -139,15 +120,16 @@ func Test_sealAndSave(t *testing.T) {
 		SaveFn: func(secretMeta *core.SecretMeta) (int64, error) {
 			assert.Equal(t, "myapp", secretMeta.AppName)
 			assert.Equal(t, "mystage", secretMeta.StageName)
-			assert.Equal(t, "mysecret", secretMeta.SecretName)
+			assert.Equal(t, "mysecret", secretMeta.Name)
 			return 1, nil
 		},
 	}
 
 	meta := &core.SecretMeta{
-		AppName:    "myapp",
-		StageName:  "mystage",
-		SecretName: "mysecret",
+		AppName:   "myapp",
+		StageName: "mystage",
+		Name:      "mysecret",
+		Revision:  1,
 	}
 
 	committer := state.NewDryRunCommitter()
@@ -161,9 +143,9 @@ func Test_sealAndSave(t *testing.T) {
 	assert.Equal(t, 1, secretMetaRepository.SaveCallCount)
 	assert.Equal(t, 1, secretMetaRepository.CommitCallCount)
 	assert.Len(t, committer.Commits, 1)
-	assert.Equal(t, "Updating secret \"myapp-mysecret\" in stage \"mystage\"", committer.Commits[0].Message)
+	assert.Equal(t, "Updating secret \"myapp-mysecret-1\" in stage \"mystage\"", committer.Commits[0].Message)
 	assert.Len(t, committer.Commits[0].Files, 1)
-	assert.Equal(t, "stages/mystage/kube-resources/riser-managed/myns/secrets/myapp/bitnami.com.sealedsecret.myapp-mysecret.yaml", committer.Commits[0].Files[0].Name)
+	assert.Equal(t, "stages/mystage/kube-resources/riser-managed/myns/secrets/myapp/bitnami.com.sealedsecret.myapp-mysecret-1.yaml", committer.Commits[0].Files[0].Name)
 }
 
 func Test_sealAndSave_WhenNewerRevisionExists(t *testing.T) {
@@ -178,9 +160,9 @@ func Test_sealAndSave_WhenNewerRevisionExists(t *testing.T) {
 	}
 
 	meta := &core.SecretMeta{
-		AppName:    "myapp",
-		StageName:  "mystage",
-		SecretName: "mysecret",
+		AppName:   "myapp",
+		StageName: "mystage",
+		Name:      "mysecret",
 	}
 
 	committer := state.NewDryRunCommitter()

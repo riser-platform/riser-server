@@ -10,7 +10,10 @@ import (
 )
 
 func Test_k8sEnvVars(t *testing.T) {
-	secretNames := []string{"secret2", "secret1"}
+	secrets := []core.SecretMeta{
+		{AppName: "myapp", Name: "secret1", Revision: 5},
+		{AppName: "myapp", Name: "secret2", Revision: 1},
+	}
 	deployment := &core.DeploymentConfig{
 		App: &model.AppConfig{
 			Environment: map[string]intstr.IntOrString{
@@ -20,11 +23,13 @@ func Test_k8sEnvVars(t *testing.T) {
 		},
 	}
 
-	result := k8sEnvVars(&core.DeploymentContext{Deployment: deployment, SecretNames: secretNames})
+	result := k8sEnvVars(&core.DeploymentContext{Deployment: deployment, Secrets: secrets})
 
 	assert.Len(t, result, 4)
 	assert.Equal(t, "ENV1", result[0].Name)
 	assert.Equal(t, "ENV2", result[1].Name)
 	assert.Equal(t, "SECRET1", result[2].Name)
+	assert.Equal(t, "myapp-secret1-5", result[2].ValueFrom.SecretKeyRef.LocalObjectReference.Name)
 	assert.Equal(t, "SECRET2", result[3].Name)
+	assert.Equal(t, "myapp-secret2-1", result[3].ValueFrom.SecretKeyRef.LocalObjectReference.Name)
 }

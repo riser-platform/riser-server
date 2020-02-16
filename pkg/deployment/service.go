@@ -64,7 +64,7 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 		return err
 	}
 
-	secretNames, err := s.secrets.FindNamesByStage(deploymentConfig.App.Name, deploymentConfig.Stage)
+	secrets, err := s.secrets.FindByStage(deploymentConfig.App.Name, deploymentConfig.Stage)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 		Deployment:    deploymentConfig,
 		Stage:         &stage.Doc.Config,
 		RiserRevision: riserRevision,
-		SecretNames:   secretNames,
+		Secrets:       secrets,
 	}
 	err = deploy(ctx, committer)
 	if err != nil {

@@ -31,7 +31,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: data
-              name: myapp-mysecret
+              name: myapp-mysecret-1
               optional: false
         image: :0.0.1
         name: myapp

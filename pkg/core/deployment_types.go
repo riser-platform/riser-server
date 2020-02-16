@@ -80,7 +80,7 @@ type DeploymentContext struct {
 	Deployment    *DeploymentConfig
 	Stage         *StageConfig
 	RiserRevision int64
-	SecretNames   []string
+	Secrets       []SecretMeta
 	ManualRollout bool
 }
 

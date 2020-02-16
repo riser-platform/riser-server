@@ -61,7 +61,7 @@ func mapSecretMetaStatusFromDomain(domain core.SecretMeta) model.SecretMetaStatu
 		SecretMeta: model.SecretMeta{
 			App:   domain.AppName,
 			Stage: domain.StageName,
-			Name:  domain.SecretName,
+			Name:  domain.Name,
 		},
 		Revision: domain.Revision,
 	}
@@ -78,8 +78,8 @@ func mapSecretMetaStatusArrayFromDomain(domainArray []core.SecretMeta) []model.S
 
 func mapSecretMetaFromModel(in *model.SecretMeta) *core.SecretMeta {
 	return &core.SecretMeta{
-		AppName:    in.App,
-		SecretName: in.Name,
-		StageName:  in.Stage,
+		AppName:   in.App,
+		Name:      in.Name,
+		StageName: in.Stage,
 	}
 }

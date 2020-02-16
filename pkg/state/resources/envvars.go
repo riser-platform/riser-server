@@ -2,9 +2,10 @@ package resources
 
 import (
 	"fmt"
-	"github.com/riser-platform/riser-server/pkg/util"
 	"sort"
 	"strings"
+
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 	corev1 "k8s.io/api/core/v1"
@@ -19,15 +20,15 @@ func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 		})
 	}
 
-	for _, secretName := range ctx.SecretNames {
+	for _, secret := range ctx.Secrets {
 		secretEnv := corev1.EnvVar{
-			Name: strings.ToUpper(secretName),
+			Name: strings.ToUpper(secret.Name),
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
 					Key:      "data",
 					Optional: util.PtrBool(false),
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("%s-%s", ctx.Deployment.App.Name, secretName),
+						Name: fmt.Sprintf("%s-%s-%d", secret.AppName, secret.Name, secret.Revision),
 					},
 				},
 			},

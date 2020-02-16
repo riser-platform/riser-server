@@ -43,6 +43,7 @@ func Test_CreateSealedSecret(t *testing.T) {
 		SecretName: "mysecretname",
 		AppName:    "myapp",
 		StageName:  "dev",
+		Revision:   1,
 	}
 
 	result, err := CreateSealedSecret("mysecretvalue", secret, "apps", []byte(testSealedSecretCert))
@@ -54,6 +55,8 @@ func Test_CreateSealedSecret(t *testing.T) {
 	assert.Equal(t, "apps", result.Namespace)
 	assert.Equal(t, "SealedSecret", result.Kind)
 	assert.Equal(t, "bitnami.com/v1alpha1", result.APIVersion)
+	assert.Equal(t, "1", result.Annotations["riser.dev/revision"])
+	assert.Equal(t, "myapp", result.Labels["riser.dev/app"])
 	// Sanity check that we're setting the encrypted data field.
 	// We'll use e2e integration testing that tests the mounting of secrets into a pod for better coverage.
 	assert.Len(t, result.Spec.EncryptedData, 1)

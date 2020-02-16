@@ -7,6 +7,7 @@ import (
 )
 
 var ErrNotFound = errors.New("the object could not be found")
+var ErrConflictNewerVersion = errors.New("a newer version of the object exists")
 
 // ValidationError provides an error consumable by a client. This is safe to return to the API as the errorHandler is aware of this error
 type ValidationError struct {
@@ -21,6 +22,11 @@ type ValidationError struct {
 // consumable by a client.
 func NewValidationError(message string, validationError error) error {
 	return &ValidationError{Message: message, ValidationError: validationError}
+}
+
+// NewValidationErrorMessage creates a ValidationError without an underlying error.
+func NewValidationErrorMessage(message string) error {
+	return &ValidationError{Message: message}
 }
 
 func (e *ValidationError) Error() string {

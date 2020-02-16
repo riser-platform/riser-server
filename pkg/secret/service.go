@@ -2,7 +2,6 @@ package secret
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/riser-platform/riser-server/pkg/state/resources"
 
@@ -12,7 +11,7 @@ import (
 )
 
 type Service interface {
-	SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, comitter state.Committer) error
+	SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error
 	FindByStage(appName, stageName string) ([]core.SecretMeta, error)
 	FindNamesByStage(appName, stageName string) ([]string, error)
 }
@@ -49,17 +48,25 @@ func (s *service) FindByStage(appName, stageName string) ([]core.SecretMeta, err
 	return secretMetas, nil
 }
 
-func (s *service) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, comitter state.Committer) error {
-	stage, err := s.stages.Get(secretMeta.StageName)
+// TODO: Move namespace parameter into secretMeta (probably as part of namespace feature)
+func (s *service) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error {
+	sealedSecretCert, err := s.getSealedSecretCert(plaintextSecret, secretMeta.StageName)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Error retrieving stage %q", secretMeta.StageName))
+		return err
 	}
 
-	if len(stage.Doc.Config.SealedSecretCert) == 0 {
-		return errors.New(fmt.Sprintf("No certificate configured in stage %q", secretMeta.StageName))
+	return s.sealAndSave(plaintextSecret, namespace, sealedSecretCert, secretMeta, committer)
+}
+
+func (s *service) sealAndSave(plaintextSecret, namespace string, sealedSecretCert []byte, secretMeta *core.SecretMeta, committer state.Committer) error {
+	revision, err := s.secretMetas.Save(secretMeta)
+	if err != nil {
+		return errors.Wrap(err, "Error saving secret metadata")
 	}
 
-	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, secretMeta, namespace, stage.Doc.Config.SealedSecretCert)
+	secretMeta.Revision = revision
+
+	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, secretMeta, namespace, sealedSecretCert)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Error creating sealed secret %q in stage %q", secretMeta.SecretName, secretMeta.StageName))
 	}
@@ -69,15 +76,31 @@ func (s *service) SealAndSave(plaintextSecret string, secretMeta *core.SecretMet
 		return errors.Wrap(err, fmt.Sprintf("Error rendering sealed secret resource %q in stage %q", secretMeta.SecretName, secretMeta.StageName))
 	}
 
-	secretMeta.Doc.LastUpdated = time.Now().UTC()
-	err = s.secretMetas.Save(secretMeta)
+	err = committer.Commit(fmt.Sprintf("Updating secret %q in stage %q", sealedSecret.Name, secretMeta.StageName), resourceFiles)
 	if err != nil {
-		return errors.Wrap(err, "Error saving secret metadata")
+		return errors.Wrap(err, "Error committing sealed secret resources")
 	}
 
-	err = comitter.Commit(fmt.Sprintf("Updating secret %q in stage %q", sealedSecret.Name, secretMeta.StageName), resourceFiles)
+	err = s.secretMetas.Commit(secretMeta)
 	if err != nil {
-		return errors.Wrap(err, "Error commiting sealed secret resources")
+		// Let the client handle this error specifically
+		if err == core.ErrConflictNewerVersion {
+			return err
+		}
+		return errors.Wrap(err, "Error committing sealed secret metadata")
 	}
 	return nil
+}
+
+func (s *service) getSealedSecretCert(plaintextSecret, stageName string) ([]byte, error) {
+	stage, err := s.stages.Get(stageName)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Error retrieving stage %q", stageName))
+	}
+
+	if len(stage.Doc.Config.SealedSecretCert) == 0 {
+		return nil, errors.New(fmt.Sprintf("No certificate configured in stage %q", stageName))
+	}
+
+	return stage.Doc.Config.SealedSecretCert, nil
 }

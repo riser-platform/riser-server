@@ -1,9 +1,5 @@
 package model
 
-import (
-	"time"
-)
-
 type UnsealedSecret struct {
 	SecretMeta `json:",inline"`
 	PlainText  string `json:"secretValue"`
@@ -16,6 +12,6 @@ type SecretMeta struct {
 }
 
 type SecretMetaStatus struct {
-	SecretMeta  `json:",inline"`
-	LastUpdated time.Time `json:"lastUpdated"`
+	SecretMeta `json:",inline"`
+	Revision   int64 `json:"revision"`
 }

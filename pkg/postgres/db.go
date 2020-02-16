@@ -32,3 +32,8 @@ func AddAuthToConnString(postgresConn string, username string, password string) 
 	postgresUrl.User = url.UserPassword(username, password)
 	return postgresUrl.String(), nil
 }
+
+func ResultHasRows(r sql.Result) bool {
+	rows, err := r.RowsAffected()
+	return err == nil && rows > 0
+}

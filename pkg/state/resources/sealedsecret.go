@@ -37,7 +37,12 @@ func CreateSealedSecret(plaintextSecret string, secretMeta *core.SecretMeta, nam
 		// Note: For the moment secrets are shared between deployments in the same stage and namespace. Need to validate this requirement
 		Name:      fmt.Sprintf("%s-%s", secretMeta.AppName, secretMeta.SecretName),
 		Namespace: namespace,
-		// TODO: Add labels
+		Annotations: map[string]string{
+			riserLabel("revision"): fmt.Sprintf("%d", secretMeta.Revision),
+		},
+		Labels: map[string]string{
+			riserLabel("app"): secretMeta.AppName,
+		},
 	}
 	ciphertext, err := sealSecret(objectMeta, publicKey, []byte(plaintextSecret))
 	if err != nil {

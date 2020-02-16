@@ -27,13 +27,16 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	// We don't know what namespace an app is associated with yet as namespace support is not fully supported.
-	// This could get tricky if we support apps being deployed to multiple namespaces.
-	return secretService.SealAndSave(
+	err = secretService.SealAndSave(
 		unsealedSecret.PlainText,
 		mapSecretMetaFromModel(&unsealedSecret.SecretMeta),
 		DefaultNamespace,
 		state.NewGitCommitter(stateRepo))
+	if err == core.ErrConflictNewerVersion {
+		return echo.NewHTTPError(http.StatusConflict, "A newer revision of the secret was saved while attempting to save this secret. This is usually caused by a race condition due to another user saving the secret at the same time.")
+	}
+
+	return err
 }
 
 func GetSecrets(c echo.Context, secretService secret.Service, stageService stage.Service) error {
@@ -60,7 +63,7 @@ func mapSecretMetaStatusFromDomain(domain core.SecretMeta) model.SecretMetaStatu
 			Stage: domain.StageName,
 			Name:  domain.SecretName,
 		},
-		LastUpdated: domain.Doc.LastUpdated,
+		Revision: domain.Revision,
 	}
 }
 

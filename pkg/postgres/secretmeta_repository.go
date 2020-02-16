@@ -14,13 +14,30 @@ func NewSecretMetaRepository(db *sql.DB) core.SecretMetaRepository {
 	return &secretMetaRepository{db}
 }
 
-func (r *secretMetaRepository) Save(secretMeta *core.SecretMeta) error {
-	_, err := r.db.Exec(`
-		INSERT INTO secret_meta (app_name, stage_name, secret_name, doc) VALUES ($1,$2,$3,$4)
+func (r *secretMetaRepository) Save(secretMeta *core.SecretMeta) (int64, error) {
+	row := r.db.QueryRow(`
+		INSERT INTO secret_meta (app_name, stage_name, secret_name, revision) VALUES ($1,$2,$3,0)
 		ON CONFLICT(app_name, stage_name, secret_name) DO
 		UPDATE SET
-			doc=$4;
-		`, secretMeta.AppName, secretMeta.StageName, secretMeta.SecretName, &secretMeta.Doc)
+			revision=secret_meta.revision + 1
+		RETURNING secret_meta.revision
+		`, secretMeta.AppName, secretMeta.StageName, secretMeta.SecretName)
+
+	var revision int64
+	err := row.Scan(&revision)
+	return revision, err
+}
+
+func (r *secretMetaRepository) Commit(secretMeta *core.SecretMeta) error {
+	result, err := r.db.Exec(`
+	UPDATE secret_meta
+		SET committed_revision = revision
+		WHERE app_name = $1 AND stage_name = $2 AND secret_name = $3 AND revision = $4
+	`, secretMeta.AppName, secretMeta.StageName, secretMeta.SecretName, secretMeta.Revision)
+
+	if err != nil && !ResultHasRows(result) {
+		return core.ErrConflictNewerVersion
+	}
 
 	return err
 }
@@ -28,7 +45,7 @@ func (r *secretMetaRepository) Save(secretMeta *core.SecretMeta) error {
 func (r *secretMetaRepository) FindByStage(appName string, stageName string) ([]core.SecretMeta, error) {
 	secretMetas := []core.SecretMeta{}
 	rows, err := r.db.Query(`
-	SELECT app_name, stage_name, secret_name, doc
+	SELECT app_name, stage_name, secret_name, committed_revision
 	FROM secret_meta
 	WHERE app_name = $1 AND stage_name = $2
 	ORDER BY secret_name
@@ -41,7 +58,7 @@ func (r *secretMetaRepository) FindByStage(appName string, stageName string) ([]
 	defer rows.Close()
 	for rows.Next() {
 		secretMeta := core.SecretMeta{}
-		err := rows.Scan(&secretMeta.AppName, &secretMeta.StageName, &secretMeta.SecretName, &secretMeta.Doc)
+		err := rows.Scan(&secretMeta.AppName, &secretMeta.StageName, &secretMeta.SecretName, &secretMeta.Revision)
 		if err != nil {
 			return nil, err
 		}

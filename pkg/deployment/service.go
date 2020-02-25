@@ -85,7 +85,6 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 }
 
 func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, dryRun bool) (riserRevision int64, err error) {
-	applyDefaults(deploymentConfig)
 	if err := validateDeploymentConfig(deploymentConfig); err != nil {
 		return 0, err
 	}

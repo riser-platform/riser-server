@@ -102,8 +102,9 @@ func Test_Delete_GetDeploymentFails(t *testing.T) {
 
 func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:      "myapp-mydep",
+		Namespace: "myns",
+		Stage:     "mystage",
 		App: &model.AppConfig{
 			Name: "myapp",
 		},
@@ -128,8 +129,7 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
-	// Sanity check that defaults are tested. Exhaustive default tests are in defaults_test
-	assert.NotNil(t, deployment.App.Expose)
+	assert.Equal(t, "myns", deployment.Namespace)
 	assert.Equal(t, int64(1), result)
 	assert.Equal(t, 1, deploymentRepository.GetCallCount)
 	assert.Equal(t, 1, deploymentRepository.CreateCallCount)
@@ -170,8 +170,6 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
-	// Sanity check that defaults are tested. Exhaustive default tests are in util_test
-	assert.NotNil(t, deployment.App.Expose)
 	assert.Equal(t, int64(3), result)
 	assert.Equal(t, 1, deploymentRepository.GetCallCount)
 	assert.Equal(t, 1, deploymentRepository.IncrementRevisionCallCount)
@@ -235,8 +233,6 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
-	// Sanity check that defaults are tested. Exhaustive default tests are in util_test
-	assert.NotNil(t, deployment.App.Expose)
 	assert.Equal(t, int64(3), result)
 	assert.Equal(t, 1, deploymentRepository.GetCallCount)
 	assert.Equal(t, 1, deploymentRepository.IncrementRevisionCallCount)

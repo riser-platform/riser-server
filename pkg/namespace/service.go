@@ -8,6 +8,9 @@ import (
 	"github.com/riser-platform/riser-server/pkg/state/resources"
 )
 
+// Default is the default namespace
+const Default = "apps"
+
 type Service interface {
 	Save(namespace *core.Namespace, committer state.Committer) error
 }

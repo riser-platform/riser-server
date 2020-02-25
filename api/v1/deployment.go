@@ -22,6 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// TODO(ns): Remove
 const DefaultNamespace = "apps"
 
 // TODO: Refactor and add unit test coverage
@@ -34,6 +35,18 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 
 	isDryRun := c.QueryParam("dryRun") == "true"
 
+	// TODO: Move this call into a custom databinder
+	err = deploymentRequest.App.ApplyDefaults()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Move this call into a custom databinder
+	err = deploymentRequest.App.Validate()
+	if err != nil {
+		return core.NewValidationError("Invalid app config", err)
+	}
+
 	err = stageService.ValidateDeployable(deploymentRequest.Stage)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -42,11 +55,6 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 	newDeployment, err := mapDeploymentRequestToDomain(deploymentRequest)
 	if err != nil {
 		return err
-	}
-
-	err = newDeployment.App.Validate()
-	if err != nil {
-		return core.NewValidationError("Invalid app config", err)
 	}
 
 	appId, err := core.DecodeAppId(deploymentRequest.App.AppConfig.Id)
@@ -69,10 +77,10 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		committer = state.NewGitCommitter(stateRepo)
 	}
 
-	// TODO: This is a hack that exists for ease of use since we only support the "apps" namespace.
+	// TODO(ns): This is a hack that exists for ease of use since we only support the "apps" namespace.
 	// Once we support multiple namespace this should be in its own route
 	namespaceService := namespace.NewService()
-	err = namespaceService.Save(&core.Namespace{Name: DefaultNamespace, Stage: deploymentRequest.Stage}, committer)
+	err = namespaceService.Save(&core.Namespace{Name: deploymentRequest.App.Namespace, Stage: deploymentRequest.Stage}, committer)
 	if err != nil && err != git.ErrNoChanges {
 		return err
 	}
@@ -144,7 +152,7 @@ func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*
 	}
 	return &core.DeploymentConfig{
 		Name:      deploymentRequest.Name,
-		Namespace: DefaultNamespace,
+		Namespace: app.Namespace,
 		Stage:     deploymentRequest.Stage,
 		Docker: core.DeploymentDocker{
 			Tag: deploymentRequest.Docker.Tag,

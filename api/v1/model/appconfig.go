@@ -8,6 +8,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+var (
+	DefaultAppConfig = &AppConfig{
+		Namespace: "apps",
+		Expose: &AppConfigExpose{
+			Protocol: "http",
+		},
+	}
+)
+
 // TODO: Move outside the API and into a separate module. The AppConfig should version independently of the API via a Version field on the root AppConfig object
 // Also, pkg/* should not have a dependency here. However, moving this into pkg/core (for example) would cause a circular module dependency so we
 // may need to create a separate module e.g. pkg/core/appconfig
@@ -67,10 +76,15 @@ type AppConfigResources struct {
 	MemoryMB *int32   `json:"memoryMB,omitempty"`
 }
 
+// ApplyDefaults sets any unset values with their defaults
+func (appConfig *AppConfig) ApplyDefaults() error {
+	return mergo.Merge(appConfig, DefaultAppConfig)
+}
+
 func (appConfig *AppConfig) Validate() error {
 	err := validation.ValidateStruct(appConfig,
 		validation.Field(&appConfig.Name, RulesAppName()...),
-		validation.Field(&appConfig.Namespace, RulesNamingIdentifier()...),
+		validation.Field(&appConfig.Namespace, append(RulesNamingIdentifier(), validation.Required)...),
 		validation.Field(&appConfig.Id, validation.Required),
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
 		validation.Field(&appConfig.Expose, validation.Required),

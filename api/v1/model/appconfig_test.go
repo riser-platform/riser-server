@@ -16,12 +16,46 @@ import (
 
 // Define the minimum valid config here. Don't reference it directly though. Use createMinAppConfig instead to get a deep clone
 var minimumValidAppConfig = &AppConfig{
-	Name:  "myapp",
-	Id:    "myid",
-	Image: "myimage",
+	Name:      "myapp",
+	Namespace: "myns",
+	Id:        "myid",
+	Image:     "myimage",
 	Expose: &AppConfigExpose{
 		ContainerPort: 80,
 	},
+}
+
+func Test_AppConfig_ApplyDefaults(t *testing.T) {
+	appConfig := &AppConfig{
+		Name: "myapp",
+	}
+
+	err := appConfig.ApplyDefaults()
+
+	assert.NoError(t, err)
+	assert.Equal(t, "myapp", appConfig.Name)
+	assert.Equal(t, "apps", appConfig.Namespace)
+	assert.NotNil(t, appConfig.Expose)
+	assert.Equal(t, "http", appConfig.Expose.Protocol)
+}
+
+func Test_AppConfig_ApplyDefaults_NoDefaults(t *testing.T) {
+	appConfig := &AppConfig{
+		Name:      "myapp",
+		Namespace: "myns",
+		Expose: &AppConfigExpose{
+			ContainerPort: 8000,
+			Protocol:      "http2",
+		},
+	}
+
+	err := appConfig.ApplyDefaults()
+
+	assert.NoError(t, err)
+	assert.Equal(t, "myapp", appConfig.Name)
+	assert.Equal(t, "myns", appConfig.Namespace)
+	assert.Equal(t, "http2", appConfig.Expose.Protocol)
+	assert.EqualValues(t, 8000, appConfig.Expose.ContainerPort)
 }
 
 func Test_AppConfig_ValidateName(t *testing.T) {
@@ -43,8 +77,8 @@ func Test_AppConfig_ValidateRequired(t *testing.T) {
 
 	assert.IsType(t, validation.Errors{}, err)
 	validationErrors := err.(validation.Errors)
-	assert.Len(t, validationErrors, 4)
-	assertFieldsRequired(t, validationErrors, "name", "id", "image", "expose")
+	assert.Len(t, validationErrors, 5)
+	assertFieldsRequired(t, validationErrors, "name", "namespace", "id", "image", "expose")
 }
 
 func Test_AppConfig_ValidateExposeRequired(t *testing.T) {

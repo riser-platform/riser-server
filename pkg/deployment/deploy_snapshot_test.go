@@ -41,6 +41,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 			},
 			Expose: &model.AppConfigExpose{
 				ContainerPort: 8080,
+				Protocol:      "http",
 			},
 		},
 		Traffic: core.TrafficConfig{
@@ -73,8 +74,6 @@ func Test_update_snapshot_simple(t *testing.T) {
 		RiserRevision: 3,
 		Secrets:       secrets,
 	}
-	// TODO: Refactor prepareDeployment and call first
-	applyDefaults(newDeployment)
 	err = deploy(ctx, committer)
 
 	assert.NoError(t, err)

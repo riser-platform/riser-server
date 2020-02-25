@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Note: See rules_test for more test coverage
+
 // Define the minimum valid config here. Don't reference it directly though. Use createMinAppConfig instead to get a deep clone
 var minimumValidAppConfig = &AppConfig{
 	Name:  "myapp",
@@ -20,6 +22,19 @@ var minimumValidAppConfig = &AppConfig{
 	Expose: &AppConfigExpose{
 		ContainerPort: 80,
 	},
+}
+
+func Test_AppConfig_ValidateName(t *testing.T) {
+	appConfig := createMinAppConfig()
+	appConfig.Name = "5name"
+	appConfig.Namespace = "5ns"
+
+	err := appConfig.Validate()
+	assert.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	assert.Len(t, validationErrors, 2)
+	assert.Equal(t, "must be lowercase, alphanumeric, and start with a letter", validationErrors["name"].Error())
+	assert.Equal(t, "must be lowercase, alphanumeric, and start with a letter", validationErrors["namespace"].Error())
 }
 
 func Test_AppConfig_ValidateRequired(t *testing.T) {

@@ -54,7 +54,9 @@ func ListStages(c echo.Context, stageRepository core.StageRepository) error {
 }
 
 func validateStageName(stageName string) error {
-	err := validation.Validate(&stageName, model.RulesNamingIdentifier()...)
+	rules := model.RulesNamingIdentifier()
+	rules = append(rules, validation.Required)
+	err := validation.Validate(&stageName, rules...)
 	if err != nil {
 		return core.NewValidationError("invalid stage name", err)
 	}

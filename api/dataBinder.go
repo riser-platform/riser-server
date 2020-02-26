@@ -1,14 +1,9 @@
 package api
 
 import (
-	"errors"
-
 	"github.com/labstack/echo/v4"
 	"github.com/riser-platform/riser-server/pkg/core"
 )
-
-// ErrInvalidBindType occurs when the wrong type is sent to a custom data binder. This should never happen.
-var ErrInvalidBindType = errors.New("The incoming type must match the struct type")
 
 type DefaultApplier interface {
 	ApplyDefaults() error

@@ -5,6 +5,13 @@ type DeploymentRequest struct {
 	App            *AppConfigWithOverrides `json:"app"`
 }
 
+func (d *DeploymentRequest) ApplyDefaults() error {
+	if d.App == nil {
+		d.App = &AppConfigWithOverrides{}
+	}
+	return d.App.ApplyDefaults()
+}
+
 type DeploymentResponse struct {
 	Message       string         `json:"message"`
 	DryRunCommits []DryRunCommit `json:"dryRunCommits,omitempty"`

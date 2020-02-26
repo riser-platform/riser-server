@@ -79,6 +79,7 @@ func main() {
 	e.Logger = echolog.NewLogger(logger, "")
 	e.Use(echolog.Middleware(echolog.DefaultConfig))
 	e.HTTPErrorHandler = api.ErrorHandler
+	e.Binder = &api.DataBinder{}
 
 	apiv1.RegisterRoutes(e, repo, postgresDb)
 	err = e.Start(rc.BindAddress)

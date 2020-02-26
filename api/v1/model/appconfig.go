@@ -81,8 +81,8 @@ func (appConfig *AppConfig) ApplyDefaults() error {
 	return mergo.Merge(appConfig, DefaultAppConfig)
 }
 
-func (appConfig *AppConfig) Validate() error {
-	err := validation.ValidateStruct(appConfig,
+func (appConfig AppConfig) Validate() error {
+	err := validation.ValidateStruct(&appConfig,
 		validation.Field(&appConfig.Name, RulesAppName()...),
 		validation.Field(&appConfig.Namespace, append(RulesNamingIdentifier(), validation.Required)...),
 		validation.Field(&appConfig.Id, validation.Required),

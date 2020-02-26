@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/labstack/echo/v4"
+	"github.com/riser-platform/riser-server/pkg/core"
 )
 
 // ErrInvalidBindType occurs when the wrong type is sent to a custom data binder. This should never happen.
@@ -11,6 +12,10 @@ var ErrInvalidBindType = errors.New("The incoming type must match the struct typ
 
 type DefaultApplier interface {
 	ApplyDefaults() error
+}
+
+type Validator interface {
+	Validate() error
 }
 
 type DataBinder struct{}
@@ -21,8 +26,19 @@ func (b *DataBinder) Bind(i interface{}, c echo.Context) (err error) {
 		return err
 	}
 
-	if modelDataBinder, ok := i.(DefaultApplier); ok {
-		return modelDataBinder.ApplyDefaults()
+	if modelWithDefaults, ok := i.(DefaultApplier); ok {
+		err = modelWithDefaults.ApplyDefaults()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Use our own validation instead of echo validation.
+	if modelWithValidator, ok := i.(Validator); ok {
+		err := modelWithValidator.Validate()
+		if err != nil {
+			return core.NewValidationError("validation error", err)
+		}
 	}
 
 	return nil

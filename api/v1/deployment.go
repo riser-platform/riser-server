@@ -35,12 +35,6 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 
 	isDryRun := c.QueryParam("dryRun") == "true"
 
-	// TODO: Move this call into a custom databinder
-	err = deploymentRequest.App.Validate()
-	if err != nil {
-		return core.NewValidationError("Invalid app config", err)
-	}
-
 	err = stageService.ValidateDeployable(deploymentRequest.Stage)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())

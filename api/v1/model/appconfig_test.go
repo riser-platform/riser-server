@@ -293,13 +293,6 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 	assert.Equal(t, "/health", result.HealthCheck.Path)
 }
 
-func assertFieldsRequired(t *testing.T, errors validation.Errors, fieldNames ...string) {
-	for _, fieldName := range fieldNames {
-		require.Contains(t, errors, fieldName, "missing required field %q", fieldName)
-		assert.Equal(t, "cannot be blank", errors[fieldName].Error())
-	}
-}
-
 func createMinAppConfig() *AppConfig {
 	appConfig := &AppConfig{}
 	_ = copier.Copy(appConfig, minimumValidAppConfig)

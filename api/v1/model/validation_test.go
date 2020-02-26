@@ -81,3 +81,10 @@ func Test_mergeValidationErrors_EmptyPrefix(t *testing.T) {
 	assert.Equal(t, "field1 error", validationErrors["field1"].Error())
 	assert.Equal(t, "field2 error", validationErrors["field2"].Error())
 }
+
+func assertFieldsRequired(t *testing.T, errors validation.Errors, fieldNames ...string) {
+	for _, fieldName := range fieldNames {
+		require.Contains(t, errors, fieldName, "missing required field %q", fieldName)
+		assert.Equal(t, "cannot be blank", errors[fieldName].Error())
+	}
+}

@@ -47,8 +47,8 @@ func ListApps(c echo.Context, appRepo core.AppRepository) error {
 
 func mapAppFromDomain(domain core.App) model.App {
 	return model.App{
+		Id:   domain.Id,
 		Name: domain.Name,
-		Id:   domain.Hashid.String(),
 	}
 }
 

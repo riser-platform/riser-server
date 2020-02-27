@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/docker/distribution/reference"
 	validation "github.com/go-ozzo/ozzo-validation/v3"
+	"github.com/google/uuid"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -44,16 +45,15 @@ func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig,
 
 // AppConfig is the root of the application config object graph without stage overrides
 type AppConfig struct {
+	Id          uuid.UUID                     `json:"id"`
 	Name        string                        `json:"name"`
 	Namespace   string                        `json:"namespace,omitempty"`
 	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
 	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
 	Expose      *AppConfigExpose              `json:"expose,omitempty"`
 	HealthCheck *AppConfigHealthCheck         `json:"healthcheck,omitempty"`
-	// Id is a random id used to prevent collisions (two apps with the same name and namespace)
-	Id        string              `json:"id"`
-	Image     string              `json:"image"`
-	Resources *AppConfigResources `json:"resources,omitempty"`
+	Image       string                        `json:"image"`
+	Resources   *AppConfigResources           `json:"resources,omitempty"`
 }
 
 type AppConfigAutoscale struct {

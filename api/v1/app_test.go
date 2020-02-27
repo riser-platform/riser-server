@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/api/v1/model"
 
 	"github.com/stretchr/testify/assert"
@@ -27,16 +28,15 @@ func Test_PostApp_Validates(t *testing.T) {
 }
 
 func Test_mapAppFromDomain(t *testing.T) {
-	appId, _ := core.DecodeAppId("aaaa")
 	domain := core.App{
-		Name:   "myapp",
-		Hashid: appId,
+		Id:   uuid.New(),
+		Name: "myapp",
 	}
 
 	result := mapAppFromDomain(domain)
 
 	assert.Equal(t, "myapp", result.Name)
-	assert.Equal(t, "aaaa", result.Id)
+	assert.Equal(t, domain.Id, result.Id)
 }
 
 func Test_mapAppArrayFromDomain(t *testing.T) {

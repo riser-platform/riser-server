@@ -5,6 +5,6 @@ autoscale:
 expose:
   containerPort: 8080
   protocol: http
-id: myid
+id: 2516d5e4-1ec3-46b8-b3cd-c3d72ae38dc0
 image: ""
 name: myapp

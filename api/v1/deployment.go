@@ -45,12 +45,8 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		return err
 	}
 
-	appId, err := core.DecodeAppId(deploymentRequest.App.AppConfig.Id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "App Id must be a hex string")
-	}
-	err = appService.CheckAppId(deploymentRequest.App.Name, appId)
-	if err == app.ErrInvalidAppId || err == app.ErrAppNotFound {
+	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, deploymentRequest.App.Name)
+	if err == app.ErrInvalidAppName || err == app.ErrAppNotFound {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if err != nil {

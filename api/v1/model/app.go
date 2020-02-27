@@ -1,9 +1,12 @@
 package model
 
+import (
+	"github.com/google/uuid"
+)
+
 type App struct {
-	// Id is a short hash (32bit SHA1 represented as an 8 character hex)
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type NewApp struct {

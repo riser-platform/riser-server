@@ -1,22 +1,19 @@
 package app
 
 import (
-	"crypto/sha1"
-
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-var ErrAlreadyExists = errors.New("app already exists")
-var ErrInvalidAppId = errors.New("invalid app ID")
+var ErrAlreadyExists = errors.New("an app already exists with the provided name")
+var ErrInvalidAppName = errors.New("the app name does not match the name associated with the provided app ID")
 var ErrAppNotFound = errors.New("app not found")
-
-const appIdSizeInBytes = 4
 
 type Service interface {
 	CreateApp(name string) (*core.App, error)
-	CheckAppId(name string, appId core.AppId) error
+	// CheckAppName ensures that the app name belongs to the app ID. This prevents an accidental or otherwise name change in the app config.
+	CheckAppName(id uuid.UUID, name string) error
 }
 
 type service struct {
@@ -28,17 +25,17 @@ func NewService(apps core.AppRepository) Service {
 }
 
 func (s *service) CreateApp(name string) (*core.App, error) {
-	_, err := s.apps.Get(name)
+	_, err := s.apps.GetByName(name)
 
 	if err == nil {
 		return nil, ErrAlreadyExists
 	} else if err != core.ErrNotFound {
 		return nil, errors.Wrap(err, "unable to validate app")
 	}
-	appId := createAppId()
+	appId := uuid.New()
 	app := &core.App{
-		Hashid: appId,
-		Name:   name,
+		Id:   appId,
+		Name: name,
 	}
 	err = s.apps.Create(app)
 	if err != nil {
@@ -48,8 +45,8 @@ func (s *service) CreateApp(name string) (*core.App, error) {
 	return app, nil
 }
 
-func (s *service) CheckAppId(name string, appId core.AppId) error {
-	app, err := s.apps.Get(name)
+func (s *service) CheckAppName(id uuid.UUID, name string) error {
+	app, err := s.apps.Get(id)
 	if err != nil {
 		if err == core.ErrNotFound {
 			return ErrAppNotFound
@@ -57,14 +54,9 @@ func (s *service) CheckAppId(name string, appId core.AppId) error {
 		return errors.Wrap(err, "Error getting app")
 	}
 
-	if appId.String() != app.Hashid.String() {
-		return ErrInvalidAppId
+	if name != app.Name {
+		return ErrInvalidAppName
 	}
 
 	return nil
-}
-
-func createAppId() core.AppId {
-	hashBytes := sha1.Sum([]byte(uuid.New().String()))
-	return hashBytes[:appIdSizeInBytes]
 }

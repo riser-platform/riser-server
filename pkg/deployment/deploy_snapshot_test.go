@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -34,7 +35,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 		},
 		App: &model.AppConfig{
 			Name: "myapp",
-			Id:   "myid",
+			Id:   uuid.MustParse("2516D5E4-1EC3-46B8-B3CD-C3D72AE38DC0"),
 			Autoscale: &model.AppConfigAutoscale{
 				Min: util.PtrInt(0),
 				Max: util.PtrInt(1),

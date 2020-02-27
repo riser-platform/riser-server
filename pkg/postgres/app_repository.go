@@ -3,6 +3,8 @@ package postgres
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
+
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
@@ -14,9 +16,22 @@ func NewAppRepository(db *sql.DB) core.AppRepository {
 	return &appRepository{db: db}
 }
 
-func (r *appRepository) Get(name string) (*core.App, error) {
+func (r *appRepository) Get(id uuid.UUID) (*core.App, error) {
 	app := &core.App{}
-	err := r.db.QueryRow("SELECT name, hashid FROM app WHERE name = $1", name).Scan(&app.Name, &app.Hashid)
+	err := r.db.QueryRow("SELECT id, name FROM app WHERE id = $1", id).Scan(&app.Id, &app.Name)
+	if err == sql.ErrNoRows {
+		return nil, core.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (r *appRepository) GetByName(name string) (*core.App, error) {
+	app := &core.App{}
+	err := r.db.QueryRow("SELECT id, name FROM app WHERE name = $1", name).Scan(&app.Id, &app.Name)
 	if err == sql.ErrNoRows {
 		return nil, core.ErrNotFound
 	}
@@ -28,13 +43,13 @@ func (r *appRepository) Get(name string) (*core.App, error) {
 }
 
 func (r *appRepository) Create(app *core.App) error {
-	_, err := r.db.Exec("INSERT INTO app (name, hashid) VALUES ($1,$2)", app.Name, app.Hashid)
+	_, err := r.db.Exec("INSERT INTO app (id, name) VALUES ($1,$2)", app.Id, app.Name)
 	return err
 }
 
 func (r *appRepository) ListApps() ([]core.App, error) {
 	apps := []core.App{}
-	rows, err := r.db.Query("SELECT name, hashid FROM app")
+	rows, err := r.db.Query("SELECT id, name FROM app")
 
 	if err != nil {
 		return nil, err
@@ -43,7 +58,7 @@ func (r *appRepository) ListApps() ([]core.App, error) {
 	defer rows.Close()
 	for rows.Next() {
 		app := core.App{}
-		err := rows.Scan(&app.Name, &app.Hashid)
+		err := rows.Scan(&app.Id, &app.Name)
 		if err != nil {
 			return nil, err
 		}

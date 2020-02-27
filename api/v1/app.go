@@ -45,6 +45,16 @@ func ListApps(c echo.Context, appRepo core.AppRepository) error {
 	return c.JSON(200, mapAppArrayFromDomain(apps))
 }
 
+func GetApp(c echo.Context, appService app.Service) error {
+	domainApp, err := appService.GetByIdOrName(c.Param("appIdOrName"))
+
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, mapAppFromDomain(*domainApp))
+}
+
 func mapAppFromDomain(domain core.App) model.App {
 	return model.App{
 		Id:   domain.Id,

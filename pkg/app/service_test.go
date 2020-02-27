@@ -13,6 +13,54 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
+func Test_GetByIdOrName_UUID(t *testing.T) {
+	appId := uuid.New()
+	appRepository := &core.FakeAppRepository{
+		GetFn: func(idArg uuid.UUID) (*core.App, error) {
+			return &core.App{Id: idArg}, nil
+		},
+	}
+
+	appService := service{appRepository}
+
+	result, err := appService.GetByIdOrName(appId.String())
+
+	assert.NoError(t, err)
+	assert.Equal(t, appId, result.Id)
+}
+
+func Test_GetByIdOrName_UUID_WhenError(t *testing.T) {
+	appId := uuid.New()
+	appRepository := &core.FakeAppRepository{
+		GetFn: func(idArg uuid.UUID) (*core.App, error) {
+			return nil, errors.New("test")
+		},
+	}
+
+	appService := service{appRepository}
+
+	result, err := appService.GetByIdOrName(appId.String())
+
+	assert.Equal(t, "test", err.Error())
+	assert.Nil(t, result)
+}
+
+func Test_GetByIdOrName_Name(t *testing.T) {
+	appName := "myapp"
+	appRepository := &core.FakeAppRepository{
+		GetByNameFn: func(nameArg string) (*core.App, error) {
+			return &core.App{Name: nameArg}, nil
+		},
+	}
+
+	appService := service{appRepository}
+
+	result, err := appService.GetByIdOrName(appName)
+
+	assert.NoError(t, err)
+	assert.Equal(t, appName, result.Name)
+}
+
 func Test_CreateApp(t *testing.T) {
 	var appName string
 	var newApp *core.App
@@ -27,9 +75,7 @@ func Test_CreateApp(t *testing.T) {
 		},
 	}
 
-	appService := service{
-		apps: appRepository,
-	}
+	appService := service{appRepository}
 
 	result, err := appService.CreateApp("foo")
 

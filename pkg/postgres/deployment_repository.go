@@ -52,7 +52,7 @@ func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, er
 	rows, err := r.db.Query(`
 	SELECT name, stage_name, app_id, riser_revision, doc
 	FROM deployment
-	WHERE appId = $1 AND deleted_at IS NULL
+	WHERE app_id = $1 AND deleted_at IS NULL
 	ORDER BY stage_name, name
 	`, appId)
 

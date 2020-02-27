@@ -49,8 +49,12 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return ListApps(c, appRepository)
 	})
 
-	v1.GET("/apps/:appId/status", func(c echo.Context) error {
-		return GetStatus(c, deploymentStatusService)
+	v1.GET("/apps/:appIdOrName", func(c echo.Context) error {
+		return GetApp(c, appService)
+	})
+
+	v1.GET("/apps/:appIdOrName/status", func(c echo.Context) error {
+		return GetAppStatus(c, appService, deploymentStatusService)
 	})
 
 	v1.POST("/apps", func(c echo.Context) error {

@@ -52,8 +52,7 @@ CREATE INDEX ix_secretmeta_committed_revision ON secret_meta(committed_revision)
 /* "user" is a reserved word in Postgress. Easier to just use riser_user. The domain will still call this resource a "user" */
 CREATE TABLE riser_user
 (
--- TODO: uuid
-  id serial,
+  id uuid NOT NULL,
   username character varying(32) NOT NULL,
   doc jsonb NOT NULL,
   PRIMARY KEY(id)
@@ -63,15 +62,13 @@ CREATE UNIQUE INDEX ix_riser_user_username ON riser_user(username);
 
 CREATE TABLE apikey
 (
--- TODO: uuid
-  id serial,
-  riser_user_id integer NOT NULL REFERENCES riser_user(id),
-  key_hash bytea NOT NULL,
-  PRIMARY KEY(id)
+  riser_user_id uuid NOT NULL REFERENCES riser_user(id),
+  key_hash bytea NOT NULL
 );
 
-CREATE INDEX ix_userlogin_user_id ON apikey(riser_user_id);
-CREATE UNIQUE INDEX ix_userlogin_key_hash ON apikey(key_hash);
+CREATE INDEX ix_apikey_riser_user_id ON apikey(riser_user_id);
+-- The hash must be unique across users since we find the user based on the hash alone
+CREATE UNIQUE INDEX ix_apikey_key_hash ON apikey(key_hash);
 
 
 

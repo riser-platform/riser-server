@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
@@ -14,10 +15,10 @@ func NewApiKeyRepository(db *sql.DB) core.ApiKeyRepository {
 	return &apiKeyRepository{db}
 }
 
-func (r *apiKeyRepository) GetByUserId(userId int) ([]core.ApiKey, error) {
+func (r *apiKeyRepository) GetByUserId(userId uuid.UUID) ([]core.ApiKey, error) {
 	apiKeys := []core.ApiKey{}
 	rows, err := r.db.Query(`
-	SELECT id, riser_user_id, key_hash
+	SELECT riser_user_id, key_hash
 	FROM apikey
 	WHERE riser_user_id = $1
 	`, userId)
@@ -29,7 +30,7 @@ func (r *apiKeyRepository) GetByUserId(userId int) ([]core.ApiKey, error) {
 	defer rows.Close()
 	for rows.Next() {
 		apiKey := core.ApiKey{}
-		err := rows.Scan(&apiKey.Id, &apiKey.UserId, &apiKey.KeyHash)
+		err := rows.Scan(&apiKey.UserId, &apiKey.KeyHash)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +40,7 @@ func (r *apiKeyRepository) GetByUserId(userId int) ([]core.ApiKey, error) {
 	return apiKeys, nil
 }
 
-func (r *apiKeyRepository) Create(userId int, keyHash []byte) (id int, err error) {
-	err = r.db.QueryRow("INSERT INTO apikey (riser_user_id, key_hash) VALUES ($1, $2) RETURNING id", userId, keyHash).Scan(&id)
-	return id, err
+func (r *apiKeyRepository) Create(userId uuid.UUID, keyHash []byte) error {
+	_, err := r.db.Exec("INSERT INTO apikey (riser_user_id, key_hash) VALUES ($1, $2)", userId, keyHash)
+	return err
 }

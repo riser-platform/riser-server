@@ -3,14 +3,14 @@ package core
 type UserRepository interface {
 	GetByApiKey(keyHash []byte) (*User, error)
 	GetByUsername(username string) (*User, error)
-	Create(newUser *NewUser) (int, error)
+	Create(newUser *NewUser) error
 	GetActiveCount() (int, error)
 }
 
 type FakeUserRepository struct {
 	GetByApiKeyFn    func(keyHash []byte) (*User, error)
 	GetByUsernameFn  func(username string) (*User, error)
-	CreateFn         func(newUser *NewUser) (int, error)
+	CreateFn         func(newUser *NewUser) error
 	CreateCallCount  int
 	GetActiveCountFn func() (int, error)
 }
@@ -23,7 +23,7 @@ func (r *FakeUserRepository) GetByUsername(username string) (*User, error) {
 	return r.GetByUsernameFn(username)
 }
 
-func (r *FakeUserRepository) Create(newUser *NewUser) (int, error) {
+func (r *FakeUserRepository) Create(newUser *NewUser) error {
 	r.CreateCallCount++
 	return r.CreateFn(newUser)
 }

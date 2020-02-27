@@ -28,11 +28,11 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	secretMetaRepository := postgres.NewSecretMetaRepository(db)
 	stageRepository := postgres.NewStageRepository(db)
 	stageService := stage.NewService(stageRepository)
-	secretService := secret.NewService(secretMetaRepository, stageRepository)
+	secretService := secret.NewService(appRepository, secretMetaRepository, stageRepository)
 	deploymentRepository := postgres.NewDeploymentRepository(db)
-	deploymentService := deployment.NewService(secretService, stageRepository, deploymentRepository)
+	deploymentService := deployment.NewService(appRepository, secretService, stageRepository, deploymentRepository)
 	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
-	rolloutService := rollout.NewService(deploymentRepository)
+	rolloutService := rollout.NewService(appRepository, deploymentRepository)
 	userRepository := postgres.NewUserRepository(db)
 	apiKeyRepository := postgres.NewApiKeyRepository(db)
 	loginService := login.NewService(userRepository, apiKeyRepository)
@@ -49,7 +49,7 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return ListApps(c, appRepository)
 	})
 
-	v1.GET("/apps/:appName/status", func(c echo.Context) error {
+	v1.GET("/apps/:appId/status", func(c echo.Context) error {
 		return GetStatus(c, deploymentStatusService)
 	})
 
@@ -78,7 +78,7 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	v1.PUT("/secrets", func(c echo.Context) error {
 		return PutSecret(c, repo, secretService, stageService)
 	})
-	v1.GET("/secrets/:appName/:stageName", func(c echo.Context) error {
+	v1.GET("/secrets/:appId/:stageName", func(c echo.Context) error {
 		return GetSecrets(c, secretService, stageService)
 	})
 

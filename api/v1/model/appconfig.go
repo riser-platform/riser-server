@@ -85,7 +85,7 @@ func (appConfig AppConfig) Validate() error {
 	err := validation.ValidateStruct(&appConfig,
 		validation.Field(&appConfig.Name, RulesAppName()...),
 		validation.Field(&appConfig.Namespace, append(RulesNamingIdentifier(), validation.Required)...),
-		validation.Field(&appConfig.Id, validation.Required),
+		validation.Field(&appConfig.Id, validation.By(validId)),
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
 		validation.Field(&appConfig.Expose, validation.Required),
 	)
@@ -129,5 +129,14 @@ func validDockerImageWithoutTagOrDigest(value interface{}) error {
 		return errors.New("must not contain a tag or digest")
 	}
 
+	return nil
+}
+
+func validId(v interface{}) error {
+	id, _ := v.(uuid.UUID)
+	if id == uuid.Nil {
+
+		return errors.New("cannot be blank")
+	}
 	return nil
 }

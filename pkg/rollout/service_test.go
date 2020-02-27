@@ -2,20 +2,23 @@ package rollout
 
 import (
 	"errors"
-	"github.com/riser-platform/riser-server/pkg/state"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/riser-platform/riser-server/pkg/state"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_UpdateTraffic(t *testing.T) {
+	appId := uuid.New()
 	committer := state.NewDryRunCommitter()
 	deployments := &core.FakeDeploymentRepository{
 		GetFn: func(name string, stageName string) (*core.Deployment, error) {
 			return &core.Deployment{
 				Name:      "myapp",
-				AppName:   "myapp",
+				AppId:     appId,
 				StageName: "dev",
 				Doc: core.DeploymentDoc{
 					Status: &core.DeploymentStatus{
@@ -30,6 +33,15 @@ func Test_UpdateTraffic(t *testing.T) {
 		},
 	}
 
+	apps := &core.FakeAppRepository{
+		GetFn: func(id uuid.UUID) (*core.App, error) {
+			return &core.App{
+				Id:   id,
+				Name: "myapp",
+			}, nil
+		},
+	}
+
 	traffic := core.TrafficConfig{
 		core.TrafficConfigRule{
 			RiserRevision: 1,
@@ -37,7 +49,7 @@ func Test_UpdateTraffic(t *testing.T) {
 		},
 	}
 
-	svc := service{deployments: deployments}
+	svc := service{apps, deployments}
 
 	err := svc.UpdateTraffic("myapp", "dev", traffic, committer)
 
@@ -97,6 +109,15 @@ func Test_UpdateTraffic_ValidatesRevisionStatus(t *testing.T) {
 		},
 	}
 
+	apps := &core.FakeAppRepository{
+		GetFn: func(id uuid.UUID) (*core.App, error) {
+			return &core.App{
+				Id:   id,
+				Name: "myapp",
+			}, nil
+		},
+	}
+
 	traffic := core.TrafficConfig{
 		core.TrafficConfigRule{
 			RiserRevision: 1,
@@ -108,7 +129,7 @@ func Test_UpdateTraffic_ValidatesRevisionStatus(t *testing.T) {
 		},
 	}
 
-	svc := service{deployments: deployments}
+	svc := service{apps, deployments}
 
 	result := svc.UpdateTraffic("myapp", "dev", traffic, nil)
 
@@ -125,6 +146,15 @@ func Test_UpdateTraffic_ValidatesRevisionStatus_NoStatus(t *testing.T) {
 		},
 	}
 
+	apps := &core.FakeAppRepository{
+		GetFn: func(id uuid.UUID) (*core.App, error) {
+			return &core.App{
+				Id:   id,
+				Name: "myapp",
+			}, nil
+		},
+	}
+
 	traffic := core.TrafficConfig{
 		core.TrafficConfigRule{
 			RiserRevision: 1,
@@ -132,7 +162,7 @@ func Test_UpdateTraffic_ValidatesRevisionStatus_NoStatus(t *testing.T) {
 		},
 	}
 
-	svc := service{deployments: deployments}
+	svc := service{apps, deployments}
 
 	result := svc.UpdateTraffic("myapp", "dev", traffic, nil)
 

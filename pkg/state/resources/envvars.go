@@ -28,7 +28,7 @@ func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 					Key:      "data",
 					Optional: util.PtrBool(false),
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("%s-%s-%d", secret.AppName, secret.Name, secret.Revision),
+						Name: fmt.Sprintf("%s-%s-%d", ctx.Deployment.App.Name, secret.Name, secret.Revision),
 					},
 				},
 			},

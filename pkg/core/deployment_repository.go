@@ -1,10 +1,12 @@
 package core
 
+import "github.com/google/uuid"
+
 type DeploymentRepository interface {
 	Create(newDeployment *Deployment) error
 	Delete(name, stageName string) error
 	Get(name, stageName string) (*Deployment, error)
-	FindByApp(appName string) ([]Deployment, error)
+	FindByApp(appId uuid.UUID) ([]Deployment, error)
 	UpdateStatus(name, stageName string, status *DeploymentStatus) error
 	UpdateTraffic(name, stageName string, riserRevision int64, traffic TrafficConfig) error
 	IncrementRevision(name, stageName string) (int64, error)
@@ -18,7 +20,7 @@ type FakeDeploymentRepository struct {
 	DeleteCallCount            int
 	GetFn                      func(name, stageName string) (*Deployment, error)
 	GetCallCount               int
-	FindByAppFn                func(string) ([]Deployment, error)
+	FindByAppFn                func(uuid.UUID) ([]Deployment, error)
 	IncrementRevisionFn        func(name, stageName string) (int64, error)
 	IncrementRevisionCallCount int
 	RollbackRevisionFn         func(name, stageName string, failedRevision int64) (int64, error)
@@ -43,8 +45,8 @@ func (f *FakeDeploymentRepository) Get(name, stageName string) (*Deployment, err
 	return f.GetFn(name, stageName)
 }
 
-func (fake *FakeDeploymentRepository) FindByApp(appName string) ([]Deployment, error) {
-	return fake.FindByAppFn(appName)
+func (fake *FakeDeploymentRepository) FindByApp(appId uuid.UUID) ([]Deployment, error) {
+	return fake.FindByAppFn(appId)
 }
 
 func (fake *FakeDeploymentRepository) IncrementRevision(deploymentName, stageName string) (int64, error) {

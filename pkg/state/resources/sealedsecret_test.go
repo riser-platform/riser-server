@@ -41,12 +41,11 @@ xbU=
 func Test_CreateSealedSecret(t *testing.T) {
 	secret := &core.SecretMeta{
 		Name:      "mysecretname",
-		AppName:   "myapp",
 		StageName: "dev",
 		Revision:  1,
 	}
 
-	result, err := CreateSealedSecret("mysecretvalue", secret, "apps", []byte(testSealedSecretCert))
+	result, err := CreateSealedSecret("mysecretvalue", "myapp", secret, "apps", []byte(testSealedSecretCert))
 
 	require.NoError(t, err)
 	require.NotNil(t, result)

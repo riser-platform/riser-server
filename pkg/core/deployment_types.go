@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/api/v1/model"
 )
 
 type Deployment struct {
 	Name      string
 	StageName string
-	AppName   string
+	AppId     uuid.UUID
 	// RiserRevision is for tracking deployment changes and has no relation to a k8s deployment revision
 	RiserRevision int64
 	DeletedAt     *time.Time

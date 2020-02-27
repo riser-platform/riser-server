@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/riser-platform/riser-server/pkg/state"
 )
@@ -15,10 +16,6 @@ func (f *FakeService) SealAndSave(plaintextSecret string, secretMeta *core.Secre
 	return f.SealAndSaveFn(plaintextSecret, secretMeta, namespace, committer)
 }
 
-func (f *FakeService) FindByStage(appName, stageName string) ([]core.SecretMeta, error) {
-	panic("NI")
-}
-
-func (f *FakeService) FindNamesByStage(appName, stageName string) ([]string, error) {
+func (f *FakeService) FindByStage(appId uuid.UUID, stageName string) ([]core.SecretMeta, error) {
 	panic("NI")
 }

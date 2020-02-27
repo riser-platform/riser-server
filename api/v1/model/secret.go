@@ -1,14 +1,16 @@
 package model
 
+import "github.com/google/uuid"
+
 type UnsealedSecret struct {
 	SecretMeta `json:",inline"`
 	PlainText  string `json:"secretValue"`
 }
 
 type SecretMeta struct {
-	App   string `json:"app"`
-	Stage string `json:"stage"`
-	Name  string `json:"secretName"`
+	AppId uuid.UUID `json:"appId"`
+	Stage string    `json:"stage"`
+	Name  string    `json:"secretName"`
 }
 
 type SecretMetaStatus struct {

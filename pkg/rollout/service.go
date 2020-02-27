@@ -16,11 +16,12 @@ type Service interface {
 }
 
 type service struct {
+	apps        core.AppRepository
 	deployments core.DeploymentRepository
 }
 
-func NewService(deployments core.DeploymentRepository) Service {
-	return &service{deployments}
+func NewService(apps core.AppRepository, deployments core.DeploymentRepository) Service {
+	return &service{apps, deployments}
 }
 
 func (s *service) UpdateTraffic(deploymentName, stageName string, traffic core.TrafficConfig, committer state.Committer) error {
@@ -30,6 +31,11 @@ func (s *service) UpdateTraffic(deploymentName, stageName string, traffic core.T
 			return &core.ValidationError{Message: fmt.Sprintf("a deployment with the name %q does not exist in stage %q", deploymentName, stageName)}
 		}
 		return errors.Wrap(err, "error getting deployment")
+	}
+
+	app, err := s.apps.Get(deployment.AppId)
+	if err != nil {
+		return errors.Wrap(err, "error getting app")
 	}
 
 	err = validateTrafficRules(traffic, deployment)
@@ -48,7 +54,7 @@ func (s *service) UpdateTraffic(deploymentName, stageName string, traffic core.T
 			Stage:     stageName,
 			Traffic:   traffic,
 			App: &model.AppConfig{
-				Name: deployment.AppName,
+				Name: app.Name,
 			},
 		},
 		RiserRevision: deployment.RiserRevision,

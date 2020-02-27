@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/state"
 
 	"github.com/pkg/errors"
@@ -16,20 +17,28 @@ import (
 const testCert = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVyakNDQXBhZ0F3SUJBZ0lSQUswbGdFTFB0MVE1UXRTQ1BKQ0k4Y1V3RFFZSktvWklodmNOQVFFTEJRQXcKQURBZUZ3MHhPVEE1TWpReE1ERTJNemxhRncweU9UQTVNakV4TURFMk16bGFNQUF3Z2dJaU1BMEdDU3FHU0liMwpEUUVCQVFVQUE0SUNEd0F3Z2dJS0FvSUNBUURBNURtRGt4dzlzRFhtVjJ4M0EyL3JBYUpHc1NVZzJ2Uk5NWFVtCndkdWJlTVB0eDhicHU4bEtCZVJlQTFuSk5QT1diQ0tlMGxTeVVQTUw4RFBRWmF5eEtIMUhPQnd3MDVrdmhJQ1YKLzFMcGlZbzRNVC91WWlLcS9vODhMY0JDTTBYdHBzZGFjL05LZExyalg2VWhoaEVPQ2VmWnIwSEJZbTBOTDdEUwp5OFVZN0ZucnZ0YUo0aVBCNTcrK0R3bUJkS3lzMGJzK3ZtVXp5L0Q2UjdHUGxPTTF4YmFrWjZ4NElrUXNmbVlTClVRR1RNMzFCb3Y5d2x6dksyS0pET2NNNU9JdG1TdGVTekMvbExzdllPWVpqSE95Q01iVG8veStMdldlZXFCTHYKNU9GZytTelVLSWNOT2RQWUdOSVNwRk9UNUtzVTlrMU55UXVNbWhKZ1dEdWpaTkdxT1IvWmNTK0M5RjBLTXlWcgpZSkdQWS9rYjRLNFZ3bUlkbTdodk1OZkU4QnRjS0UxVzJaYzNPOWZZeFN3ZDByQk9oZ0J4WndHUU4zTE8rbkVFCnA5TGt6UjhxMVlCV3VYa0VJZGd0Y1l1UkJEb0ZUcTRMUXNzazdQY2JjUWx6dHdNbUFPTWtKNVVGcktjZVU3YzgKVnlnOHphSVcxekNySVdUV2RMeEJIa0FZL0ZURVRGMkNVL3NTOWxTd090elRLdDVPVUdld3EzOS94TlpPVmlVLwp0RnhzZ3AxSjFYNk16SGlOTzdGVHVaTitKcXpmcnI4ekZzcEVDR29vVmZMd0I1MERnSnZXeFc4bWptTkplQWN6Ck9PVXR2TEpoK29TK3NJRTdqYmhROTJpTW42V2VNdUhMSEJxL2RXWmFqYmozbDJhaHF0emNPLy95ejB1VVdUclUKVnZqVkxRSURBUUFCb3lNd0lUQU9CZ05WSFE4QkFmOEVCQU1DQUFFd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBTgpCZ2txaGtpRzl3MEJBUXNGQUFPQ0FnRUFKL2lNdEJ3Z3RaY1JpNlRudnVKQ3IvT2RYblZFaVRDeWtkOVREeWxRCnBMRXNqUWt4TjhwT2x3R1V5K3FOeGM0SjJNSmo2WG9KK3RrVXNRSVZTOHpzcTNWblU3YzBpd1VRUWZSZUdXNmcKRlVLTnNUaVpwTUplVnp0aUpRT3FJNlZBUnNEMFZNSzVXWnUzc2w0VCsrVUl6SXVsWUJLUWx2UzFGNmpYNjdXUQplenVLR250NC85OUFYTG53cjBFaVh5U1hQcFhzVklJNXBlSlU4K1BoN1dHRkFxb04wMFlIMUFaSEJaU2JpYjRvClVXU21NWlhlSDJ4aXVIUUVKRCtkdENGeUNYU1R6OFRNeXpaYy90NGtaZFFvWGVST3FxZ09QR0FCcmR5R2lkNHkKY2tjeGcxbDRTWXZJeHlmNktJWFZGQ2VaUVRFcU9xRzQyQzR2WjZSTlEzR093VGFzQSsyK1ZNNUNZQlVkSlIzWgpzZkI4djVFK3VPZ3RrQXpGNUV0SjgxODcwUXE3ZXgwVDUzREEvd2JoVDR5RkJWb25UU1p4cGFUaGlyUEN1RUVXClErOGpPWWhPWTNZeDVnekwzY1puclVLRk9XaVltOWVVVWpWZnB1R3JBdmJzK0svZlJMNWp4UDFFUWhydDhDRnoKOHlxc2lrYm1NM0FDeGxpakJqRWtrM0Zsa3ZjRTdpa1FqVFd2SVE1QWxHVDRXTHNnQVVHcVJzcDBBNzB4V3NSdwphMW9ZUWIzZngzWG0zZ0hwVXVyVGtjSVF2Q0xkS2NPZTlNbnB3UVBtRCtpK3V3THh5LzJjN004VzZaa2dXTlZJCmU3and6bW11SzNiWmI4ZmpBS0NHRDB4dkJOU0Y4N1hZZU9qN0d3Ykd3bjVPMFFYaXJ2dE1lZFZ6c1NuUTA2ZS8KNFVrPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="
 
 func Test_FindByStage(t *testing.T) {
+	appId := uuid.New()
 	secretMetas := []core.SecretMeta{
-		core.SecretMeta{AppName: "myapp", StageName: "dev"},
+		core.SecretMeta{AppId: appId, StageName: "dev"},
 	}
 	secretMetaRepository := &core.FakeSecretMetaRepository{
-		FindByStageFn: func(appName string, stageName string) ([]core.SecretMeta, error) {
-			assert.Equal(t, "myapp", appName)
+		FindByStageFn: func(appIdArg uuid.UUID, stageName string) ([]core.SecretMeta, error) {
+			assert.Equal(t, appId, appIdArg)
 			assert.Equal(t, "dev", stageName)
 			return secretMetas, nil
 		},
 	}
 
-	service := service{secretMetas: secretMetaRepository}
+	apps := &core.FakeAppRepository{
+		GetFn: func(id uuid.UUID) (*core.App, error) {
+			assert.Equal(t, appId, id)
+			return &core.App{}, nil
+		},
+	}
 
-	result, err := service.FindByStage("myapp", "dev")
+	service := service{apps: apps, secretMetas: secretMetaRepository}
+
+	result, err := service.FindByStage(appId, "dev")
 
 	assert.NoError(t, err)
 	assert.Equal(t, secretMetas, result)
@@ -38,14 +47,20 @@ func Test_FindByStage(t *testing.T) {
 func Test_FindByStage_SecretRepositoryErr_ReturnsErr(t *testing.T) {
 	expectedErr := errors.New("test")
 	secretMetaRepository := &core.FakeSecretMetaRepository{
-		FindByStageFn: func(string, string) ([]core.SecretMeta, error) {
+		FindByStageFn: func(uuid.UUID, string) ([]core.SecretMeta, error) {
 			return nil, expectedErr
 		},
 	}
 
-	service := service{secretMetas: secretMetaRepository}
+	apps := &core.FakeAppRepository{
+		GetFn: func(id uuid.UUID) (*core.App, error) {
+			return &core.App{}, nil
+		},
+	}
 
-	result, err := service.FindByStage("myapp", "dev")
+	service := service{apps: apps, secretMetas: secretMetaRepository}
+
+	result, err := service.FindByStage(uuid.New(), "dev")
 
 	assert.Nil(t, result)
 	assert.Equal(t, "Error retrieving secret metadata: test", err.Error())
@@ -112,21 +127,30 @@ func Test_getSealedSecretCert_WhenGetStageErr(t *testing.T) {
 
 func Test_sealAndSave(t *testing.T) {
 	testCertBytes, _ := base64.StdEncoding.DecodeString(testCert)
+	appId := uuid.New()
 	secretMetaRepository := &core.FakeSecretMetaRepository{
 		CommitFn: func(secretMeta *core.SecretMeta) error {
 			assert.EqualValues(t, 1, secretMeta.Revision)
 			return nil
 		},
 		SaveFn: func(secretMeta *core.SecretMeta) (int64, error) {
-			assert.Equal(t, "myapp", secretMeta.AppName)
+			assert.Equal(t, appId, secretMeta.AppId)
 			assert.Equal(t, "mystage", secretMeta.StageName)
 			assert.Equal(t, "mysecret", secretMeta.Name)
 			return 1, nil
 		},
 	}
 
+	apps := &core.FakeAppRepository{
+		GetFn: func(id uuid.UUID) (*core.App, error) {
+			return &core.App{
+				Name: "myapp",
+			}, nil
+		},
+	}
+
 	meta := &core.SecretMeta{
-		AppName:   "myapp",
+		AppId:     appId,
 		StageName: "mystage",
 		Name:      "mysecret",
 		Revision:  1,
@@ -134,7 +158,7 @@ func Test_sealAndSave(t *testing.T) {
 
 	committer := state.NewDryRunCommitter()
 
-	service := service{secretMetas: secretMetaRepository}
+	service := service{apps: apps, secretMetas: secretMetaRepository}
 
 	result := service.sealAndSave("plain", "myns", testCertBytes, meta, committer)
 
@@ -159,15 +183,21 @@ func Test_sealAndSave_WhenNewerRevisionExists(t *testing.T) {
 		},
 	}
 
+	apps := &core.FakeAppRepository{
+		GetFn: func(id uuid.UUID) (*core.App, error) {
+			return &core.App{}, nil
+		},
+	}
+
 	meta := &core.SecretMeta{
-		AppName:   "myapp",
+		AppId:     uuid.New(),
 		StageName: "mystage",
 		Name:      "mysecret",
 	}
 
 	committer := state.NewDryRunCommitter()
 
-	service := service{secretMetas: secretMetaRepository}
+	service := service{apps: apps, secretMetas: secretMetaRepository}
 
 	result := service.sealAndSave("plain", "myns", testCertBytes, meta, committer)
 

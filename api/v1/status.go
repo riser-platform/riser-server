@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/core"
 
 	"github.com/riser-platform/riser-server/pkg/deploymentstatus"
@@ -14,9 +15,12 @@ import (
 )
 
 func GetStatus(c echo.Context, statusService deploymentstatus.Service) error {
-	appName := c.Param("appName")
+	appId, err := uuid.Parse(c.Param("appId"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
-	appStatus, err := statusService.GetByApp(appName)
+	appStatus, err := statusService.GetByApp(appId)
 	if err != nil {
 		return err
 	}

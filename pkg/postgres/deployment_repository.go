@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/core"
 )
@@ -16,8 +17,8 @@ func NewDeploymentRepository(db *sql.DB) core.DeploymentRepository {
 }
 
 func (r *deploymentRepository) Create(newDeployment *core.Deployment) error {
-	_, err := r.db.Exec(`INSERT INTO deployment (name, stage_name, app_name, riser_revision, doc) VALUES ($1,$2,$3,$4,$5)`,
-		newDeployment.Name, newDeployment.StageName, newDeployment.AppName, newDeployment.RiserRevision, &newDeployment.Doc)
+	_, err := r.db.Exec(`INSERT INTO deployment (name, stage_name, app_id, riser_revision, doc) VALUES ($1,$2,$3,$4,$5)`,
+		newDeployment.Name, newDeployment.StageName, newDeployment.AppId, newDeployment.RiserRevision, &newDeployment.Doc)
 	return err
 }
 
@@ -34,9 +35,9 @@ func (r *deploymentRepository) Delete(deploymentName, stageName string) error {
 func (r *deploymentRepository) Get(deploymentName, stageName string) (*core.Deployment, error) {
 	deployment := &core.Deployment{}
 	err := r.db.QueryRow(`
-	SELECT name, stage_name, app_name, riser_revision, doc FROM deployment
+	SELECT name, stage_name, app_id, riser_revision, doc FROM deployment
 	WHERE name = $1 AND stage_name = $2
-	`, deploymentName, stageName).Scan(&deployment.Name, &deployment.StageName, &deployment.AppName, &deployment.RiserRevision, &deployment.Doc)
+	`, deploymentName, stageName).Scan(&deployment.Name, &deployment.StageName, &deployment.AppId, &deployment.RiserRevision, &deployment.Doc)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			err = core.ErrNotFound
@@ -46,14 +47,14 @@ func (r *deploymentRepository) Get(deploymentName, stageName string) (*core.Depl
 	return deployment, nil
 }
 
-func (r *deploymentRepository) FindByApp(appName string) ([]core.Deployment, error) {
+func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, error) {
 	deployments := []core.Deployment{}
 	rows, err := r.db.Query(`
-	SELECT name, stage_name, app_name, riser_revision, doc
+	SELECT name, stage_name, app_id, riser_revision, doc
 	FROM deployment
-	WHERE app_name = $1 AND deleted_at IS NULL
+	WHERE appId = $1 AND deleted_at IS NULL
 	ORDER BY stage_name, name
-	`, appName)
+	`, appId)
 
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func (r *deploymentRepository) FindByApp(appName string) ([]core.Deployment, err
 	defer rows.Close()
 	for rows.Next() {
 		deployment := core.Deployment{}
-		err := rows.Scan(&deployment.Name, &deployment.StageName, &deployment.AppName, &deployment.RiserRevision, &deployment.Doc)
+		err := rows.Scan(&deployment.Name, &deployment.StageName, &deployment.AppId, &deployment.RiserRevision, &deployment.Doc)
 		if err != nil {
 			return nil, err
 		}

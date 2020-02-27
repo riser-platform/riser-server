@@ -3,6 +3,7 @@ package deploymentstatus
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/pkg/errors"
@@ -16,7 +17,7 @@ func Test_GetByApp(t *testing.T) {
 	status := core.Deployment{
 		Name:      "myDeployment",
 		StageName: "mystage",
-		AppName:   "myapp",
+		AppId:     uuid.New(),
 		Doc: core.DeploymentDoc{
 			Status: &core.DeploymentStatus{
 				Revisions: []core.DeploymentRevisionStatus{
@@ -33,8 +34,8 @@ func Test_GetByApp(t *testing.T) {
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		FindByAppFn: func(appName string) ([]core.Deployment, error) {
-			assert.Equal(t, "myapp", appName)
+		FindByAppFn: func(appId uuid.UUID) ([]core.Deployment, error) {
+			assert.Equal(t, status.AppId, appId)
 			return []core.Deployment{status}, nil
 		},
 	}
@@ -51,7 +52,7 @@ func Test_GetByApp(t *testing.T) {
 
 	service := service{deployments: deploymentRepository, stageService: stageService}
 
-	result, err := service.GetByApp("myapp")
+	result, err := service.GetByApp(status.AppId)
 
 	assert.NoError(t, err)
 	assert.Len(t, result.StageStatuses, 1)
@@ -63,14 +64,14 @@ func Test_GetByApp(t *testing.T) {
 
 func Test_GetByApp_StatusRepoErr_ReturnsErr(t *testing.T) {
 	deploymentRepository := &core.FakeDeploymentRepository{
-		FindByAppFn: func(string) ([]core.Deployment, error) {
+		FindByAppFn: func(uuid.UUID) ([]core.Deployment, error) {
 			return nil, errors.New("test")
 		},
 	}
 
 	service := service{deployments: deploymentRepository}
 
-	result, err := service.GetByApp("myapp")
+	result, err := service.GetByApp(uuid.New())
 
 	assert.Nil(t, result)
 	assert.Equal(t, err.Error(), "Error retrieving deployment status: test")
@@ -78,13 +79,13 @@ func Test_GetByApp_StatusRepoErr_ReturnsErr(t *testing.T) {
 
 func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
 	status := core.Deployment{
-		AppName:   "myapp",
+		AppId:     uuid.New(),
 		StageName: "mystage",
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		FindByAppFn: func(appName string) ([]core.Deployment, error) {
-			assert.Equal(t, "myapp", appName)
+		FindByAppFn: func(appId uuid.UUID) ([]core.Deployment, error) {
+			assert.Equal(t, status.AppId, appId)
 			return []core.Deployment{status}, nil
 		},
 	}
@@ -97,7 +98,7 @@ func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
 
 	service := service{deployments: deploymentRepository, stageService: stageService}
 
-	result, err := service.GetByApp("myapp")
+	result, err := service.GetByApp(status.AppId)
 
 	assert.Nil(t, result)
 	assert.Equal(t, "Error retrieving stage status for stage \"mystage\": test", err.Error())

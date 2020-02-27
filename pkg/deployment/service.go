@@ -28,7 +28,7 @@ type service struct {
 	deployments core.DeploymentRepository
 }
 
-func NewService(secrets secret.Service, stages core.StageRepository, deployments core.DeploymentRepository) Service {
+func NewService(apps core.AppRepository, secrets secret.Service, stages core.StageRepository, deployments core.DeploymentRepository) Service {
 	return &service{secrets, stages, deployments}
 }
 
@@ -64,7 +64,7 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 		return err
 	}
 
-	secrets, err := s.secrets.FindByStage(deploymentConfig.App.Name, deploymentConfig.Stage)
+	secrets, err := s.secrets.FindByStage(deploymentConfig.App.Id, deploymentConfig.Stage)
 	if err != nil {
 		return err
 	}
@@ -88,6 +88,7 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 	if err := validateDeploymentConfig(deploymentConfig); err != nil {
 		return 0, err
 	}
+
 	existingDeployment, err := s.deployments.Get(deploymentConfig.Name, deploymentConfig.Stage)
 	if err != nil && err != core.ErrNotFound {
 		return 0, errors.Wrap(err, fmt.Sprintf("Error retrieving deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
@@ -99,7 +100,7 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 		err = s.deployments.Create(&core.Deployment{
 			Name:          deploymentConfig.Name,
 			StageName:     deploymentConfig.Stage,
-			AppName:       deploymentConfig.App.Name,
+			AppId:         deploymentConfig.App.Id,
 			RiserRevision: riserRevision,
 			Doc: core.DeploymentDoc{
 				Traffic: deploymentConfig.Traffic,
@@ -108,8 +109,8 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 		if err != nil {
 			return 0, errors.Wrap(err, fmt.Sprintf("Error creating deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
 		}
-	} else if existingDeployment.AppName != deploymentConfig.App.Name {
-		return 0, &core.ValidationError{Message: fmt.Sprintf("A deployment with the name %q is owned by app %q", deploymentConfig.Name, existingDeployment.AppName)}
+	} else if existingDeployment.AppId != deploymentConfig.App.Id {
+		return 0, &core.ValidationError{Message: fmt.Sprintf("A deployment with the name %q is owned by app %q", deploymentConfig.Name, existingDeployment.AppId)}
 	} else {
 		if !dryRun {
 			riserRevision, err = s.deployments.IncrementRevision(deploymentConfig.Name, deploymentConfig.Stage)

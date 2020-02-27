@@ -3,6 +3,7 @@ package deployment
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"testing"
@@ -106,6 +107,7 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 		Namespace: "myns",
 		Stage:     "mystage",
 		App: &model.AppConfig{
+			Id:   uuid.New(),
 			Name: "myapp",
 		},
 	}
@@ -119,7 +121,7 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 		CreateFn: func(deploymentArg *core.Deployment) error {
 			assert.Equal(t, "myapp-mydep", deploymentArg.Name)
 			assert.Equal(t, "mystage", deploymentArg.StageName)
-			assert.Equal(t, "myapp", deploymentArg.AppName)
+			assert.Equal(t, deployment.App.Id, deploymentArg.AppId)
 			assert.Equal(t, int64(1), deploymentArg.RiserRevision)
 			return nil
 		},
@@ -140,6 +142,7 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
+			Id:   uuid.New(),
 			Name: "myapp",
 		},
 	}
@@ -148,7 +151,7 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
 			assert.Equal(t, "myapp-mydep", deploymentNameArg)
 			assert.Equal(t, "mystage", stageNameArg)
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
+			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
 		},
 		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			assert.Equal(t, "myapp-mydep", name)
@@ -184,6 +187,7 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
+			Id:   uuid.New(),
 			Name: "myapp",
 		},
 		ManualRollout: true,
@@ -197,7 +201,7 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 			return &core.Deployment{
 				Name:      "myapp-mydep",
 				StageName: "mystage",
-				AppName:   "myapp",
+				AppId:     deployment.App.Id,
 				DeletedAt: &deletedAt,
 				Doc: core.DeploymentDoc{
 					// This rule should be ignored since the deployment was previously deleted
@@ -245,13 +249,14 @@ func Test_prepareForDeployment_whenIncrementRevisionFails(t *testing.T) {
 		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
+			Id:   uuid.New(),
 			Name: "myapp",
 		},
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
+			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
 		},
 		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			return 0, errors.New("test")
@@ -270,6 +275,7 @@ func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
 		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
+			Id:   uuid.New(),
 			Name: "myapp",
 		},
 	}
@@ -278,7 +284,7 @@ func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
 			assert.Equal(t, "myapp-mydep", deploymentNameArg)
 			assert.Equal(t, "mystage", stageNameArg)
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
+			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
 		},
 	}
 
@@ -304,13 +310,14 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
+			Id:   uuid.New(),
 			Name: "myapp",
 		},
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp"}, nil
+			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
 		},
 		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			return 1, nil
@@ -339,13 +346,14 @@ func Test_prepareForDeployment_whenAppDoesNotOwnDeployment(t *testing.T) {
 		Name:  "myapp-mydep",
 		Stage: "mystage",
 		App: &model.AppConfig{
+			Id:   uuid.New(),
 			Name: "myapp",
 		},
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
 		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppName: "myapp-mydep"}, nil
+			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: uuid.MustParse("2C739752-8B23-4AFF-B0FB-7BC7569BA930")}, nil
 		},
 	}
 
@@ -353,7 +361,7 @@ func Test_prepareForDeployment_whenAppDoesNotOwnDeployment(t *testing.T) {
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
-	assert.Equal(t, `A deployment with the name "myapp-mydep" is owned by app "myapp-mydep"`, err.Error())
+	assert.Equal(t, `A deployment with the name "myapp-mydep" is owned by app "2c739752-8b23-4aff-b0fb-7bc7569ba930"`, err.Error())
 	assert.IsType(t, &core.ValidationError{}, err)
 }
 

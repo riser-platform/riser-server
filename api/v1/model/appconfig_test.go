@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 
 	validation "github.com/go-ozzo/ozzo-validation/v3"
@@ -18,7 +19,7 @@ import (
 var minimumValidAppConfig = &AppConfig{
 	Name:      "myapp",
 	Namespace: "myns",
-	Id:        "myid",
+	Id:        uuid.New(),
 	Image:     "myimage",
 	Expose: &AppConfigExpose{
 		ContainerPort: 80,
@@ -73,6 +74,7 @@ func Test_AppConfig_ValidateName(t *testing.T) {
 
 func Test_AppConfig_ValidateRequired(t *testing.T) {
 	appConfig := AppConfig{}
+
 	err := appConfig.Validate()
 
 	assert.IsType(t, validation.Errors{}, err)

@@ -3,6 +3,7 @@ package v1
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -40,15 +41,18 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 }
 
 func GetSecrets(c echo.Context, secretService secret.Service, stageService stage.Service) error {
-	appName := c.Param("appName")
 	stageName := c.Param("stageName")
-
-	err := stageService.ValidateDeployable(stageName)
+	appId, err := uuid.Parse(c.Param("appId"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	secretMetas, err := secretService.FindByStage(appName, stageName)
+	err = stageService.ValidateDeployable(stageName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	secretMetas, err := secretService.FindByStage(appId, stageName)
 	if err != nil {
 		return err
 	}
@@ -59,7 +63,7 @@ func GetSecrets(c echo.Context, secretService secret.Service, stageService stage
 func mapSecretMetaStatusFromDomain(domain core.SecretMeta) model.SecretMetaStatus {
 	return model.SecretMetaStatus{
 		SecretMeta: model.SecretMeta{
-			App:   domain.AppName,
+			AppId: domain.AppId,
 			Stage: domain.StageName,
 			Name:  domain.Name,
 		},
@@ -78,7 +82,7 @@ func mapSecretMetaStatusArrayFromDomain(domainArray []core.SecretMeta) []model.S
 
 func mapSecretMetaFromModel(in *model.SecretMeta) *core.SecretMeta {
 	return &core.SecretMeta{
-		AppName:   in.App,
+		AppId:     in.AppId,
 		Name:      in.Name,
 		StageName: in.Stage,
 	}

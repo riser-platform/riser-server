@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
@@ -21,7 +22,7 @@ import (
 func Test_PutSecret(t *testing.T) {
 	unsealed := model.UnsealedSecret{
 		SecretMeta: model.SecretMeta{
-			App:   "myapp",
+			AppId: uuid.New(),
 			Stage: "dev",
 			Name:  "mysecret",
 		},
@@ -59,7 +60,7 @@ func Test_PutSecret(t *testing.T) {
 func Test_PutSecret_WhenRevisionConflict(t *testing.T) {
 	unsealed := model.UnsealedSecret{
 		SecretMeta: model.SecretMeta{
-			App:   "myapp",
+			AppId: uuid.New(),
 			Stage: "dev",
 			Name:  "mysecret",
 		},
@@ -92,7 +93,7 @@ func Test_PutSecret_WhenRevisionConflict(t *testing.T) {
 
 func Test_mapSecretMetaStatusFromDomain(t *testing.T) {
 	domain := core.SecretMeta{
-		AppName:   "myapp",
+		AppId:     uuid.New(),
 		StageName: "mystage",
 		Name:      "mysecret",
 		Revision:  1,
@@ -100,7 +101,7 @@ func Test_mapSecretMetaStatusFromDomain(t *testing.T) {
 
 	result := mapSecretMetaStatusFromDomain(domain)
 
-	assert.Equal(t, "myapp", result.App)
+	assert.Equal(t, domain.AppId, result.AppId)
 	assert.Equal(t, "mystage", result.Stage)
 	assert.Equal(t, "mysecret", result.Name)
 	assert.EqualValues(t, 1, result.Revision)
@@ -121,14 +122,14 @@ func Test_mapSecretMetaStatusArrayFromDomain(t *testing.T) {
 
 func Test_mapSecretMetaFromModel(t *testing.T) {
 	model := &model.SecretMeta{
-		App:   "myapp",
+		AppId: uuid.New(),
 		Name:  "mysecret",
 		Stage: "mystage",
 	}
 
 	result := mapSecretMetaFromModel(model)
 
-	assert.Equal(t, "myapp", result.AppName)
+	assert.Equal(t, model.AppId, result.AppId)
 	assert.Equal(t, "mysecret", result.Name)
 	assert.Equal(t, "mystage", result.StageName)
 }

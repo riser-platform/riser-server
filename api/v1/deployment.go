@@ -7,8 +7,6 @@ import (
 	"github.com/riser-platform/riser-server/pkg/deploymentstatus"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
-	"github.com/riser-platform/riser-server/pkg/namespace"
-
 	"github.com/riser-platform/riser-server/pkg/deployment"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -59,14 +57,6 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		committer = state.NewDryRunCommitter()
 	} else {
 		committer = state.NewGitCommitter(stateRepo)
-	}
-
-	// TODO(ns): This is a hack that exists for ease of use since we only support the "apps" namespace.
-	// Once we support multiple namespace this should be in its own route
-	namespaceService := namespace.NewService()
-	err = namespaceService.Save(&core.Namespace{Name: deploymentRequest.App.Namespace, Stage: deploymentRequest.Stage}, committer)
-	if err != nil && err != git.ErrNoChanges {
-		return err
 	}
 
 	err = deploymentService.Update(newDeployment, committer, isDryRun)

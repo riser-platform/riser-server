@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/riser-platform/riser-server/pkg/namespace"
+
 	validation "github.com/go-ozzo/ozzo-validation/v3"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -23,13 +25,14 @@ type Service interface {
 }
 
 type service struct {
-	secrets     secret.Service
-	stages      core.StageRepository
-	deployments core.DeploymentRepository
+	namespaceService namespace.Service
+	secrets          secret.Service
+	stages           core.StageRepository
+	deployments      core.DeploymentRepository
 }
 
-func NewService(apps core.AppRepository, secrets secret.Service, stages core.StageRepository, deployments core.DeploymentRepository) Service {
-	return &service{secrets, stages, deployments}
+func NewService(apps core.AppRepository, namespaceService namespace.Service, secrets secret.Service, stages core.StageRepository, deployments core.DeploymentRepository) Service {
+	return &service{namespaceService, secrets, stages, deployments}
 }
 
 func (s *service) Delete(deploymentName, namespace, stageName string, committer state.Committer) error {
@@ -55,6 +58,11 @@ func (s *service) Delete(deploymentName, namespace, stageName string, committer 
 }
 
 func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) error {
+	err := s.namespaceService.EnsureNamespaceInStage(deploymentConfig.Namespace, deploymentConfig.Stage, committer)
+	if err != nil {
+		return err
+	}
+
 	riserRevision, err := s.prepareForDeployment(deploymentConfig, dryRun)
 	if err != nil {
 		return err

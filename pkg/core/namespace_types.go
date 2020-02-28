@@ -1,6 +1,5 @@
 package core
 
 type Namespace struct {
-	Name  string
-	Stage string
+	Name string
 }

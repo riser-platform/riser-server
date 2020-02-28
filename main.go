@@ -3,6 +3,10 @@ package main
 import (
 	"database/sql"
 
+	"github.com/riser-platform/riser-server/pkg/state"
+
+	"github.com/riser-platform/riser-server/pkg/namespace"
+
 	"github.com/riser-platform/riser-server/api"
 
 	"github.com/riser-platform/riser-server/pkg/login"
@@ -72,6 +76,7 @@ func main() {
 	}
 
 	bootstrapApiKey(postgresDb, &rc)
+	bootstrapDefaultNamespace(postgresDb, repo)
 
 	e := echo.New()
 	e.HideBanner = true
@@ -84,6 +89,12 @@ func main() {
 	apiv1.RegisterRoutes(e, repo, postgresDb)
 	err = e.Start(rc.BindAddress)
 	exitIfError(err, "Error starting server")
+}
+
+func bootstrapDefaultNamespace(db *sql.DB, repo git.Repo) {
+	namespaceService := namespace.NewService(postgres.NewNamespaceRepository(db), postgres.NewStageRepository(db))
+	err := namespaceService.EnsureDefaultNamespace(state.NewGitCommitter(repo))
+	exitIfError(err, "Error ensuring default namespace")
 }
 
 func bootstrapApiKey(db *sql.DB, rc *core.RuntimeConfig) {

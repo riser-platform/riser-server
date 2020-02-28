@@ -3,6 +3,8 @@ package v1
 import (
 	"database/sql"
 
+	"github.com/riser-platform/riser-server/pkg/namespace"
+
 	"github.com/riser-platform/riser-server/pkg/rollout"
 
 	"github.com/labstack/echo/v4/middleware"
@@ -29,8 +31,10 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	stageRepository := postgres.NewStageRepository(db)
 	stageService := stage.NewService(stageRepository)
 	secretService := secret.NewService(appRepository, secretMetaRepository, stageRepository)
+	namespaceRepository := postgres.NewNamespaceRepository(db)
+	namespaceService := namespace.NewService(namespaceRepository, stageRepository)
 	deploymentRepository := postgres.NewDeploymentRepository(db)
-	deploymentService := deployment.NewService(appRepository, secretService, stageRepository, deploymentRepository)
+	deploymentService := deployment.NewService(appRepository, namespaceService, secretService, stageRepository, deploymentRepository)
 	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
 	rolloutService := rollout.NewService(appRepository, deploymentRepository)
 	userRepository := postgres.NewUserRepository(db)
@@ -77,6 +81,10 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 
 	v1.PUT("/rollout/:deploymentName/:stageName", func(c echo.Context) error {
 		return PutRollout(c, rolloutService, stageService, repo)
+	})
+
+	v1.POST("/namespace", func(c echo.Context) error {
+		return PostNamespace(c, namespaceService, repo)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {

@@ -83,6 +83,10 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return PutRollout(c, rolloutService, stageService, repo)
 	})
 
+	v1.GET("/namespace", func(c echo.Context) error {
+		return GetNamespaces(c, namespaceRepository)
+	})
+
 	v1.POST("/namespace", func(c echo.Context) error {
 		return PostNamespace(c, namespaceService, repo)
 	})

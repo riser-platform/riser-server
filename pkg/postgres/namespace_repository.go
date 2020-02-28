@@ -32,3 +32,24 @@ func (r *namespaceRepository) Get(namespaceName string) (*core.Namespace, error)
 
 	return ns, nil
 }
+
+func (r *namespaceRepository) List() ([]core.Namespace, error) {
+	namespaces := []core.Namespace{}
+	rows, err := r.db.Query("SELECT name FROM namespace")
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		ns := core.Namespace{}
+		err := rows.Scan(&ns.Name)
+		if err != nil {
+			return nil, err
+		}
+		namespaces = append(namespaces, ns)
+	}
+
+	return namespaces, nil
+}

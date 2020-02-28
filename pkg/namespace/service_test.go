@@ -105,7 +105,7 @@ func Test_EnsureNamespaceInStage_WhenNamespaceDoesNotExist(t *testing.T) {
 
 	err := svc.EnsureNamespaceInStage("myns", "mystage", committer)
 
-	assert.Equal(t, ErrNamespaceDoesNotExist, err)
+	assert.Equal(t, `the namespace "myns" does not exist`, err.Error())
 }
 
 func Test_EnsureDefaultNamespace_ReturnsErr(t *testing.T) {

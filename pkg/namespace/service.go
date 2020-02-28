@@ -14,8 +14,6 @@ import (
 // DefaultName is the default namespace
 const DefaultName = "apps"
 
-var ErrNamespaceDoesNotExist = errors.New("the provided namespace does not exist")
-
 type Service interface {
 	EnsureDefaultNamespace(committer state.Committer) error
 	// EnsureNamespaceInStage ensures that a namespace has been committed to a stage. Returns an error if the namespace has not been created
@@ -48,7 +46,7 @@ func (s *service) EnsureNamespaceInStage(namespaceName string, stageName string,
 	_, err := s.namespaces.Get(namespaceName)
 	if err != nil {
 		if err == core.ErrNotFound {
-			return ErrNamespaceDoesNotExist
+			return core.NewValidationErrorMessage(fmt.Sprintf("the namespace %q does not exist", namespaceName))
 		}
 		return err
 	}

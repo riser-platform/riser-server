@@ -10,5 +10,6 @@ type App struct {
 }
 
 type NewApp struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }

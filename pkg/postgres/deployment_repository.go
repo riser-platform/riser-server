@@ -16,44 +16,109 @@ func NewDeploymentRepository(db *sql.DB) core.DeploymentRepository {
 	return &deploymentRepository{db: db}
 }
 
-func (r *deploymentRepository) Create(newDeployment *core.Deployment) error {
-	_, err := r.db.Exec(`INSERT INTO deployment (name, stage_name, app_id, riser_revision, doc) VALUES ($1,$2,$3,$4,$5)`,
-		newDeployment.Name, newDeployment.StageName, newDeployment.AppId, newDeployment.RiserRevision, &newDeployment.Doc)
+func (r *deploymentRepository) Create(deployment *core.DeploymentRecord) error {
+	_, err := r.db.Exec(`
+	INSERT INTO deployment (id, deployment_reservation_id, stage_name, riser_revision, doc)
+	VALUES ($1,$2,$3,$4,$5)`,
+		deployment.Id, deployment.ReservationId, deployment.StageName, deployment.RiserRevision, &deployment.Doc)
 	return err
 }
 
-func (r *deploymentRepository) Delete(deploymentName, stageName string) error {
-	_, err := r.db.Exec(`UPDATE deployment SET deleted_at=now() WHERE name = $1 AND stage_name = $2`, deploymentName, stageName)
-	if err != nil {
-		return err
-	}
+func (r *deploymentRepository) Delete(name *core.NamespacedName, stageName string) error {
+	_, err := r.db.Exec(`
+	UPDATE deployment SET deleted_at=now()
+	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
+	WHERE deployment_reservation.name = $1 deployment_reservation.namespace = $2 AND deployment.stage_name = $2
+	`, name.Name, name.Namespace, stageName)
 
-	return nil
+	return noRowsErrorHandler(err)
 }
 
-// Get returns a deployment whether or not it has been deleted.
-func (r *deploymentRepository) Get(deploymentName, stageName string) (*core.Deployment, error) {
+// GetByName returns a deployment by its name whether or not it's been deleted.
+func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName string) (*core.Deployment, error) {
 	deployment := &core.Deployment{}
 	err := r.db.QueryRow(`
-	SELECT name, stage_name, app_id, riser_revision, doc FROM deployment
-	WHERE name = $1 AND stage_name = $2
-	`, deploymentName, stageName).Scan(&deployment.Name, &deployment.StageName, &deployment.AppId, &deployment.RiserRevision, &deployment.Doc)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			err = core.ErrNotFound
-		}
-		return nil, err
-	}
-	return deployment, nil
+	SELECT
+		deployment_reservation.id,
+		deployment_reservation.app_id,
+		deployment_reservation.name,
+		deployment_reservation.namespace,
+		deployment.id,
+		deployment.deleted_at,
+		deployment.deployment_reservation_id,
+		deployment.stage_name,
+		deployment.riser_revision,
+		deployment.doc
+	FROM deployment
+	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
+	WHERE deployment_reservation.name = $1 deployment_reservation.namespace=$2 AND deployment.stage_name = $2
+	`, name.Name, name.Namespace, stageName).Scan(
+		&deployment.DeploymentReservation.Id,
+		&deployment.AppId,
+		&deployment.Name,
+		&deployment.Namespace,
+		&deployment.DeploymentRecord.Id,
+		&deployment.DeletedAt,
+		&deployment.ReservationId,
+		&deployment.StageName,
+		&deployment.RiserRevision,
+		&deployment.Doc,
+	)
+	return deployment, noRowsErrorHandler(err)
 }
 
+// GetByReservation returns a deployment by its reservation ID whether or not it has been deleted.
+func (r *deploymentRepository) GetByReservation(reservationId uuid.UUID, stageName string) (*core.Deployment, error) {
+	deployment := &core.Deployment{}
+	err := r.db.QueryRow(`
+	SELECT
+		deployment_reservation.id,
+		deployment_reservation.app_id,
+		deployment_reservation.name,
+		deployment_reservation.namespace,
+		deployment.id,
+		deployment.deleted_at,
+		deployment.deployment_reservation_id,
+		deployment.stage_name,
+		deployment.riser_revision,
+		deployment.doc
+	FROM deployment
+	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
+	WHERE deployment_reservation.id = $1 AND deployment.stage_name = $2
+	`, reservationId, stageName).Scan(
+		&deployment.DeploymentReservation.Id,
+		&deployment.AppId,
+		&deployment.Name,
+		&deployment.Namespace,
+		&deployment.DeploymentRecord.Id,
+		&deployment.DeletedAt,
+		&deployment.ReservationId,
+		&deployment.StageName,
+		&deployment.RiserRevision,
+		&deployment.Doc,
+	)
+	return deployment, noRowsErrorHandler(err)
+}
+
+// FindByApp returns all active deployments in all stages by a given app ID
 func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, error) {
 	deployments := []core.Deployment{}
 	rows, err := r.db.Query(`
-	SELECT name, stage_name, app_id, riser_revision, doc
+	SELECT
+		deployment_reservation.id,
+		deployment_reservation.app_id,
+		deployment_reservation.name,
+		deployment_reservation.namespace,
+		deployment.id,
+		deployment.deleted_at,
+		deployment.deployment_reservation_id,
+		deployment.stage_name,
+		deployment.riser_revision,
+		deployment.doc
 	FROM deployment
-	WHERE app_id = $1 AND deleted_at IS NULL
-	ORDER BY stage_name, name
+	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
+	WHERE deployment_reservation.app_id = $1 AND deployment.deleted_at IS NULL
+	ORDER BY deployment.stage_name, deployment_reservation.name
 	`, appId)
 
 	if err != nil {

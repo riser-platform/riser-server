@@ -1,5 +1,7 @@
 package model
 
+import "github.com/google/uuid"
+
 const (
 	RevisionStatusWaiting   = "Waiting"
 	RevisionStatusReady     = "Ready"
@@ -13,9 +15,11 @@ type AppStatus struct {
 }
 
 type DeploymentStatus struct {
-	DeploymentName          string `json:"deployment"`
-	StageName               string `json:"stage"`
-	RiserRevision           int64  `json:"riserRevision"`
+	AppId                   uuid.UUID `json:"appId"`
+	DeploymentName          string    `json:"deployment"`
+	Namespace               string    `json:"namespace"`
+	StageName               string    `json:"stage"`
+	RiserRevision           int64     `json:"riserRevision"`
 	DeploymentStatusMutable `json:",inline"`
 }
 

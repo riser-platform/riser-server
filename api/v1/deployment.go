@@ -43,7 +43,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		return err
 	}
 
-	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, deploymentRequest.App.Name)
+	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(deploymentRequest.Name, deploymentRequest.App.Namespace))
 	if err == app.ErrInvalidAppName || err == app.ErrAppNotFound {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -80,7 +80,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 }
 
 func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService deployment.Service) error {
-	err := deploymentService.Delete(c.Param("deploymentName"), DefaultNamespace, c.Param("stageName"), state.NewGitCommitter(stateRepo))
+	err := deploymentService.Delete(core.NewNamespacedName(c.Param("deploymentName"), c.Param("namespace")), c.Param("stageName"), state.NewGitCommitter(stateRepo))
 	if err != nil {
 		if err == git.ErrNoChanges {
 			return c.JSON(http.StatusNotFound, model.APIResponse{Message: "Deployment not found"})

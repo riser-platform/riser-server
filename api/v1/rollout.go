@@ -25,6 +25,7 @@ func PutRollout(c echo.Context, rolloutService rollout.Service, stageService sta
 	}
 
 	deploymentName := c.Param("deploymentName")
+	namespace := c.Param("namespace")
 	stageName := c.Param("stageName")
 
 	err = stageService.ValidateDeployable(stageName)
@@ -37,7 +38,7 @@ func PutRollout(c echo.Context, rolloutService rollout.Service, stageService sta
 		return core.NewValidationError("Invalid rollout request", err)
 	}
 
-	err = rolloutService.UpdateTraffic(deploymentName, stageName,
+	err = rolloutService.UpdateTraffic(core.NewNamespacedName(deploymentName, namespace), stageName,
 		mapTrafficRulesToDomain(deploymentName, rolloutRequest.Traffic),
 		state.NewGitCommitter(stateRepo))
 	if err != nil {

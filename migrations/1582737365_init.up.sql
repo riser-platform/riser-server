@@ -13,27 +13,35 @@ CREATE TABLE app
 (
   id uuid NOT NULL,
   name character varying(63) NOT NULL,
--- TODO: namespace
-  --namespace character varying(63) NOT NULL REFERENCES namespace(name),
+  namespace character varying(63) NOT NULL REFERENCES namespace(name),
   PRIMARY KEY(id)
 );
 
--- TODO: namespace
--- CREATE UNIQUE INDEX ix_app_name ON app(name, namespace);
-CREATE UNIQUE INDEX ix_app_name ON app(name);
+CREATE UNIQUE INDEX ix_app_name ON app(name, namespace);
+
+CREATE TABLE deployment_reservation
+(
+  id uuid NOT NULL,
+  app_id uuid NOT NULL REFERENCES app(id)
+  name character varying(63) NOT NULL,
+  namespace character varying(63) NOT NULL REFERENCES namespace(name),
+  PRIMARY KEY(id)
+)
+
+CREATE UNIQUE INDEX ix_deployment_name_namespace ON deployment_name(name, namespace)
 
 CREATE TABLE deployment
 (
-  name character varying(63) NOT NULL,
+  id uuid NOT NULL
+  deployment_reservation_id uuid NOT NULL REFERENCES deployment_reservation_meta(id)
   stage_name character varying(63) NOT NULL REFERENCES stage(name),
-  app_id uuid NOT NULL REFERENCES app(id),
   riser_revision integer NOT NULL DEFAULT(0),
   deleted_at TIMESTAMP WITH TIME ZONE,
   doc jsonb NOT NULL,
-  PRIMARY KEY (name,stage_name)
+  PRIMARY KEY (id)
 );
 
-CREATE UNIQUE INDEX ix_deployment ON deployment(name,stage_name);
+CREATE UNIQUE INDEX ix_deployment_stage_name ON deployment(deployment_reservation_id, stage_name);
 CREATE INDEX ix_deployment_riser_revision ON deployment(riser_revision);
 CREATE INDEX ix_deployment_deleted_at ON deployment(deleted_at);
 

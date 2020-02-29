@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/google/uuid"
+	"github.com/riser-platform/riser-server/pkg/deploymentreservation"
 	"github.com/riser-platform/riser-server/pkg/namespace"
 
 	validation "github.com/go-ozzo/ozzo-validation/v3"
@@ -21,40 +23,39 @@ import (
 
 type Service interface {
 	Update(deployment *core.DeploymentConfig, committer state.Committer, dryRun bool) error
-	Delete(deploymentName, namespace, stageName string, committer state.Committer) error
+	Delete(name *core.NamespacedName, stageName string, committer state.Committer) error
 }
 
 type service struct {
-	namespaceService namespace.Service
-	secrets          secret.Service
-	stages           core.StageRepository
-	deployments      core.DeploymentRepository
+	namespaceService   namespace.Service
+	secrets            secret.Service
+	stages             core.StageRepository
+	deployments        core.DeploymentRepository
+	reservationService deploymentreservation.Service
 }
 
-func NewService(apps core.AppRepository, namespaceService namespace.Service, secrets secret.Service, stages core.StageRepository, deployments core.DeploymentRepository) Service {
-	return &service{namespaceService, secrets, stages, deployments}
+func NewService(
+	apps core.AppRepository,
+	namespaceService namespace.Service,
+	secrets secret.Service,
+	stages core.StageRepository,
+	deployments core.DeploymentRepository,
+	reservationService deploymentreservation.Service) Service {
+	return &service{namespaceService, secrets, stages, deployments, reservationService}
 }
 
-func (s *service) Delete(deploymentName, namespace, stageName string, committer state.Committer) error {
-	_, err := s.deployments.Get(deploymentName, stageName)
+func (s *service) Delete(name *core.NamespacedName, stageName string, committer state.Committer) error {
+	// This is safe to do before we perform the commit since it's idempotent
+	err := s.deployments.Delete(name, stageName)
 	if err != nil {
 		if err == core.ErrNotFound {
-			return &core.ValidationError{
-				Message: fmt.Sprintf("There is no deployment by the name %q in stage %q", deploymentName, stageName),
-			}
+			return core.NewValidationErrorMessage(fmt.Sprintf("There is no deployment by the name %q in stage %q", name, stageName))
 		}
-
-		return errors.Wrap(err, "error getting deployment")
-	}
-
-	// This is safe to do before we perform the commit since it's idempotent and the "Get" above returns soft deleted deployments
-	err = s.deployments.Delete(deploymentName, stageName)
-	if err != nil {
 		return errors.Wrap(err, "error deleting deployment")
 	}
 
-	files := state.RenderDeleteDeployment(deploymentName, namespace, stageName)
-	return committer.Commit(fmt.Sprintf("Deleting deployment %q", deploymentName), files)
+	files := state.RenderDeleteDeployment(name.Name, name.Namespace, stageName)
+	return committer.Commit(fmt.Sprintf("Deleting deployment %q", name), files)
 }
 
 func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) error {
@@ -97,18 +98,24 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 		return 0, err
 	}
 
-	existingDeployment, err := s.deployments.Get(deploymentConfig.Name, deploymentConfig.Stage)
+	reservation, err := s.reservationService.EnsureReservation(
+		deploymentConfig.App.Id,
+		core.NewNamespacedName(deploymentConfig.Name, deploymentConfig.Namespace))
+	if err != nil {
+		return 0, errors.Wrap(err, "Error ensuring deployment reservation")
+	}
+
+	existingDeployment, err := s.deployments.GetByReservation(reservation.Id, deploymentConfig.Stage)
 	if err != nil && err != core.ErrNotFound {
 		return 0, errors.Wrap(err, fmt.Sprintf("Error retrieving deployment %q in stage %q", deploymentConfig.Name, deploymentConfig.Stage))
 	}
 	if err == core.ErrNotFound {
 		riserRevision = 1
 		deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, nil)
-		// TODO: Ensure that the deployment name does not exist in another stage by another app (edge case)
-		err = s.deployments.Create(&core.Deployment{
-			Name:          deploymentConfig.Name,
+		err = s.deployments.Create(&core.DeploymentRecord{
+			Id:            uuid.New(),
+			ReservationId: reservation.Id,
 			StageName:     deploymentConfig.Stage,
-			AppId:         deploymentConfig.App.Id,
 			RiserRevision: riserRevision,
 			Doc: core.DeploymentDoc{
 				Traffic: deploymentConfig.Traffic,
@@ -129,7 +136,7 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 
 		// When a deployment was previously deleted, we don't want to compute traffic with the old traffic rules
 		if existingDeployment.DeletedAt == nil {
-			deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, existingDeployment)
+			deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, &existingDeployment.DeploymentRecord)
 		} else {
 			deploymentConfig.Traffic = computeTraffic(riserRevision, deploymentConfig, nil)
 		}
@@ -145,7 +152,7 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 	return riserRevision, nil
 }
 
-func computeTraffic(riserRevision int64, deploymentConfig *core.DeploymentConfig, existingDeployment *core.Deployment) core.TrafficConfig {
+func computeTraffic(riserRevision int64, deploymentConfig *core.DeploymentConfig, existingDeployment *core.DeploymentRecord) core.TrafficConfig {
 	newRule := core.TrafficConfigRule{
 		RiserRevision: riserRevision,
 		RevisionName:  fmt.Sprintf("%s-%d", deploymentConfig.Name, riserRevision),

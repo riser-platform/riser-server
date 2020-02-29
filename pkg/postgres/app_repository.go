@@ -29,9 +29,9 @@ func (r *appRepository) Get(id uuid.UUID) (*core.App, error) {
 	return app, nil
 }
 
-func (r *appRepository) GetByName(name string) (*core.App, error) {
+func (r *appRepository) GetByName(name *core.NamespacedName) (*core.App, error) {
 	app := &core.App{}
-	err := r.db.QueryRow("SELECT id, name FROM app WHERE name = $1", name).Scan(&app.Id, &app.Name)
+	err := r.db.QueryRow("SELECT id, name FROM app WHERE name = $1 and namespace = $2", name.Name, name.Namespace).Scan(&app.Id, &app.Name)
 	if err == sql.ErrNoRows {
 		return nil, core.ErrNotFound
 	}

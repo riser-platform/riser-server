@@ -26,7 +26,7 @@ func PostApp(c echo.Context, appService app.Service) error {
 		return core.NewValidationError("invalid app name", err)
 	}
 
-	createdApp, err := appService.CreateApp(newAppRequest.Name)
+	createdApp, err := appService.CreateApp(core.NewNamespacedName(newAppRequest.Name, newAppRequest.Namespace))
 	if err != nil {
 		if err == app.ErrAlreadyExists {
 			return echo.NewHTTPError(http.StatusConflict, fmt.Sprintf("The app \"%s\" already exists", newAppRequest.Name))
@@ -46,7 +46,7 @@ func ListApps(c echo.Context, appRepo core.AppRepository) error {
 }
 
 func GetApp(c echo.Context, appService app.Service) error {
-	domainApp, err := appService.GetByIdOrName(c.Param("appIdOrName"))
+	domainApp, err := appService.GetByIdOrName(core.AppIdOrName(c.Param("appIdOrName")))
 
 	if err != nil {
 		return err

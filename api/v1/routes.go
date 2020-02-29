@@ -3,6 +3,8 @@ package v1
 import (
 	"database/sql"
 
+	"github.com/riser-platform/riser-server/pkg/deploymentreservation"
+
 	"github.com/riser-platform/riser-server/pkg/namespace"
 
 	"github.com/riser-platform/riser-server/pkg/rollout"
@@ -33,8 +35,10 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	secretService := secret.NewService(appRepository, secretMetaRepository, stageRepository)
 	namespaceRepository := postgres.NewNamespaceRepository(db)
 	namespaceService := namespace.NewService(namespaceRepository, stageRepository)
+	deploymentReservationRepository := postgres.NewDeploymentReservationRepository(db)
+	deploymentReservationService := deploymentreservation.NewService(deploymentReservationRepository)
 	deploymentRepository := postgres.NewDeploymentRepository(db)
-	deploymentService := deployment.NewService(appRepository, namespaceService, secretService, stageRepository, deploymentRepository)
+	deploymentService := deployment.NewService(appRepository, namespaceService, secretService, stageRepository, deploymentRepository, deploymentReservationService)
 	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
 	rolloutService := rollout.NewService(appRepository, deploymentRepository)
 	userRepository := postgres.NewUserRepository(db)
@@ -53,10 +57,12 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return ListApps(c, appRepository)
 	})
 
+	// TODO: /apps/:namespace/:appName
 	v1.GET("/apps/:appIdOrName", func(c echo.Context) error {
 		return GetApp(c, appService)
 	})
 
+	// TODO: /apps/:namespace/:appName
 	v1.GET("/apps/:appIdOrName/status", func(c echo.Context) error {
 		return GetAppStatus(c, appService, deploymentStatusService)
 	})
@@ -71,31 +77,37 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	v1.PUT("/deployments", func(c echo.Context) error {
 		return PostDeployment(c, repo, appService, deploymentService, stageService)
 	})
-	v1.DELETE("/deployments/:deploymentName/:stageName", func(c echo.Context) error {
+
+	// TODO(sdk)
+	v1.DELETE("/deployments/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
 		return DeleteDeployment(c, repo, deploymentService)
 	})
 
-	v1.PUT("/deployments/:deploymentName/status/:stageName", func(c echo.Context) error {
+	// TODO(sdk)
+	v1.PUT("/deployments/:stageName/:namespace/:deploymentName/status", func(c echo.Context) error {
 		return PutDeploymentStatus(c, deploymentStatusService)
 	})
 
-	v1.PUT("/rollout/:deploymentName/:stageName", func(c echo.Context) error {
+	// TODO(sdk)
+	v1.PUT("/rollout/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
 		return PutRollout(c, rolloutService, stageService, repo)
-	})
-
-	v1.GET("/namespace", func(c echo.Context) error {
-		return GetNamespaces(c, namespaceRepository)
-	})
-
-	v1.POST("/namespace", func(c echo.Context) error {
-		return PostNamespace(c, namespaceService, repo)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {
 		return PutSecret(c, repo, secretService, stageService)
 	})
-	v1.GET("/secrets/:appId/:stageName", func(c echo.Context) error {
+
+	// TODO(sdk)
+	v1.GET("/secrets/:appIdOrName/:stageName", func(c echo.Context) error {
 		return GetSecrets(c, secretService, stageService)
+	})
+
+	v1.GET("/namespaces", func(c echo.Context) error {
+		return GetNamespaces(c, namespaceRepository)
+	})
+
+	v1.POST("/namespaces", func(c echo.Context) error {
+		return PostNamespace(c, namespaceService, repo)
 	})
 
 	v1.PUT("/stages/:stageName/config", func(c echo.Context) error {

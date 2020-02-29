@@ -1,9 +1,11 @@
 package v1
 
 import (
-	"github.com/riser-platform/riser-server/pkg/util"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 
@@ -14,42 +16,48 @@ import (
 
 func Test_mapDeploymentToStatusModel(t *testing.T) {
 	deployment := &core.Deployment{
-		Name:          "mydeployment",
-		StageName:     "mystage",
-		RiserRevision: 4,
-		Doc: core.DeploymentDoc{
-			Status: &core.DeploymentStatus{
-				ObservedRiserRevision:     3,
-				LatestCreatedRevisionName: "rev2",
-				LatestReadyRevisionName:   "rev1",
-				Revisions: []core.DeploymentRevisionStatus{
-					core.DeploymentRevisionStatus{
-						Name:                 "rev1",
-						AvailableReplicas:    1,
-						RevisionStatus:       "myrevisionstatus",
-						RevisionStatusReason: "myrevisionstatusreason",
-						DockerImage:          "mydockerimage",
-						RiserRevision:        3,
+		DeploymentReservation: core.DeploymentReservation{
+			AppId:     uuid.New(),
+			Name:      "mydeployment",
+			Namespace: "myns",
+		},
+		DeploymentRecord: core.DeploymentRecord{
+			StageName:     "mystage",
+			RiserRevision: 4,
+			Doc: core.DeploymentDoc{
+				Status: &core.DeploymentStatus{
+					ObservedRiserRevision:     3,
+					LatestCreatedRevisionName: "rev2",
+					LatestReadyRevisionName:   "rev1",
+					Revisions: []core.DeploymentRevisionStatus{
+						core.DeploymentRevisionStatus{
+							Name:                 "rev1",
+							AvailableReplicas:    1,
+							RevisionStatus:       "myrevisionstatus",
+							RevisionStatusReason: "myrevisionstatusreason",
+							DockerImage:          "mydockerimage",
+							RiserRevision:        3,
+						},
+						core.DeploymentRevisionStatus{
+							Name:                 "rev2",
+							AvailableReplicas:    1,
+							RevisionStatus:       "myrevisionstatus2",
+							RevisionStatusReason: "myrevisionstatusreason2",
+							DockerImage:          "mydockerimage2",
+							RiserRevision:        4,
+						},
 					},
-					core.DeploymentRevisionStatus{
-						Name:                 "rev2",
-						AvailableReplicas:    1,
-						RevisionStatus:       "myrevisionstatus2",
-						RevisionStatusReason: "myrevisionstatusreason2",
-						DockerImage:          "mydockerimage2",
-						RiserRevision:        4,
-					},
-				},
-				Traffic: []core.DeploymentTrafficStatus{
-					core.DeploymentTrafficStatus{
-						Percent:      util.PtrInt64(90),
-						RevisionName: "rev1",
-						Tag:          "r1",
-					},
-					core.DeploymentTrafficStatus{
-						Percent:      util.PtrInt64(10),
-						RevisionName: "rev2",
-						Tag:          "r2",
+					Traffic: []core.DeploymentTrafficStatus{
+						core.DeploymentTrafficStatus{
+							Percent:      util.PtrInt64(90),
+							RevisionName: "rev1",
+							Tag:          "r1",
+						},
+						core.DeploymentTrafficStatus{
+							Percent:      util.PtrInt64(10),
+							RevisionName: "rev2",
+							Tag:          "r2",
+						},
 					},
 				},
 			},
@@ -58,7 +66,9 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 
 	result := mapDeploymentToStatusModel(deployment)
 
+	assert.Equal(t, deployment.AppId, result.AppId)
 	assert.Equal(t, "mydeployment", result.DeploymentName)
+	assert.Equal(t, "myns", result.Namespace)
 	assert.Equal(t, "mystage", result.StageName)
 	assert.Equal(t, int64(3), result.ObservedRiserRevision)
 	assert.Equal(t, int64(4), result.RiserRevision)
@@ -92,14 +102,23 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 
 func Test_mapDeploymentToStatusModel_NilStatus(t *testing.T) {
 	deployment := &core.Deployment{
-		Name:      "mydeployment",
-		StageName: "mystage",
-		Doc:       core.DeploymentDoc{},
+		DeploymentReservation: core.DeploymentReservation{
+			AppId:     uuid.New(),
+			Name:      "mydeployment",
+			Namespace: "myns",
+		},
+		DeploymentRecord: core.DeploymentRecord{
+
+			StageName: "mystage",
+			Doc:       core.DeploymentDoc{},
+		},
 	}
 
 	result := mapDeploymentToStatusModel(deployment)
 
+	assert.Equal(t, deployment.AppId, result.AppId)
 	assert.Equal(t, "mydeployment", result.DeploymentName)
+	assert.Equal(t, "myns", result.Namespace)
 	assert.Equal(t, "mystage", result.StageName)
 }
 

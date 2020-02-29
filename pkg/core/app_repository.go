@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 type AppRepository interface {
 	Get(id uuid.UUID) (*App, error)
-	GetByName(name string) (*App, error)
+	GetByName(*NamespacedName) (*App, error)
 	Create(app *App) error
 	ListApps() ([]App, error)
 }
@@ -12,7 +12,7 @@ type AppRepository interface {
 type FakeAppRepository struct {
 	GetFn              func(id uuid.UUID) (*App, error)
 	GetCallCount       int
-	GetByNameFn        func(name string) (*App, error)
+	GetByNameFn        func(*NamespacedName) (*App, error)
 	GetByNameCallCount int
 	CreateFn           func(app *App) error
 	ListAppsFn         func() ([]App, error)
@@ -23,7 +23,7 @@ func (fake *FakeAppRepository) Get(id uuid.UUID) (*App, error) {
 	return fake.GetFn(id)
 }
 
-func (fake *FakeAppRepository) GetByName(name string) (*App, error) {
+func (fake *FakeAppRepository) GetByName(name *NamespacedName) (*App, error) {
 	fake.GetByNameCallCount++
 	return fake.GetByNameFn(name)
 }

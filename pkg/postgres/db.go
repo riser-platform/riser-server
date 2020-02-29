@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/pkg/errors"
+	"github.com/riser-platform/riser-server/pkg/core"
 
 	// Required for pq lib dynamic driver loading
 	_ "github.com/lib/pq"
@@ -36,4 +37,12 @@ func AddAuthToConnString(postgresConn string, username string, password string) 
 func ResultHasRows(r sql.Result) bool {
 	rows, err := r.RowsAffected()
 	return err == nil && rows > 0
+}
+
+func noRowsErrorHandler(err error) error {
+	if err == sql.ErrNoRows {
+		return core.ErrNotFound
+	}
+
+	return err
 }

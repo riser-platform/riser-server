@@ -15,7 +15,7 @@ import (
 )
 
 func GetAppStatus(c echo.Context, appService app.Service, statusService deploymentstatus.Service) error {
-	domainApp, err := appService.GetByIdOrName(c.Param("appIdOrName"))
+	domainApp, err := appService.GetByIdOrName(core.AppIdOrName(c.Param("appIdOrName")))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -48,7 +48,9 @@ func GetAppStatus(c echo.Context, appService app.Service, statusService deployme
 
 func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus {
 	status := &model.DeploymentStatus{
+		AppId:          domain.AppId,
 		DeploymentName: domain.Name,
+		Namespace:      domain.Namespace,
 		StageName:      domain.StageName,
 		RiserRevision:  domain.RiserRevision,
 	}

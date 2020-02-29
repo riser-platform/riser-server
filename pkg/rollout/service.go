@@ -12,7 +12,7 @@ import (
 )
 
 type Service interface {
-	UpdateTraffic(deploymentName, stageName string, rollout core.TrafficConfig, committer state.Committer) error
+	UpdateTraffic(name *core.NamespacedName, stageName string, rollout core.TrafficConfig, committer state.Committer) error
 }
 
 type service struct {
@@ -24,11 +24,11 @@ func NewService(apps core.AppRepository, deployments core.DeploymentRepository) 
 	return &service{apps, deployments}
 }
 
-func (s *service) UpdateTraffic(deploymentName, stageName string, traffic core.TrafficConfig, committer state.Committer) error {
-	deployment, err := s.deployments.Get(deploymentName, stageName)
+func (s *service) UpdateTraffic(name *core.NamespacedName, stageName string, traffic core.TrafficConfig, committer state.Committer) error {
+	deployment, err := s.deployments.GetByName(name, stageName)
 	if err != nil {
 		if err == core.ErrNotFound {
-			return &core.ValidationError{Message: fmt.Sprintf("a deployment with the name %q does not exist in stage %q", deploymentName, stageName)}
+			return &core.ValidationError{Message: fmt.Sprintf("a deployment with the name %q does not exist in stage %q", name, stageName)}
 		}
 		return errors.Wrap(err, "error getting deployment")
 	}
@@ -43,14 +43,11 @@ func (s *service) UpdateTraffic(deploymentName, stageName string, traffic core.T
 		return err
 	}
 
-	// TODO: do not hardcode namespace
-	namespace := "apps"
-
 	// TODO: Refactor underlying code to not require the entire deployment context. Currently this is hydrated only with fields that we know are needed
 	ctx := &core.DeploymentContext{
 		Deployment: &core.DeploymentConfig{
-			Name:      deploymentName,
-			Namespace: namespace,
+			Name:      name.Name,
+			Namespace: name.Namespace,
 			Stage:     stageName,
 			Traffic:   traffic,
 			App: &model.AppConfig{
@@ -60,12 +57,12 @@ func (s *service) UpdateTraffic(deploymentName, stageName string, traffic core.T
 		RiserRevision: deployment.RiserRevision,
 	}
 
-	resourceFiles, err := state.RenderRoute(deploymentName, namespace, stageName, resources.CreateKNativeRoute(ctx))
+	resourceFiles, err := state.RenderRoute(name.Name, name.Namespace, stageName, resources.CreateKNativeRoute(ctx))
 	if err != nil {
 		return err
 	}
 
-	return committer.Commit(fmt.Sprintf("Updating resources for %q in stage %q", deployment.Name, ctx.Deployment.Stage), resourceFiles)
+	return committer.Commit(fmt.Sprintf("Updating resources for %q in stage %q", name, ctx.Deployment.Stage), resourceFiles)
 }
 
 func validateTrafficRules(traffic core.TrafficConfig, deployment *core.Deployment) error {

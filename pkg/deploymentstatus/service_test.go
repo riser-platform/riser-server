@@ -15,18 +15,22 @@ import (
 
 func Test_GetByApp(t *testing.T) {
 	status := core.Deployment{
-		Name:      "myDeployment",
-		StageName: "mystage",
-		AppId:     uuid.New(),
-		Doc: core.DeploymentDoc{
-			Status: &core.DeploymentStatus{
-				Revisions: []core.DeploymentRevisionStatus{
-					core.DeploymentRevisionStatus{
-						Name:                 "rev1",
-						RiserRevision:        1,
-						RevisionStatus:       "InProgress",
-						RevisionStatusReason: "Deploying",
-						DockerImage:          "foo:v1.0",
+		DeploymentReservation: core.DeploymentReservation{
+			Name:  "myDeployment",
+			AppId: uuid.New(),
+		},
+		DeploymentRecord: core.DeploymentRecord{
+			StageName: "mystage",
+			Doc: core.DeploymentDoc{
+				Status: &core.DeploymentStatus{
+					Revisions: []core.DeploymentRevisionStatus{
+						core.DeploymentRevisionStatus{
+							Name:                 "rev1",
+							RiserRevision:        1,
+							RevisionStatus:       "InProgress",
+							RevisionStatusReason: "Deploying",
+							DockerImage:          "foo:v1.0",
+						},
 					},
 				},
 			},
@@ -78,15 +82,15 @@ func Test_GetByApp_StatusRepoErr_ReturnsErr(t *testing.T) {
 }
 
 func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
-	status := core.Deployment{
-		AppId:     uuid.New(),
-		StageName: "mystage",
+	deployment := core.Deployment{
+		DeploymentRecord: core.DeploymentRecord{
+			StageName: "mystage",
+		},
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
 		FindByAppFn: func(appId uuid.UUID) ([]core.Deployment, error) {
-			assert.Equal(t, status.AppId, appId)
-			return []core.Deployment{status}, nil
+			return []core.Deployment{deployment}, nil
 		},
 	}
 
@@ -98,7 +102,7 @@ func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
 
 	service := service{deployments: deploymentRepository, stageService: stageService}
 
-	result, err := service.GetByApp(status.AppId)
+	result, err := service.GetByApp(uuid.New())
 
 	assert.Nil(t, result)
 	assert.Equal(t, "Error retrieving stage status for stage \"mystage\": test", err.Error())

@@ -3,23 +3,29 @@ package core
 import "github.com/google/uuid"
 
 type DeploymentRepository interface {
-	Create(newDeployment *Deployment) error
-	Delete(name, stageName string) error
-	Get(name, stageName string) (*Deployment, error)
+	Create(newDeployment *DeploymentRecord) error
+	Delete(name *NamespacedName, stageName string) error
+	GetByReservation(reservationId uuid.UUID, stageName string) (*Deployment, error)
+	GetByName(name *NamespacedName, stageName string) (*Deployment, error)
 	FindByApp(appId uuid.UUID) ([]Deployment, error)
+	// TODO: either name/namespace/stage or reservationId
 	UpdateStatus(name, stageName string, status *DeploymentStatus) error
+	// TODO: either name/namespace/stage or reservationId
 	UpdateTraffic(name, stageName string, riserRevision int64, traffic TrafficConfig) error
+	// TODO: either name/namespace/stage or reservationId
 	IncrementRevision(name, stageName string) (int64, error)
+	// TODO: either name/namespace/stage or reservationId
 	RollbackRevision(name, stageName string, failedRevision int64) (int64, error)
 }
 
 type FakeDeploymentRepository struct {
-	CreateFn                   func(newDeployment *Deployment) error
+	CreateFn                   func(newDeployment *DeploymentRecord) error
 	CreateCallCount            int
-	DeleteFn                   func(name, stageName string) error
+	DeleteFn                   func(name *NamespacedName, stageName string) error
 	DeleteCallCount            int
-	GetFn                      func(name, stageName string) (*Deployment, error)
-	GetCallCount               int
+	GetByNameFn                func(name *NamespacedName, stageName string) (*Deployment, error)
+	GetByReservationFn         func(reservationId uuid.UUID, stageName string) (*Deployment, error)
+	GetByReservationCallCount  int
 	FindByAppFn                func(uuid.UUID) ([]Deployment, error)
 	IncrementRevisionFn        func(name, stageName string) (int64, error)
 	IncrementRevisionCallCount int
@@ -30,19 +36,23 @@ type FakeDeploymentRepository struct {
 	UpdateTrafficCallCount     int
 }
 
-func (f *FakeDeploymentRepository) Create(newDeployment *Deployment) error {
+func (f *FakeDeploymentRepository) Create(newDeployment *DeploymentRecord) error {
 	f.CreateCallCount++
 	return f.CreateFn(newDeployment)
 }
 
-func (f *FakeDeploymentRepository) Delete(name, stageName string) error {
+func (f *FakeDeploymentRepository) Delete(name *NamespacedName, stageName string) error {
 	f.DeleteCallCount++
 	return f.DeleteFn(name, stageName)
 }
 
-func (f *FakeDeploymentRepository) Get(name, stageName string) (*Deployment, error) {
-	f.GetCallCount++
-	return f.GetFn(name, stageName)
+func (f *FakeDeploymentRepository) GetByName(name *NamespacedName, stageName string) (*Deployment, error) {
+	return f.GetByNameFn(name, stageName)
+}
+
+func (f *FakeDeploymentRepository) GetByReservation(reservationId uuid.UUID, stageName string) (*Deployment, error) {
+	f.GetByReservationCallCount++
+	return f.GetByReservationFn(reservationId, stageName)
 }
 
 func (fake *FakeDeploymentRepository) FindByApp(appId uuid.UUID) ([]Deployment, error) {

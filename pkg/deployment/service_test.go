@@ -3,6 +3,9 @@ package deployment
 import (
 	"time"
 
+	"github.com/riser-platform/riser-server/pkg/deploymentreservation"
+	"github.com/riser-platform/riser-server/pkg/state"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -12,20 +15,15 @@ import (
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"
-	"github.com/riser-platform/riser-server/pkg/state"
 )
 
 // Note: See snapshot_test for state based testing of deployment artifacts
 
 func Test_Delete(t *testing.T) {
+	name := core.NewNamespacedName("mydep", "apps")
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(name, stageName string) (*core.Deployment, error) {
-			assert.Equal(t, "mydep", name)
-			assert.Equal(t, "mystage", stageName)
-			return &core.Deployment{}, nil
-		},
-		DeleteFn: func(name, stageName string) error {
-			assert.Equal(t, "mydep", name)
+		DeleteFn: func(nameArg *core.NamespacedName, stageName string) error {
+			assert.Equal(t, name, nameArg)
 			assert.Equal(t, "mystage", stageName)
 			return nil
 		},
@@ -35,26 +33,22 @@ func Test_Delete(t *testing.T) {
 
 	service := service{deployments: deploymentRepository}
 
-	err := service.Delete("mydep", "apps", "mystage", committer)
+	err := service.Delete(name, "mystage", committer)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 1, deploymentRepository.DeleteCallCount)
 	assert.Len(t, committer.Commits, 1)
-	assert.Equal(t, `Deleting deployment "mydep"`, committer.Commits[0].Message)
+	assert.Equal(t, `Deleting deployment "mydep.apps"`, committer.Commits[0].Message)
 	assert.Len(t, committer.Commits[0].Files, 2)
 	assert.Equal(t, "stages/mystage/kube-resources/riser-managed/apps/deployments/mydep", committer.Commits[0].Files[0].Name)
 	assert.True(t, committer.Commits[0].Files[0].Delete)
 	assert.Equal(t, "stages/mystage/configs/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
 	assert.True(t, committer.Commits[0].Files[1].Delete)
-	assert.Equal(t, 1, deploymentRepository.DeleteCallCount)
 }
 
 func Test_Delete_SoftDeleteFails(t *testing.T) {
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(name, stageName string) (*core.Deployment, error) {
-			return &core.Deployment{}, nil
-		},
-		DeleteFn: func(name, stageName string) error {
+		DeleteFn: func(*core.NamespacedName, string) error {
 			return errors.New("test")
 		},
 	}
@@ -63,42 +57,24 @@ func Test_Delete_SoftDeleteFails(t *testing.T) {
 
 	service := service{deployments: deploymentRepository}
 
-	err := service.Delete("mydep", "apps", "mystage", committer)
+	err := service.Delete(core.NewNamespacedName("mydep", "myns"), "mystage", committer)
 
 	assert.Equal(t, "error deleting deployment: test", err.Error())
 }
 
 func Test_Delete_DeploymentNotFound(t *testing.T) {
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(name, stageName string) (*core.Deployment, error) {
-			return nil, core.ErrNotFound
+		DeleteFn: func(*core.NamespacedName, string) error {
+			return core.ErrNotFound
 		},
 	}
 
 	service := service{deployments: deploymentRepository}
 
-	err := service.Delete("mydep", "apps", "mystage", nil)
+	err := service.Delete(core.NewNamespacedName("mydep", "myns"), "mystage", nil)
 
-	assert.Equal(t, `There is no deployment by the name "mydep" in stage "mystage"`, err.Error())
+	assert.Equal(t, `There is no deployment by the name "mydep.myns" in stage "mystage"`, err.Error())
 	assert.IsType(t, &core.ValidationError{}, err)
-	assert.Equal(t, 1, deploymentRepository.GetCallCount)
-	assert.Equal(t, 0, deploymentRepository.DeleteCallCount)
-}
-
-func Test_Delete_GetDeploymentFails(t *testing.T) {
-	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(name, stageName string) (*core.Deployment, error) {
-			return nil, errors.New("failed")
-		},
-	}
-
-	service := service{deployments: deploymentRepository}
-
-	err := service.Delete("mydep", "apps", "mystage", nil)
-
-	assert.Equal(t, `error getting deployment: failed`, err.Error())
-	assert.Equal(t, 1, deploymentRepository.GetCallCount)
-	assert.Equal(t, 0, deploymentRepository.DeleteCallCount)
 }
 
 func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
@@ -112,46 +88,76 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 		},
 	}
 
+	reservation := &core.DeploymentReservation{
+		Id: uuid.New(),
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			assert.Equal(t, deployment.App.Id, appIdArg)
+			assert.Equal(t, core.NewNamespacedName(deployment.Name, deployment.Namespace), nameArg)
+			return reservation, nil
+		},
+	}
+
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			assert.Equal(t, "myapp-mydep", deploymentNameArg)
+		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+			assert.Equal(t, reservation.Id, reservationId)
 			assert.Equal(t, "mystage", stageNameArg)
 			return nil, core.ErrNotFound
 		},
-		CreateFn: func(deploymentArg *core.Deployment) error {
-			assert.Equal(t, "myapp-mydep", deploymentArg.Name)
+		CreateFn: func(deploymentArg *core.DeploymentRecord) error {
+			assert.NotEqual(t, uuid.Nil, deploymentArg.Id)
+			assert.Equal(t, reservation.Id, deploymentArg.ReservationId)
 			assert.Equal(t, "mystage", deploymentArg.StageName)
-			assert.Equal(t, deployment.App.Id, deploymentArg.AppId)
 			assert.Equal(t, int64(1), deploymentArg.RiserRevision)
 			return nil
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "myns", deployment.Namespace)
 	assert.Equal(t, int64(1), result)
-	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 1, deploymentRepository.GetByReservationCallCount)
 	assert.Equal(t, 1, deploymentRepository.CreateCallCount)
 }
 
 func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:      "myapp-mydep",
+		Namespace: "myns",
+		Stage:     "mystage",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
 		},
 	}
 
+	deploymentId := uuid.New()
+	reservation := core.DeploymentReservation{
+		Id:        uuid.New(),
+		AppId:     deployment.App.Id,
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			return &reservation, nil
+		},
+	}
+
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			assert.Equal(t, "myapp-mydep", deploymentNameArg)
-			assert.Equal(t, "mystage", stageNameArg)
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
+		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+			return &core.Deployment{
+				DeploymentReservation: reservation,
+				DeploymentRecord: core.DeploymentRecord{
+					Id:            deploymentId,
+					ReservationId: reservation.Id,
+					StageName:     "mystage"}}, nil
 		},
 		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			assert.Equal(t, "myapp-mydep", name)
@@ -169,19 +175,19 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int64(3), result)
-	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 1, deploymentRepository.GetByReservationCallCount)
 	assert.Equal(t, 1, deploymentRepository.IncrementRevisionCallCount)
 	assert.Equal(t, 1, deploymentRepository.UpdateTrafficCallCount)
 	assert.Equal(t, 0, deploymentRepository.CreateCallCount)
 }
 
 // If a manual rollout is requested for a previously deleted deployment, don't try to update traffic rules with
-// the old deployment as they will not be valid. Effectively ManualRollout is ignored in this case.
+// the old deployment as they will not be valid. ManualRollout is effectively ignored in this case.
 func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
 		Name:  "myapp-mydep",
@@ -193,23 +199,40 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 		ManualRollout: true,
 	}
 
+	deploymentId := uuid.New()
+	reservation := core.DeploymentReservation{
+		Id:        uuid.New(),
+		AppId:     deployment.App.Id,
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			assert.Equal(t, deployment.App.Id, appIdArg)
+			assert.Equal(t, core.NewNamespacedName(deployment.Name, deployment.Namespace), nameArg)
+			return &reservation, nil
+		},
+	}
+
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
 			deletedAt := time.Now()
-			assert.Equal(t, "myapp-mydep", deploymentNameArg)
-			assert.Equal(t, "mystage", stageNameArg)
 			return &core.Deployment{
-				Name:      "myapp-mydep",
-				StageName: "mystage",
-				AppId:     deployment.App.Id,
-				DeletedAt: &deletedAt,
-				Doc: core.DeploymentDoc{
-					// This rule should be ignored since the deployment was previously deleted
-					Traffic: core.TrafficConfig{
-						core.TrafficConfigRule{
-							RevisionName:  "myapp-mydep-2",
-							Percent:       100,
-							RiserRevision: 2,
+				DeploymentReservation: reservation,
+				DeploymentRecord: core.DeploymentRecord{
+					Id:            deploymentId,
+					ReservationId: reservation.Id,
+					StageName:     "mystage",
+					DeletedAt:     &deletedAt,
+					Doc: core.DeploymentDoc{
+						// This rule should be ignored since the deployment was previously deleted
+						Traffic: core.TrafficConfig{
+							core.TrafficConfigRule{
+								RevisionName:  "myapp-mydep-2",
+								Percent:       100,
+								RiserRevision: 2,
+							},
 						},
 					},
 				},
@@ -233,12 +256,12 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.NoError(t, err)
 	assert.Equal(t, int64(3), result)
-	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 1, deploymentRepository.GetByReservationCallCount)
 	assert.Equal(t, 1, deploymentRepository.IncrementRevisionCallCount)
 	assert.Equal(t, 1, deploymentRepository.UpdateTrafficCallCount)
 	assert.Equal(t, 0, deploymentRepository.CreateCallCount)
@@ -254,16 +277,35 @@ func Test_prepareForDeployment_whenIncrementRevisionFails(t *testing.T) {
 		},
 	}
 
+	deploymentId := uuid.New()
+	reservation := core.DeploymentReservation{
+		Id:        uuid.New(),
+		AppId:     deployment.App.Id,
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			return &reservation, nil
+		},
+	}
+
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
+		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+			return &core.Deployment{
+				DeploymentReservation: reservation,
+				DeploymentRecord: core.DeploymentRecord{
+					Id:            deploymentId,
+					ReservationId: reservation.Id,
+					StageName:     "mystage"}}, nil
 		},
 		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			return 0, errors.New("test")
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
@@ -280,21 +322,38 @@ func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
 		},
 	}
 
-	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			assert.Equal(t, "myapp-mydep", deploymentNameArg)
-			assert.Equal(t, "mystage", stageNameArg)
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
+	deploymentId := uuid.New()
+	reservation := core.DeploymentReservation{
+		Id:        uuid.New(),
+		AppId:     deployment.App.Id,
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			return &reservation, nil
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	deploymentRepository := &core.FakeDeploymentRepository{
+		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+			return &core.Deployment{
+				DeploymentReservation: reservation,
+				DeploymentRecord: core.DeploymentRecord{
+					Id:            deploymentId,
+					ReservationId: reservation.Id,
+					StageName:     "mystage"}}, nil
+		},
+	}
+
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, true)
 
 	assert.NoError(t, err)
 	// The RiserRevision is always "0" for a dry-run
 	assert.Equal(t, int64(0), result)
-	assert.Equal(t, 1, deploymentRepository.GetCallCount)
+	assert.Equal(t, 1, deploymentRepository.GetByReservationCallCount)
 	assert.Equal(t, 0, deploymentRepository.IncrementRevisionCallCount)
 	assert.Equal(t, 0, deploymentRepository.UpdateTrafficCallCount)
 	assert.Equal(t, 0, deploymentRepository.CreateCallCount)
@@ -315,9 +374,28 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 		},
 	}
 
+	deploymentId := uuid.New()
+	reservation := core.DeploymentReservation{
+		Id:        uuid.New(),
+		AppId:     deployment.App.Id,
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			return &reservation, nil
+		},
+	}
+
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: deployment.App.Id}, nil
+		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+			return &core.Deployment{
+				DeploymentReservation: reservation,
+				DeploymentRecord: core.DeploymentRecord{
+					Id:            deploymentId,
+					ReservationId: reservation.Id,
+					StageName:     "mystage"}}, nil
 		},
 		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
 			return 1, nil
@@ -327,21 +405,14 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
 	assert.Equal(t, "Error updating traffic: broke", err.Error())
 }
 
-/*
-	Scenario. Two apps with the following app and deployment names
-	app
-	app-foo
-
-	app decides to deploy with the deployment name "app-foo", resulting in a duplicate deployment name of "app-foo" of the app "app-foo"
-*/
-func Test_prepareForDeployment_whenAppDoesNotOwnDeployment(t *testing.T) {
+func Test_prepareForDeployment_whenEnsureReservationErr(t *testing.T) {
 	deployment := &core.DeploymentConfig{
 		Name:  "myapp-mydep",
 		Stage: "mystage",
@@ -351,18 +422,17 @@ func Test_prepareForDeployment_whenAppDoesNotOwnDeployment(t *testing.T) {
 		},
 	}
 
-	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			return &core.Deployment{Name: "myapp-mydep", StageName: "mystage", AppId: uuid.MustParse("2C739752-8B23-4AFF-B0FB-7BC7569BA930")}, nil
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			return nil, errors.New("test")
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
-	assert.Equal(t, `A deployment with the name "myapp-mydep" is owned by app "2c739752-8b23-4aff-b0fb-7bc7569ba930"`, err.Error())
-	assert.IsType(t, &core.ValidationError{}, err)
+	assert.Equal(t, `Error ensuring deployment reservation: test`, err.Error())
 }
 
 func Test_prepareForDeployment_whenGetFails(t *testing.T) {
@@ -374,13 +444,26 @@ func Test_prepareForDeployment_whenGetFails(t *testing.T) {
 		},
 	}
 
+	reservation := core.DeploymentReservation{
+		Id:        uuid.New(),
+		AppId:     deployment.App.Id,
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			return &reservation, nil
+		},
+	}
+
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(string, string) (*core.Deployment, error) {
+		GetByReservationFn: func(uuid.UUID, string) (*core.Deployment, error) {
 			return nil, errors.New("test")
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
@@ -396,18 +479,29 @@ func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 		},
 	}
 
+	reservation := core.DeploymentReservation{
+		Id:        uuid.New(),
+		AppId:     deployment.App.Id,
+		Name:      deployment.Name,
+		Namespace: deployment.Namespace,
+	}
+
+	reservationService := &deploymentreservation.FakeService{
+		EnsureReservationFn: func(appIdArg uuid.UUID, nameArg *core.NamespacedName) (*core.DeploymentReservation, error) {
+			return &reservation, nil
+		},
+	}
+
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetFn: func(deploymentNameArg string, stageNameArg string) (*core.Deployment, error) {
-			assert.Equal(t, "myapp-mydep", deploymentNameArg)
-			assert.Equal(t, "mystage", stageNameArg)
+		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
 			return nil, core.ErrNotFound
 		},
-		CreateFn: func(newDeploymentArg *core.Deployment) error {
+		CreateFn: func(newDeploymentArg *core.DeploymentRecord) error {
 			return errors.New("test")
 		},
 	}
 
-	service := service{deployments: deploymentRepository}
+	service := service{deployments: deploymentRepository, reservationService: reservationService}
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
@@ -448,7 +542,7 @@ func Test_computeTraffic_ExistingDeployment_ManualRollout(t *testing.T) {
 		ManualRollout: true,
 	}
 
-	existingDeployment := &core.Deployment{
+	existingDeployment := &core.DeploymentRecord{
 		Doc: core.DeploymentDoc{
 			Traffic: core.TrafficConfig{
 				core.TrafficConfigRule{
@@ -477,7 +571,7 @@ func Test_computeTraffic_ExistingDeployment_ManualRollout_RemovesExistingZeroPer
 		ManualRollout: true,
 	}
 
-	existingDeployment := &core.Deployment{
+	existingDeployment := &core.DeploymentRecord{
 		Doc: core.DeploymentDoc{
 			Traffic: core.TrafficConfig{
 				core.TrafficConfigRule{

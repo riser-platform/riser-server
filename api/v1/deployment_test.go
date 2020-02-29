@@ -19,12 +19,12 @@ import (
 )
 
 func Test_DeleteDeployment(t *testing.T) {
-	req := httptest.NewRequest(http.MethodDelete, "/deployments/mydep/dev", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/deployments/dev/myns/mydep", nil)
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, rec := newContextWithRecorder(req)
 
 	deploymentService := &deployment.FakeService{
-		DeleteFn: func(deploymentName, namespace, stageName string, committer state.Committer) error {
+		DeleteFn: func(name *core.NamespacedName, stageName string, committer state.Committer) error {
 			return nil
 		},
 	}
@@ -40,12 +40,12 @@ func Test_DeleteDeployment(t *testing.T) {
 }
 
 func Test_DeleteDeployment_NothingToDelete(t *testing.T) {
-	req := httptest.NewRequest(http.MethodDelete, "/deployments/mydep/dev", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/deployments/dev/myns/mydep", nil)
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, rec := newContextWithRecorder(req)
 
 	deploymentService := &deployment.FakeService{
-		DeleteFn: func(deploymentName, namespace, stageName string, committer state.Committer) error {
+		DeleteFn: func(name *core.NamespacedName, stageName string, committer state.Committer) error {
 			return git.ErrNoChanges
 		},
 	}

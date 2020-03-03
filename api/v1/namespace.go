@@ -18,7 +18,7 @@ func PostNamespace(c echo.Context, namespaceService namespace.Service, repo git.
 		return err
 	}
 
-	return namespaceService.Create(ns.Name, state.NewGitCommitter(repo))
+	return namespaceService.Create(string(ns.Name), state.NewGitCommitter(repo))
 }
 
 func GetNamespaces(c echo.Context, namespaces core.NamespaceRepository) error {
@@ -39,5 +39,5 @@ func mapNamespaceArrayFromDomain(domainArray []core.Namespace) []model.Namespace
 }
 
 func mapNamespaceFromDomain(domain core.Namespace) model.Namespace {
-	return model.Namespace{Name: domain.Name}
+	return model.Namespace{Name: model.NamespaceName(domain.Name)}
 }

@@ -12,6 +12,13 @@ func Test_NamespacedName_String(t *testing.T) {
 	assert.Equal(t, "name.ns", name.String())
 }
 
+func Test_NewNamespacedName_Default(t *testing.T) {
+	name := NewNamespacedName("name", "")
+
+	assert.Equal(t, "name", name.Name)
+	assert.Equal(t, DefaultNamespace, name.Namespace)
+}
+
 func Test_ParseNamespacedName(t *testing.T) {
 	result := ParseNamespacedName("mydep.myns")
 

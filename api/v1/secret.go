@@ -31,7 +31,8 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 	err = secretService.SealAndSave(
 		unsealedSecret.PlainText,
 		mapSecretMetaFromModel(&unsealedSecret.SecretMeta),
-		DefaultNamespace,
+		// TODO(ns)
+		core.DefaultNamespace,
 		state.NewGitCommitter(stateRepo))
 	if err == core.ErrConflictNewerVersion {
 		return echo.NewHTTPError(http.StatusConflict, "A newer revision of the secret was saved while attempting to save this secret. This is usually caused by a race condition due to another user saving the secret at the same time.")
@@ -42,12 +43,9 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 
 func GetSecrets(c echo.Context, secretService secret.Service, stageService stage.Service) error {
 	stageName := c.Param("stageName")
-	appId, err := uuid.Parse(c.Param("appId"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	err = stageService.ValidateDeployable(stageName)
+	// TODO(ns) use app name nd namespace
+	appId := uuid.New()
+	err := stageService.ValidateDeployable(stageName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}

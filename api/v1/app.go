@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation/v3"
 	"github.com/riser-platform/riser-server/pkg/core"
 
 	"github.com/riser-platform/riser-server/pkg/app"
@@ -21,12 +20,7 @@ func PostApp(c echo.Context, appService app.Service) error {
 		return errors.Wrap(err, "Error binding App")
 	}
 
-	err = validation.Validate(&newAppRequest.Name, model.RulesAppName()...)
-	if err != nil {
-		return core.NewValidationError("invalid app name", err)
-	}
-
-	createdApp, err := appService.CreateApp(core.NewNamespacedName(newAppRequest.Name, newAppRequest.Namespace))
+	createdApp, err := appService.CreateApp(core.NewNamespacedName(string(newAppRequest.Name), string(newAppRequest.Namespace)))
 	if err != nil {
 		if err == app.ErrAlreadyExists {
 			return echo.NewHTTPError(http.StatusConflict, fmt.Sprintf("The app \"%s\" already exists", newAppRequest.Name))
@@ -45,8 +39,8 @@ func ListApps(c echo.Context, appRepo core.AppRepository) error {
 	return c.JSON(200, mapAppArrayFromDomain(apps))
 }
 
-func GetApp(c echo.Context, appService app.Service) error {
-	domainApp, err := appService.GetByIdOrName(core.AppIdOrName(c.Param("appIdOrName")))
+func GetApp(c echo.Context, apps core.AppRepository) error {
+	domainApp, err := apps.GetByName(core.NewNamespacedName(c.Param("appName"), c.Param("namespace")))
 
 	if err != nil {
 		return err
@@ -57,8 +51,9 @@ func GetApp(c echo.Context, appService app.Service) error {
 
 func mapAppFromDomain(domain core.App) model.App {
 	return model.App{
-		Id:   domain.Id,
-		Name: domain.Name,
+		Id:        domain.Id,
+		Name:      model.AppName(domain.Name),
+		Namespace: model.NamespaceName(domain.Namespace),
 	}
 }
 

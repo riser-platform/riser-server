@@ -43,7 +43,7 @@ func (r *appRepository) GetByName(name *core.NamespacedName) (*core.App, error) 
 }
 
 func (r *appRepository) Create(app *core.App) error {
-	_, err := r.db.Exec("INSERT INTO app (id, name) VALUES ($1,$2)", app.Id, app.Name)
+	_, err := r.db.Exec("INSERT INTO app (id, name, namespace) VALUES ($1,$2,$3)", app.Id, app.Name, app.Namespace)
 	return err
 }
 

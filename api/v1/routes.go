@@ -57,14 +57,12 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return ListApps(c, appRepository)
 	})
 
-	// TODO: /apps/:namespace/:appName
-	v1.GET("/apps/:appIdOrName", func(c echo.Context) error {
-		return GetApp(c, appService)
+	v1.GET("/apps/:namespace/:appName", func(c echo.Context) error {
+		return GetApp(c, appRepository)
 	})
 
-	// TODO: /apps/:namespace/:appName
-	v1.GET("/apps/:appIdOrName/status", func(c echo.Context) error {
-		return GetAppStatus(c, appService, deploymentStatusService)
+	v1.GET("/apps/:namespace/:appName/status", func(c echo.Context) error {
+		return GetAppStatus(c, appRepository, deploymentStatusService)
 	})
 
 	v1.POST("/apps", func(c echo.Context) error {
@@ -78,12 +76,10 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return PostDeployment(c, repo, appService, deploymentService, stageService)
 	})
 
-	// TODO(sdk)
 	v1.DELETE("/deployments/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
 		return DeleteDeployment(c, repo, deploymentService)
 	})
 
-	// TODO(sdk)
 	v1.PUT("/deployments/:stageName/:namespace/:deploymentName/status", func(c echo.Context) error {
 		return PutDeploymentStatus(c, deploymentStatusService)
 	})
@@ -98,7 +94,7 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	})
 
 	// TODO(sdk)
-	v1.GET("/secrets/:appIdOrName/:stageName", func(c echo.Context) error {
+	v1.GET("/secrets/:stageName/:namespace/:appName", func(c echo.Context) error {
 		return GetSecrets(c, secretService, stageService)
 	})
 

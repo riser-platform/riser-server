@@ -11,9 +11,6 @@ import (
 	"github.com/riser-platform/riser-server/pkg/state/resources"
 )
 
-// DefaultName is the default namespace
-const DefaultName = "apps"
-
 type Service interface {
 	EnsureDefaultNamespace(committer state.Committer) error
 	// EnsureNamespaceInStage ensures that a namespace has been committed to a stage. Returns an error if the namespace has not been created
@@ -31,10 +28,10 @@ func NewService(namespaces core.NamespaceRepository, stages core.StageRepository
 }
 
 func (s *service) EnsureDefaultNamespace(committer state.Committer) error {
-	_, err := s.namespaces.Get(DefaultName)
+	_, err := s.namespaces.Get(core.DefaultNamespace)
 	if err != nil {
 		if err == core.ErrNotFound {
-			return s.Create(DefaultName, committer)
+			return s.Create(core.DefaultNamespace, committer)
 		}
 		return err
 	}
@@ -58,7 +55,6 @@ func (s *service) EnsureNamespaceInStage(namespaceName string, stageName string,
 }
 
 func (s *service) Create(namespaceName string, committer state.Committer) error {
-	// TODO: Validate name against ban list
 	err := s.namespaces.Create(&core.Namespace{Name: namespaceName})
 	if err != nil {
 		return errors.Wrap(err, "error creating namespace")

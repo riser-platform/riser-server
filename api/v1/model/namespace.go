@@ -16,13 +16,17 @@ to certain namespaces.
 var bannedNamespacePrefixes = []string{"riser-", "kube-", "knative-", "istio-"}
 
 type Namespace struct {
-	Name string `json:"name"`
+	Name NamespaceName `json:"name"`
 }
 
-func (model *Namespace) Validate() error {
-	return validation.ValidateStruct(model,
-		validation.Field(&model.Name, append(RulesNamingIdentifier(), validation.Required, validation.By(bannedNamespaceRule))...))
+func (v Namespace) Validate() error {
+	return validation.ValidateStruct(&v, validation.Field(&v.Name, validation.Required))
+}
 
+type NamespaceName string
+
+func (v NamespaceName) Validate() error {
+	return validation.Validate(string(v), append(RulesNamingIdentifier(), validation.By(bannedNamespaceRule))...)
 }
 
 func bannedNamespaceRule(v interface{}) error {

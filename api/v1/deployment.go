@@ -20,9 +20,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// TODO(ns): Remove
-const DefaultNamespace = "apps"
-
 // TODO: Refactor and add unit test coverage
 func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
 	deploymentRequest := &model.DeploymentRequest{}
@@ -43,7 +40,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		return err
 	}
 
-	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(deploymentRequest.Name, deploymentRequest.App.Namespace))
+	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(deploymentRequest.Name, string(deploymentRequest.App.Namespace)))
 	if err == app.ErrInvalidAppName || err == app.ErrAppNotFound {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -101,6 +98,7 @@ func PutDeploymentStatus(c echo.Context, deploymentStatusService deploymentstatu
 	deploymentName := c.Param("deploymentName")
 	stageName := c.Param("stageName")
 
+	// TODO(ns)
 	return deploymentStatusService.UpdateStatus(deploymentName, stageName, mapDeploymentStatusFromModel(deploymentStatus))
 }
 
@@ -126,7 +124,7 @@ func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*
 	}
 	return &core.DeploymentConfig{
 		Name:      deploymentRequest.Name,
-		Namespace: app.Namespace,
+		Namespace: string(app.Namespace),
 		Stage:     deploymentRequest.Stage,
 		Docker: core.DeploymentDocker{
 			Tag: deploymentRequest.Docker.Tag,

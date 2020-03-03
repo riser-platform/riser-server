@@ -46,8 +46,8 @@ func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig,
 // AppConfig is the root of the application config object graph without stage overrides
 type AppConfig struct {
 	Id          uuid.UUID                     `json:"id"`
-	Name        string                        `json:"name"`
-	Namespace   string                        `json:"namespace,omitempty"`
+	Name        AppName                       `json:"name"`
+	Namespace   NamespaceName                 `json:"namespace,omitempty"`
 	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
 	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
 	Expose      *AppConfigExpose              `json:"expose,omitempty"`
@@ -83,8 +83,8 @@ func (appConfig *AppConfig) ApplyDefaults() error {
 
 func (appConfig AppConfig) Validate() error {
 	err := validation.ValidateStruct(&appConfig,
-		validation.Field(&appConfig.Name, RulesAppName()...),
-		validation.Field(&appConfig.Namespace, append(RulesNamingIdentifier(), validation.Required)...),
+		validation.Field(&appConfig.Name),
+		validation.Field(&appConfig.Namespace),
 		validation.Field(&appConfig.Id, validation.By(validId)),
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
 		validation.Field(&appConfig.Expose, validation.Required),

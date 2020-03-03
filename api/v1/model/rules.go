@@ -12,7 +12,7 @@ import (
 func RulesAppName() []validation.Rule {
 	rules := []validation.Rule{
 		validation.Required,
-		// Max length takes into account possible deployment name suffixes
+		// Max length takes into account possible deployment name prefixes and suffixes
 		validation.RuneLength(3, 50),
 	}
 	return append(rules, RulesNamingIdentifier()...)

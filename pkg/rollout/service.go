@@ -51,7 +51,7 @@ func (s *service) UpdateTraffic(name *core.NamespacedName, stageName string, tra
 			Stage:     stageName,
 			Traffic:   traffic,
 			App: &model.AppConfig{
-				Name: app.Name,
+				Name: model.AppName(app.Name),
 			},
 		},
 		RiserRevision: deployment.RiserRevision,

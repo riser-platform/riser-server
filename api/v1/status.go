@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/riser-platform/riser-server/pkg/app"
 	"github.com/riser-platform/riser-server/pkg/core"
 
 	"github.com/riser-platform/riser-server/pkg/deploymentstatus"
@@ -14,8 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func GetAppStatus(c echo.Context, appService app.Service, statusService deploymentstatus.Service) error {
-	domainApp, err := appService.GetByIdOrName(core.AppIdOrName(c.Param("appIdOrName")))
+func GetAppStatus(c echo.Context, apps core.AppRepository, statusService deploymentstatus.Service) error {
+	domainApp, err := apps.GetByName(core.NewNamespacedName(c.Param("appName"), c.Param("namespace")))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}

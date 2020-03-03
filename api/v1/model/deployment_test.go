@@ -25,7 +25,7 @@ func Test_DeploymentRequest_ApplyDefaults(t *testing.T) {
 
 	assert.NoError(t, err)
 	// Not an exhaustive check of app defaults, just ensure that the app has a default set
-	assert.Equal(t, "apps", model.App.Namespace)
+	assert.EqualValues(t, "apps", model.App.Namespace)
 }
 
 func Test_DeploymentRequest_Validates(t *testing.T) {

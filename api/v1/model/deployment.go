@@ -36,7 +36,9 @@ type DryRunFile struct {
 }
 
 type DeploymentMeta struct {
-	Name          string           `json:"name"`
+	Name string `json:"name"`
+	// Namespace is an intentional omission. We always use the app's namespace as we do not allow an app to deploy to multiple namespaces at
+	// this time.
 	Stage         string           `json:"stage"`
 	Docker        DeploymentDocker `json:"docker"`
 	ManualRollout bool             `json:"manualRollout"`

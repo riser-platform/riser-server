@@ -38,7 +38,7 @@ func Test_PutSecret(t *testing.T) {
 		SealAndSaveFn: func(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error {
 			assert.Equal(t, "myplain", plaintextSecret)
 			assert.Equal(t, secretMeta, mapSecretMetaFromModel(&unsealed.SecretMeta))
-			assert.Equal(t, DefaultNamespace, namespace)
+			assert.Equal(t, core.DefaultNamespace, namespace)
 			return nil
 		},
 	}

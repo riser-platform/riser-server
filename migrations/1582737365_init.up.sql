@@ -1,9 +1,11 @@
-CREATE TABLE namespace (
+CREATE TABLE namespace
+(
   name character varying(63) NOT NULL,
-  PRIMARY KEY(name)
+  PRIMARY KEY (name)
 );
 
-CREATE TABLE stage (
+CREATE TABLE stage
+(
   name character varying(63) NOT NULL,
   doc jsonb NOT NULL,
   PRIMARY KEY(name)
@@ -22,18 +24,18 @@ CREATE UNIQUE INDEX ix_app_name ON app(name, namespace);
 CREATE TABLE deployment_reservation
 (
   id uuid NOT NULL,
-  app_id uuid NOT NULL REFERENCES app(id)
+  app_id uuid NOT NULL REFERENCES app(id),
   name character varying(63) NOT NULL,
   namespace character varying(63) NOT NULL REFERENCES namespace(name),
   PRIMARY KEY(id)
-)
+);
 
-CREATE UNIQUE INDEX ix_deployment_name_namespace ON deployment_name(name, namespace)
+CREATE UNIQUE INDEX ix_deployment_reservation_namespace ON deployment_reservation(name, namespace);
 
 CREATE TABLE deployment
 (
-  id uuid NOT NULL
-  deployment_reservation_id uuid NOT NULL REFERENCES deployment_reservation_meta(id)
+  id uuid NOT NULL,
+  deployment_reservation_id uuid NOT NULL REFERENCES deployment_reservation(id),
   stage_name character varying(63) NOT NULL REFERENCES stage(name),
   riser_revision integer NOT NULL DEFAULT(0),
   deleted_at TIMESTAMP WITH TIME ZONE,

@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const DefaultNamespace = "apps"
+
 type Namespace struct {
 	Name string
 }
@@ -28,5 +30,8 @@ func ParseNamespacedName(namespacedName string) *NamespacedName {
 }
 
 func NewNamespacedName(name, namespace string) *NamespacedName {
+	if namespace == "" {
+		namespace = DefaultNamespace
+	}
 	return &NamespacedName{Name: name, Namespace: namespace}
 }

@@ -22,7 +22,7 @@ func Test_Namespace_Validate_Name(t *testing.T) {
 	}
 
 	for _, test := range tt {
-		namespace := &Namespace{Name: test.name}
+		namespace := &Namespace{Name: NamespaceName(test.name)}
 		err := namespace.Validate()
 		if test.expectedErr == "" {
 			assert.NoError(t, err)

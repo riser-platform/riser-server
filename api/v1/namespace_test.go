@@ -12,7 +12,7 @@ func Test_mapNamespaceFromDomain(t *testing.T) {
 
 	result := mapNamespaceFromDomain(domain)
 
-	assert.Equal(t, "myns", result.Name)
+	assert.EqualValues(t, "myns", result.Name)
 }
 
 func Test_mapNamespaceArrayFromDomain(t *testing.T) {
@@ -24,6 +24,6 @@ func Test_mapNamespaceArrayFromDomain(t *testing.T) {
 	result := mapNamespaceArrayFromDomain(domainArray)
 
 	assert.Len(t, result, 2)
-	assert.Equal(t, "myns1", result[0].Name)
-	assert.Equal(t, "myns2", result[1].Name)
+	assert.EqualValues(t, "myns1", result[0].Name)
+	assert.EqualValues(t, "myns2", result[1].Name)
 }

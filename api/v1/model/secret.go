@@ -4,7 +4,7 @@ import validation "github.com/go-ozzo/ozzo-validation/v3"
 
 type UnsealedSecret struct {
 	SecretMeta `json:",inline"`
-	PlainText  string `json:"secretValue"`
+	PlainText  string `json:"plainTextValue"`
 }
 
 func (v UnsealedSecret) Validate() error {
@@ -14,10 +14,10 @@ func (v UnsealedSecret) Validate() error {
 }
 
 type SecretMeta struct {
+	Name      string        `json:"name"`
 	AppName   AppName       `json:"app"`
 	Namespace NamespaceName `json:"namespace"`
 	Stage     string        `json:"stage"`
-	Name      string        `json:"secretName"`
 }
 
 func (v SecretMeta) Validate() error {

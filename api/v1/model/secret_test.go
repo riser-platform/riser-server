@@ -16,5 +16,5 @@ func Test_UnsealedSecret_ValidateRequired(t *testing.T) {
 	require.IsType(t, validation.Errors{}, err)
 	validationErrors := err.(validation.Errors)
 	assert.Len(t, validationErrors, 5)
-	assertFieldsRequired(t, validationErrors, "secretName", "secretValue", "app", "namespace", "stage")
+	assertFieldsRequired(t, validationErrors, "name", "plainTextValue", "app", "namespace", "stage")
 }

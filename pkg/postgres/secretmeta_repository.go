@@ -16,8 +16,12 @@ func NewSecretMetaRepository(db *sql.DB) core.SecretMetaRepository {
 
 func (r *secretMetaRepository) Save(secretMeta *core.SecretMeta) (int64, error) {
 	row := r.db.QueryRow(`
-		app_id := app_id FROM app WHERE name = $1 AND namespace = $2
-		INSERT INTO secret_meta (app_id, stage_name, name, revision) VALUES (app_id,$3,$4,0)
+		INSERT INTO secret_meta (app_id, stage_name, name, revision)
+		SELECT app.id, $3, $4, 0
+		FROM app
+		WHERE
+			app.name = $1
+			AND app.namespace = $2
 		ON CONFLICT(app_id, stage_name, name) DO
 		UPDATE SET
 			revision=secret_meta.revision + 1
@@ -30,15 +34,20 @@ func (r *secretMetaRepository) Save(secretMeta *core.SecretMeta) (int64, error) 
 }
 
 func (r *secretMetaRepository) Commit(secretMeta *core.SecretMeta) error {
-
 	result, err := r.db.Exec(`
-		app_id := app_id FROM app WHERE name = $1 AND namespace = $2
 		UPDATE secret_meta
 		SET committed_revision = revision
-		WHERE app_id = app_id AND stage_name = $3 AND name = $4 AND revision = $5
+		FROM app
+		WHERE
+			secret_meta.app_id = app.id
+			AND app.name = $1
+			AND app.namespace = $2
+			AND secret_meta.stage_name = $3
+			AND secret_meta.name = $4
+			AND secret_meta.revision = $5
 	`, secretMeta.App.Name, secretMeta.App.Namespace, secretMeta.StageName, secretMeta.Name, secretMeta.Revision)
 
-	if err != nil && !ResultHasRows(result) {
+	if err != nil && !resultHasRows(result) {
 		return core.ErrConflictNewerVersion
 	}
 
@@ -56,8 +65,11 @@ func (r *secretMetaRepository) ListByAppInStage(appName *core.NamespacedName, st
 		secret_meta.committed_revision
 	FROM secret_meta
 	INNER JOIN app ON app.id = secret_meta.app_id
-	WHERE app.name = $1 AND app.namespace = $2 AND stage_name = $2
-	ORDER BY name
+	WHERE
+		app.name = $1
+		AND app.namespace = $2
+		AND secret_meta.stage_name = $3
+	ORDER BY secret_meta.name
 	`, appName.Name, appName.Namespace, stageName)
 
 	if err != nil {
@@ -66,7 +78,7 @@ func (r *secretMetaRepository) ListByAppInStage(appName *core.NamespacedName, st
 
 	defer rows.Close()
 	for rows.Next() {
-		secretMeta := core.SecretMeta{}
+		secretMeta := core.SecretMeta{App: &core.NamespacedName{}}
 		err := rows.Scan(&secretMeta.App.Name, &secretMeta.App.Namespace, &secretMeta.StageName, &secretMeta.Name, &secretMeta.Revision)
 		if err != nil {
 			return nil, err

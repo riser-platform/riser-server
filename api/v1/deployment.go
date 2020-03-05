@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/riser-platform/riser-server/pkg/deploymentstatus"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/riser-platform/riser-server/pkg/deployment"
@@ -85,7 +84,7 @@ func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService depl
 	return c.JSON(http.StatusAccepted, model.APIResponse{Message: "Deployment deletion requested"})
 }
 
-func PutDeploymentStatus(c echo.Context, deploymentStatusService deploymentstatus.Service) error {
+func PutDeploymentStatus(c echo.Context, deployments core.DeploymentRepository) error {
 	deploymentStatus := &model.DeploymentStatusMutable{}
 	err := c.Bind(deploymentStatus)
 	if err != nil {
@@ -93,10 +92,10 @@ func PutDeploymentStatus(c echo.Context, deploymentStatusService deploymentstatu
 	}
 
 	deploymentName := c.Param("deploymentName")
+	namespace := c.Param("namespace")
 	stageName := c.Param("stageName")
 
-	// TODO(ns)
-	return deploymentStatusService.UpdateStatus(deploymentName, stageName, mapDeploymentStatusFromModel(deploymentStatus))
+	return deployments.UpdateStatus(core.NewNamespacedName(deploymentName, namespace), stageName, mapDeploymentStatusFromModel(deploymentStatus))
 }
 
 func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunCommit {

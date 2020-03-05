@@ -8,8 +8,7 @@ type DeploymentRepository interface {
 	GetByReservation(reservationId uuid.UUID, stageName string) (*Deployment, error)
 	GetByName(name *NamespacedName, stageName string) (*Deployment, error)
 	FindByApp(appId uuid.UUID) ([]Deployment, error)
-	// TODO: either name/namespace/stage or reservationId
-	UpdateStatus(name, stageName string, status *DeploymentStatus) error
+	UpdateStatus(name *NamespacedName, stageName string, status *DeploymentStatus) error
 	// TODO: either name/namespace/stage or reservationId
 	UpdateTraffic(name, stageName string, riserRevision int64, traffic TrafficConfig) error
 	// TODO: either name/namespace/stage or reservationId
@@ -30,7 +29,7 @@ type FakeDeploymentRepository struct {
 	IncrementRevisionFn        func(name, stageName string) (int64, error)
 	IncrementRevisionCallCount int
 	RollbackRevisionFn         func(name, stageName string, failedRevision int64) (int64, error)
-	UpdateStatusFn             func(name, stageName string, status *DeploymentStatus) error
+	UpdateStatusFn             func(name *NamespacedName, stageName string, status *DeploymentStatus) error
 	UpdateStatusCallCount      int
 	UpdateTrafficFn            func(name, stageName string, riserRevision int64, traffic TrafficConfig) error
 	UpdateTrafficCallCount     int
@@ -68,9 +67,9 @@ func (fake *FakeDeploymentRepository) RollbackRevision(name, stageName string, f
 	return fake.RollbackRevisionFn(name, stageName, failedRevision)
 }
 
-func (fake *FakeDeploymentRepository) UpdateStatus(deploymentName, stageName string, status *DeploymentStatus) error {
+func (fake *FakeDeploymentRepository) UpdateStatus(name *NamespacedName, stageName string, status *DeploymentStatus) error {
 	fake.UpdateStatusCallCount++
-	return fake.UpdateStatusFn(deploymentName, stageName, status)
+	return fake.UpdateStatusFn(name, stageName, status)
 }
 
 func (fake *FakeDeploymentRepository) UpdateTraffic(name, stageName string, riserRevision int64, traffic TrafficConfig) error {

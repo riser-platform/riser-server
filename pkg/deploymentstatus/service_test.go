@@ -106,40 +106,4 @@ func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
 
 	assert.Nil(t, result)
 	assert.Equal(t, "Error retrieving stage status for stage \"mystage\": test", err.Error())
-
-}
-
-func Test_UpdateStatus(t *testing.T) {
-	status := &core.DeploymentStatus{}
-
-	deploymentRepository := &core.FakeDeploymentRepository{
-		UpdateStatusFn: func(deploymentNameArg string, stageNameArg string, statusArg *core.DeploymentStatus) error {
-			assert.Same(t, status, statusArg)
-			assert.Equal(t, "mydeployment", deploymentNameArg)
-			assert.Equal(t, "mystage", stageNameArg)
-			return nil
-		},
-	}
-
-	service := service{deployments: deploymentRepository}
-	err := service.UpdateStatus("mydeployment", "mystage", status)
-
-	assert.NoError(t, err)
-	assert.Equal(t, 1, deploymentRepository.UpdateStatusCallCount)
-}
-
-func Test_UpdateStatus_WhenUpdateStatusError_ReturnsError(t *testing.T) {
-	status := &core.DeploymentStatus{}
-
-	deploymentRepository := &core.FakeDeploymentRepository{
-		UpdateStatusFn: func(string, string, *core.DeploymentStatus) error {
-			return errors.New("test")
-		},
-	}
-
-	service := service{deployments: deploymentRepository}
-
-	err := service.UpdateStatus("mydeployment", "mystage", status)
-
-	assert.Equal(t, "Error saving status for deployment \"mydeployment\" in stage \"mystage\": test", err.Error())
 }

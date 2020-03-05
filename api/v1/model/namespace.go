@@ -26,7 +26,7 @@ func (v Namespace) Validate() error {
 type NamespaceName string
 
 func (v NamespaceName) Validate() error {
-	return validation.Validate(string(v), append(RulesNamingIdentifier(), validation.By(bannedNamespaceRule))...)
+	return validation.Validate(string(v), append(RulesNamingIdentifier(), validation.Required, validation.By(bannedNamespaceRule))...)
 }
 
 func bannedNamespaceRule(v interface{}) error {

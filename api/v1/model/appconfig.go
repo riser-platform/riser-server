@@ -47,7 +47,7 @@ func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig,
 type AppConfig struct {
 	Id          uuid.UUID                     `json:"id"`
 	Name        AppName                       `json:"name"`
-	Namespace   NamespaceName                 `json:"namespace,omitempty"`
+	Namespace   NamespaceName                 `json:"namespace"`
 	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
 	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
 	Expose      *AppConfigExpose              `json:"expose,omitempty"`

@@ -18,28 +18,17 @@ func NewAppRepository(db *sql.DB) core.AppRepository {
 
 func (r *appRepository) Get(id uuid.UUID) (*core.App, error) {
 	app := &core.App{}
-	err := r.db.QueryRow("SELECT id, name FROM app WHERE id = $1", id).Scan(&app.Id, &app.Name)
-	if err == sql.ErrNoRows {
-		return nil, core.ErrNotFound
-	}
-	if err != nil {
-		return nil, err
-	}
+	err := r.db.QueryRow("SELECT id, name, namespace FROM app WHERE id = $1", id).Scan(&app.Id, &app.Name, &app.Namespace)
 
-	return app, nil
+	return app, noRowsErrorHandler(err)
 }
 
 func (r *appRepository) GetByName(name *core.NamespacedName) (*core.App, error) {
 	app := &core.App{}
-	err := r.db.QueryRow("SELECT id, name FROM app WHERE name = $1 and namespace = $2", name.Name, name.Namespace).Scan(&app.Id, &app.Name)
-	if err == sql.ErrNoRows {
-		return nil, core.ErrNotFound
-	}
-	if err != nil {
-		return nil, err
-	}
+	err := r.db.QueryRow("SELECT id, name, namespace FROM app WHERE name = $1 and namespace = $2",
+		name.Name, name.Namespace).Scan(&app.Id, &app.Name, &app.Namespace)
 
-	return app, nil
+	return app, noRowsErrorHandler(err)
 }
 
 func (r *appRepository) Create(app *core.App) error {

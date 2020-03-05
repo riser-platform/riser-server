@@ -12,7 +12,6 @@ import (
 
 // TODO: Consider better homes for these
 type Service interface {
-	UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error
 	GetByApp(appId uuid.UUID) (*core.AppStatus, error)
 }
 
@@ -50,10 +49,4 @@ func (s *service) GetByApp(appId uuid.UUID) (*core.AppStatus, error) {
 	}
 
 	return appStatus, nil
-}
-
-// TODO: Move to deployment service
-func (s *service) UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error {
-	err := s.deployments.UpdateStatus(deploymentName, stageName, status)
-	return errors.Wrap(err, fmt.Sprintf("Error saving status for deployment %q in stage %q", deploymentName, stageName))
 }

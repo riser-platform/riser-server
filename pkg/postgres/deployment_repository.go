@@ -62,8 +62,8 @@ func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName st
 		&deployment.ReservationId,
 		&deployment.StageName,
 		&deployment.RiserRevision,
-		&deployment.Doc,
-	)
+		&deployment.Doc)
+
 	return deployment, noRowsErrorHandler(err)
 }
 
@@ -95,8 +95,7 @@ func (r *deploymentRepository) GetByReservation(reservationId uuid.UUID, stageNa
 		&deployment.ReservationId,
 		&deployment.StageName,
 		&deployment.RiserRevision,
-		&deployment.Doc,
-	)
+		&deployment.Doc)
 	return deployment, noRowsErrorHandler(err)
 }
 
@@ -128,7 +127,17 @@ func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, er
 	defer rows.Close()
 	for rows.Next() {
 		deployment := core.Deployment{}
-		err := rows.Scan(&deployment.Name, &deployment.StageName, &deployment.AppId, &deployment.RiserRevision, &deployment.Doc)
+		err := rows.Scan(
+			&deployment.DeploymentReservation.Id,
+			&deployment.AppId,
+			&deployment.Name,
+			&deployment.Namespace,
+			&deployment.DeploymentRecord.Id,
+			&deployment.DeletedAt,
+			&deployment.ReservationId,
+			&deployment.StageName,
+			&deployment.RiserRevision,
+			&deployment.Doc)
 		if err != nil {
 			return nil, err
 		}
@@ -166,16 +175,25 @@ func (r *deploymentRepository) RollbackRevision(deploymentName, stageName string
 	return revision, nil
 }
 
-func (r *deploymentRepository) UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error {
+func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, stageName string, status *core.DeploymentStatus) error {
 	result, err := r.db.Exec(`
 	  UPDATE deployment
-		SET doc = jsonb_set(doc, '{status}', $3),
+		SET doc = jsonb_set(doc, '{status}', $4),
 		-- If we receive a status update, we "undelete" the deployment
 		deleted_at = null
-		WHERE name = $1 AND stage_name = $2
+		FROM deployment_reservation
+		WHERE
+		deployment.deployment_reservation_id = deployment_reservation.id
+		AND deployment_reservation.name = $1
+		AND deployment_reservation.namespace = $2
+		AND deployment.stage_name = $3
 		-- Don't update status from an older observed revision
-		AND ((doc->'status'->>'observedRiserRevision')::int <= $4 OR doc->'status' IS NULL OR doc->'status'->>'observedRiserRevision' IS NULL)
-	`, deploymentName, stageName, status, status.ObservedRiserRevision)
+		AND (
+			(deployment.doc->'status'->>'observedRiserRevision')::int <= $5
+			OR deployment.doc->'status' IS NULL
+			OR deployment.doc->'status'->>'observedRiserRevision' IS NULL
+		)
+	`, name.Name, name.Namespace, stageName, status, status.ObservedRiserRevision)
 
 	if err != nil {
 		return err

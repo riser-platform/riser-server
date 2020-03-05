@@ -15,7 +15,7 @@ func NewDeploymentReservationRepository(db *sql.DB) core.DeploymentReservationRe
 }
 
 func (r *deploymentReservationRepository) Create(reservation *core.DeploymentReservation) error {
-	_, err := r.db.Exec(`INSERT INTO deployment (id, app_id, name, namespace)ReservationS ($1,$2,$3,$4)`,
+	_, err := r.db.Exec(`INSERT INTO deployment_reservation (id, app_id, name, namespace) VALUES ($1,$2,$3,$4)`,
 		reservation.Id, reservation.AppId, reservation.Name, reservation.Namespace)
 	return err
 }

@@ -79,8 +79,8 @@ func Test_AppConfig_ValidateRequired(t *testing.T) {
 
 	assert.IsType(t, validation.Errors{}, err)
 	validationErrors := err.(validation.Errors)
-	assert.Len(t, validationErrors, 4)
-	assertFieldsRequired(t, validationErrors, "name", "id", "image", "expose")
+	assert.Len(t, validationErrors, 5)
+	assertFieldsRequired(t, validationErrors, "name", "namespace", "id", "image", "expose")
 }
 
 func Test_AppConfig_ValidateExposeRequired(t *testing.T) {

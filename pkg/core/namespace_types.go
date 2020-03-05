@@ -17,20 +17,20 @@ type NamespacedName struct {
 }
 
 func (v *NamespacedName) String() string {
-	return fmt.Sprintf("%s.%s", v.Name, v.Namespace)
+	return strings.ToLower(fmt.Sprintf("%s.%s", v.Name, v.Namespace))
 }
 
 func ParseNamespacedName(namespacedName string) *NamespacedName {
-	parts := strings.Split(namespacedName, ".")
+	parts := strings.Split(strings.ToLower(namespacedName), ".")
 	if len(parts) == 2 {
 		return &NamespacedName{parts[0], parts[1]}
 	}
-	return &NamespacedName{Name: namespacedName}
+	return &NamespacedName{Name: strings.ToLower(namespacedName)}
 }
 
 func NewNamespacedName(name, namespace string) *NamespacedName {
 	if namespace == "" {
 		namespace = DefaultNamespace
 	}
-	return &NamespacedName{Name: name, Namespace: namespace}
+	return &NamespacedName{Name: strings.ToLower(name), Namespace: strings.ToLower(namespace)}
 }

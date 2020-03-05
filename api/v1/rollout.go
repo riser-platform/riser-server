@@ -19,16 +19,17 @@ import (
 func PutRollout(c echo.Context, rolloutService rollout.Service, stageService stage.Service, stateRepo git.Repo) error {
 	rolloutRequest := &model.RolloutRequest{}
 
-	err := c.Bind(rolloutRequest)
-	if err != nil {
-		return err
-	}
-
 	deploymentName := c.Param("deploymentName")
 	namespace := c.Param("namespace")
 	stageName := c.Param("stageName")
 
-	err = stageService.ValidateDeployable(stageName)
+	// Validate stage before binding otherwise the client gets a confusing error about route rules when they pass in an invalid stage
+	err := stageService.ValidateDeployable(stageName)
+	if err != nil {
+		return err
+	}
+
+	err = c.Bind(rolloutRequest)
 	if err != nil {
 		return err
 	}

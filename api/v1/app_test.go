@@ -10,8 +10,6 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-// TODO: Test newApp validation
-
 func Test_mapAppFromDomain(t *testing.T) {
 	domain := core.App{
 		Id:        uuid.New(),

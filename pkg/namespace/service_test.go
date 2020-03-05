@@ -7,6 +7,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/riser-platform/riser-server/pkg/state"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Create(t *testing.T) {
@@ -134,4 +135,72 @@ func Test_EnsureDefaultNamespace_WhenExists_Noop(t *testing.T) {
 	err := svc.EnsureDefaultNamespace(state.NewDryRunCommitter())
 
 	assert.NoError(t, err)
+}
+
+func Test_ValidateDeployable_NamespaceExists(t *testing.T) {
+	namespaces := &core.FakeNamespaceRepository{
+		GetFn: func(namespaceArg string) (*core.Namespace, error) {
+			assert.Equal(t, "myns", namespaceArg)
+			return &core.Namespace{Name: namespaceArg}, nil
+		},
+	}
+
+	svc := &service{namespaces: namespaces}
+
+	err := svc.ValidateDeployable("myns")
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, namespaces.GetCallCount)
+}
+
+func Test_ValidateDeployable_NamespaceMissing(t *testing.T) {
+	namespaces := &core.FakeNamespaceRepository{
+		GetFn: func(namespaceArg string) (*core.Namespace, error) {
+			return nil, core.ErrNotFound
+		},
+		ListFn: func() ([]core.Namespace, error) {
+			return []core.Namespace{
+				core.Namespace{Name: "ns1"},
+				core.Namespace{Name: "ns2"},
+			}, nil
+		},
+	}
+
+	svc := &service{namespaces: namespaces}
+
+	err := svc.ValidateDeployable("myns")
+
+	require.IsType(t, &core.ValidationError{}, err, err.Error())
+	assert.Equal(t, `Invalid namespace "myns". Must be one of: ns1, ns2`, err.Error())
+}
+
+func Test_ValidateDeployable_NamespaceMissing_ListError(t *testing.T) {
+	namespaces := &core.FakeNamespaceRepository{
+		GetFn: func(namespaceArg string) (*core.Namespace, error) {
+			return nil, core.ErrNotFound
+		},
+		ListFn: func() ([]core.Namespace, error) {
+			return nil, errors.New("test")
+		},
+	}
+
+	svc := &service{namespaces: namespaces}
+
+	err := svc.ValidateDeployable("myns")
+
+	assert.Equal(t, "test", err.Error())
+}
+
+func Test_ValidateDeployable_GetError(t *testing.T) {
+	namespaces := &core.FakeNamespaceRepository{
+		GetFn: func(namespaceArg string) (*core.Namespace, error) {
+			return nil, errors.New("test")
+		},
+	}
+
+	svc := &service{namespaces: namespaces}
+
+	err := svc.ValidateDeployable("myns")
+
+	assert.Equal(t, "test", err.Error())
 }

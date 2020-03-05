@@ -3,6 +3,8 @@ package app
 import (
 	"testing"
 
+	"github.com/riser-platform/riser-server/pkg/namespace"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -27,7 +29,14 @@ func Test_CreateApp(t *testing.T) {
 		},
 	}
 
-	appService := service{appRepository}
+	namespaceService := &namespace.FakeService{
+		ValidateDeployableFn: func(nsArg string) error {
+			assert.Equal(t, "myns", nsArg)
+			return nil
+		},
+	}
+
+	appService := service{appRepository, namespaceService}
 
 	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
 
@@ -37,6 +46,28 @@ func Test_CreateApp(t *testing.T) {
 	assert.Equal(t, "foo", newApp.Name)
 	assert.Equal(t, "myns", newApp.Namespace)
 	assert.Equal(t, newApp.Id, result.Id)
+}
+
+func Test_CreateApp_InvalidNamespace(t *testing.T) {
+	appRepository := &core.FakeAppRepository{
+		GetByNameFn: func(nameArg *core.NamespacedName) (*core.App, error) {
+			return nil, core.ErrNotFound
+		},
+	}
+
+	namespaceService := &namespace.FakeService{
+		ValidateDeployableFn: func(nsArg string) error {
+			assert.Equal(t, "myns", nsArg)
+			return errors.New("test")
+		},
+	}
+
+	appService := service{appRepository, namespaceService}
+
+	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
+
+	assert.Nil(t, result)
+	assert.Equal(t, "test", err.Error())
 }
 
 func Test_CreateApp_WhenAppExists_ReturnsErr(t *testing.T) {
@@ -85,9 +116,13 @@ func Test_CreateApp_WhenCreateFails_ReturnsErr(t *testing.T) {
 		},
 	}
 
-	appService := service{
-		apps: appRepository,
+	namespaceService := &namespace.FakeService{
+		ValidateDeployableFn: func(nsArg string) error {
+			return nil
+		},
 	}
+
+	appService := service{appRepository, namespaceService}
 
 	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
 

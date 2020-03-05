@@ -20,7 +20,6 @@ func (v *NamespacedName) String() string {
 	return fmt.Sprintf("%s.%s", v.Name, v.Namespace)
 }
 
-// TODO: Should we allow non-namespaced names and use default?
 func ParseNamespacedName(namespacedName string) *NamespacedName {
 	parts := strings.Split(namespacedName, ".")
 	if len(parts) == 2 {

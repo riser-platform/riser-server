@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/namespace"
 )
 
 var ErrAlreadyExists = errors.New("an app already exists with the provided name")
@@ -18,11 +19,12 @@ type Service interface {
 }
 
 type service struct {
-	apps core.AppRepository
+	apps             core.AppRepository
+	namespaceService namespace.Service
 }
 
-func NewService(apps core.AppRepository) Service {
-	return &service{apps}
+func NewService(apps core.AppRepository, namespaceService namespace.Service) Service {
+	return &service{apps, namespaceService}
 }
 
 func (s *service) CreateApp(name *core.NamespacedName) (*core.App, error) {
@@ -33,6 +35,12 @@ func (s *service) CreateApp(name *core.NamespacedName) (*core.App, error) {
 	} else if err != core.ErrNotFound {
 		return nil, errors.Wrap(err, "unable to validate app")
 	}
+
+	err = s.namespaceService.ValidateDeployable(name.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	appId := uuid.New()
 	app := &core.App{
 		Id:        appId,

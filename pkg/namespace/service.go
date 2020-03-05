@@ -2,6 +2,7 @@ package namespace
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -12,6 +13,9 @@ import (
 )
 
 type Service interface {
+	// ValidateDeployable validates that a namespace is deployable. Returns a ValidationError if it is not.
+	ValidateDeployable(namespaceName string) error
+	// EnsureDefaultNamespace ensures that the default namespace has been provisioned. Designed to be used only at server startup.
 	EnsureDefaultNamespace(committer state.Committer) error
 	// EnsureNamespaceInStage ensures that a namespace has been committed to a stage. Returns an error if the namespace has not been created
 	EnsureNamespaceInStage(namespaceName string, stageName string, committer state.Committer) error
@@ -72,6 +76,30 @@ func (s *service) Create(namespaceName string, committer state.Committer) error 
 	}
 
 	return nil
+}
+
+func (s *service) ValidateDeployable(namespaceName string) error {
+	_, err := s.namespaces.Get(namespaceName)
+
+	if err == core.ErrNotFound {
+		namespaces, nsListErr := s.namespaces.List()
+		if nsListErr == nil {
+			validNamespaceNames := toNameList(namespaces)
+			return core.NewValidationErrorMessage(fmt.Sprintf("Invalid namespace %q. Must be one of: %s", namespaceName, strings.Join(validNamespaceNames, ", ")))
+		} else {
+			return nsListErr
+		}
+	}
+
+	return err
+}
+
+func toNameList(namespaces []core.Namespace) []string {
+	names := []string{}
+	for _, namespace := range namespaces {
+		names = append(names, namespace.Name)
+	}
+	return names
 }
 
 func commitNamespace(namespaceName string, stageName string, committer state.Committer) error {

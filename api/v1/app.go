@@ -9,7 +9,6 @@ import (
 	"github.com/riser-platform/riser-server/pkg/app"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/api/v1/model"
 )
 
@@ -17,7 +16,7 @@ func PostApp(c echo.Context, appService app.Service) error {
 	newAppRequest := &model.NewApp{}
 	err := c.Bind(newAppRequest)
 	if err != nil {
-		return errors.Wrap(err, "Error binding App")
+		return err
 	}
 
 	createdApp, err := appService.CreateApp(core.NewNamespacedName(string(newAppRequest.Name), string(newAppRequest.Namespace)))
@@ -25,7 +24,7 @@ func PostApp(c echo.Context, appService app.Service) error {
 		if err == app.ErrAlreadyExists {
 			return echo.NewHTTPError(http.StatusConflict, fmt.Sprintf("The app \"%s\" already exists", newAppRequest.Name))
 		} else {
-			return errors.Wrap(err, "Error creating App")
+			return err
 		}
 	}
 	return c.JSON(http.StatusCreated, mapAppFromDomain(*createdApp))

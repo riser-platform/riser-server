@@ -12,7 +12,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-// UnhealthyAfter indicates the duration that is used to calculate if the stage is "unhealthy" due to not receving a "ping" of any kind from it
+// UnhealthyAfter indicates the duration that is used to calculate if the stage is "unhealthy" due to not receiving a "ping" of any kind from it
 var UnhealthyAfter = time.Duration(30) * time.Second
 
 type Service interface {
@@ -90,6 +90,7 @@ func (s *service) ValidateDeployable(stageName string) error {
 		stageNames = append(stageNames, stage.Name)
 	}
 
+	// TODO: core.NewValidationError (and remove wrapping calling code)
 	return fmt.Errorf("Invalid stage. Must be one of: %s", strings.Join(stageNames, ", "))
 }
 

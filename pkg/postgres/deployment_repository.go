@@ -50,8 +50,8 @@ func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName st
 		deployment.riser_revision,
 		deployment.doc
 	FROM deployment
-	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
-	WHERE deployment_reservation.name = $1 deployment_reservation.namespace=$2 AND deployment.stage_name = $2
+	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id=deployment_reservation.id
+	WHERE deployment_reservation.name=$1 AND deployment_reservation.namespace=$2 AND deployment.stage_name=$3
 	`, name.Name, name.Namespace, stageName).Scan(
 		&deployment.DeploymentReservation.Id,
 		&deployment.AppId,
@@ -70,6 +70,7 @@ func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName st
 // GetByReservation returns a deployment by its reservation ID whether or not it has been deleted.
 func (r *deploymentRepository) GetByReservation(reservationId uuid.UUID, stageName string) (*core.Deployment, error) {
 	deployment := &core.Deployment{}
+
 	err := r.db.QueryRow(`
 	SELECT
 		deployment_reservation.id,
@@ -149,12 +150,17 @@ func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, er
 
 // IncrementeRevision increments the revision of a deployment. If the deployment was previously soft deleted, it will mark
 // the deployment as no longer being deleted
-func (r *deploymentRepository) IncrementRevision(deploymentName, stageName string) (revision int64, err error) {
+func (r *deploymentRepository) IncrementRevision(name *core.NamespacedName, stageName string) (revision int64, err error) {
 	err = r.db.QueryRow(`
 	UPDATE deployment SET riser_revision = riser_revision + 1, deleted_at = NULL
-	WHERE name = $1 AND stage_name = $2
+	FROM deployment_reservation
+	WHERE
+	deployment.deployment_reservation_id = deployment_reservation.id
+	AND deployment_reservation.name = $1
+	AND deployment_reservation.namespace = $2
+	AND stage_name = $3
 	RETURNING riser_revision
-	`, deploymentName, stageName).Scan(&revision)
+	`, name.Name, name.Namespace, stageName).Scan(&revision)
 	if err != nil {
 		return 0, err
 	}
@@ -162,12 +168,18 @@ func (r *deploymentRepository) IncrementRevision(deploymentName, stageName strin
 	return revision, nil
 }
 
-func (r *deploymentRepository) RollbackRevision(deploymentName, stageName string, failedRevision int64) (revision int64, err error) {
+func (r *deploymentRepository) RollbackRevision(name *core.NamespacedName, stageName string, failedRevision int64) (revision int64, err error) {
 	err = r.db.QueryRow(`
 	UPDATE deployment SET riser_revision = riser_revision - 1
-	WHERE name = $1 AND stage_name = $2 AND riser_revision = $3
+	FROM deployment_reservation
+	WHERE
+	deployment.deployment_reservation_id = deployment_reservation.id
+	AND deployment_reservation.name = $1
+	AND deployment_reservation.namespace = $2
+	AND stage_name = $3
+	AND riser_revision = $4
 	RETURNING riser_revision
-	`, deploymentName, stageName, failedRevision).Scan(&revision)
+	`, name.Name, name.Namespace, stageName, failedRevision).Scan(&revision)
 	if err != nil {
 		return 0, err
 	}
@@ -207,12 +219,19 @@ func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, stageName
 	return nil
 }
 
-func (r *deploymentRepository) UpdateTraffic(deploymentName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+func (r *deploymentRepository) UpdateTraffic(name *core.NamespacedName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
 	result, err := r.db.Exec(`
-		UPDATE DEPLOYMENT
-		SET doc = jsonb_set(doc, '{traffic}', $4)
-		WHERE Name = $1 AND stage_name = $2 AND riser_revision = $3 AND deleted_at IS NULL
-	`, deploymentName, stageName, riserRevision, traffic)
+		UPDATE deployment
+		SET doc = jsonb_set(doc, '{traffic}', $5)
+		FROM deployment_reservation
+		WHERE
+		deployment.deployment_reservation_id = deployment_reservation.id
+		AND deployment_reservation.name = $1
+		AND deployment_reservation.namespace = $2
+		AND deployment.stage_name = $3
+		AND riser_revision = $4
+		AND deleted_at IS NULL
+	`, name.Name, name.Namespace, stageName, riserRevision, traffic)
 
 	if err != nil {
 		return err

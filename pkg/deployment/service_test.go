@@ -159,13 +159,15 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 					ReservationId: reservation.Id,
 					StageName:     "mystage"}}, nil
 		},
-		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
-			assert.Equal(t, "myapp-mydep", name)
+		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
+			assert.Equal(t, "myapp-mydep", name.Name)
+			assert.Equal(t, "myns", name.Namespace)
 			assert.Equal(t, "mystage", stageName)
 			return 3, nil
 		},
-		UpdateTrafficFn: func(name string, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
-			assert.Equal(t, "myapp-mydep", name)
+		UpdateTrafficFn: func(name *core.NamespacedName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+			assert.Equal(t, "myapp-mydep", name.Name)
+			assert.Equal(t, "myns", name.Namespace)
 			assert.Equal(t, "mystage", stageName)
 			assert.Len(t, traffic, 1)
 			assert.Equal(t, int64(3), traffic[0].RiserRevision)
@@ -190,8 +192,9 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 // the old deployment as they will not be valid. ManualRollout is effectively ignored in this case.
 func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:      "myapp-mydep",
+		Namespace: "myns",
+		Stage:     "mystage",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -238,13 +241,15 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 				},
 			}, nil
 		},
-		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
-			assert.Equal(t, "myapp-mydep", name)
+		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
+			assert.Equal(t, "myapp-mydep", name.Name)
+			assert.Equal(t, "myns", name.Namespace)
 			assert.Equal(t, "mystage", stageName)
 			return 3, nil
 		},
-		UpdateTrafficFn: func(name string, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
-			assert.Equal(t, "myapp-mydep", name)
+		UpdateTrafficFn: func(name *core.NamespacedName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+			assert.Equal(t, "myapp-mydep", name.Name)
+			assert.Equal(t, "myns", name.Namespace)
 			assert.Equal(t, "mystage", stageName)
 			// Even though a manual rollout is requested, a previously deleted deployment is treated as if there are no previous traffic rules
 			// Therefore we route all traffic to the new revision.
@@ -300,7 +305,7 @@ func Test_prepareForDeployment_whenIncrementRevisionFails(t *testing.T) {
 					ReservationId: reservation.Id,
 					StageName:     "mystage"}}, nil
 		},
-		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
 			return 0, errors.New("test")
 		},
 	}
@@ -397,10 +402,10 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 					ReservationId: reservation.Id,
 					StageName:     "mystage"}}, nil
 		},
-		IncrementRevisionFn: func(name string, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
 			return 1, nil
 		},
-		UpdateTrafficFn: func(name string, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+		UpdateTrafficFn: func(*core.NamespacedName, string, int64, core.TrafficConfig) error {
 			return errors.New("broke")
 		},
 	}

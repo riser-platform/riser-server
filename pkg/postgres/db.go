@@ -44,5 +44,5 @@ func noRowsErrorHandler(err error) error {
 		return core.ErrNotFound
 	}
 
-	return err
+	return errors.WithStack(err)
 }

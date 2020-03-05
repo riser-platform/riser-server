@@ -85,8 +85,9 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 	}
 	err = deploy(ctx, committer)
 	if err != nil {
-		// TODO: Log rollback error but don't return since we want the deployment error to flow to caller
-		_, _ = s.deployments.RollbackRevision(deploymentConfig.Name, deploymentConfig.Stage, riserRevision)
+		// TODO: Log rollback error but don't return since we want the original deployment error to flow to caller
+		_, _ = s.deployments.RollbackRevision(
+			core.NewNamespacedName(deploymentConfig.Name, deploymentConfig.Namespace), deploymentConfig.Stage, riserRevision)
 		return err
 	}
 
@@ -128,7 +129,8 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 		return 0, &core.ValidationError{Message: fmt.Sprintf("A deployment with the name %q is owned by app %q", deploymentConfig.Name, existingDeployment.AppId)}
 	} else {
 		if !dryRun {
-			riserRevision, err = s.deployments.IncrementRevision(deploymentConfig.Name, deploymentConfig.Stage)
+			riserRevision, err = s.deployments.IncrementRevision(
+				core.NewNamespacedName(deploymentConfig.Name, deploymentConfig.Namespace), deploymentConfig.Stage)
 			if err != nil {
 				return 0, errors.Wrap(err, "Error incrementing deployment revision")
 			}
@@ -142,7 +144,11 @@ func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, 
 		}
 
 		if !dryRun {
-			err = s.deployments.UpdateTraffic(deploymentConfig.Name, deploymentConfig.Stage, riserRevision, deploymentConfig.Traffic)
+			err = s.deployments.UpdateTraffic(
+				core.NewNamespacedName(deploymentConfig.Name, deploymentConfig.Namespace),
+				deploymentConfig.Stage,
+				riserRevision,
+				deploymentConfig.Traffic)
 			if err != nil {
 				return 0, errors.Wrap(err, "Error updating traffic")
 			}

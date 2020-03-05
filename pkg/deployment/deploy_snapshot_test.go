@@ -34,8 +34,9 @@ func Test_update_snapshot_simple(t *testing.T) {
 			Tag: "0.0.1",
 		},
 		App: &model.AppConfig{
-			Name: "myapp",
-			Id:   uuid.MustParse("2516D5E4-1EC3-46B8-B3CD-C3D72AE38DC0"),
+			Name:      "myapp",
+			Namespace: "apps",
+			Id:        uuid.MustParse("2516D5E4-1EC3-46B8-B3CD-C3D72AE38DC0"),
 			Autoscale: &model.AppConfigAutoscale{
 				Min: util.PtrInt(0),
 				Max: util.PtrInt(1),

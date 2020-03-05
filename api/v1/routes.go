@@ -84,7 +84,6 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return PutDeploymentStatus(c, deploymentRepository)
 	})
 
-	// TODO(sdk)
 	v1.PUT("/rollout/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
 		return PutRollout(c, rolloutService, stageService, repo)
 	})

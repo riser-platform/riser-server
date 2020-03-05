@@ -49,7 +49,11 @@ func (r *appRepository) Create(app *core.App) error {
 
 func (r *appRepository) ListApps() ([]core.App, error) {
 	apps := []core.App{}
-	rows, err := r.db.Query("SELECT id, name FROM app")
+	rows, err := r.db.Query(`
+	SELECT id, name, namespace
+	FROM app
+	ORDER BY namespace, name
+	`)
 
 	if err != nil {
 		return nil, err
@@ -58,7 +62,7 @@ func (r *appRepository) ListApps() ([]core.App, error) {
 	defer rows.Close()
 	for rows.Next() {
 		app := core.App{}
-		err := rows.Scan(&app.Id, &app.Name)
+		err := rows.Scan(&app.Id, &app.Name, &app.Namespace)
 		if err != nil {
 			return nil, err
 		}

@@ -3,8 +3,6 @@ package secret
 import (
 	"fmt"
 
-	"github.com/google/uuid"
-
 	"github.com/riser-platform/riser-server/pkg/state/resources"
 
 	"github.com/pkg/errors"
@@ -13,45 +11,28 @@ import (
 )
 
 type Service interface {
-	SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error
-	FindByStage(appId uuid.UUID, stageName string) ([]core.SecretMeta, error)
+	SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error
 }
 
 type service struct {
-	apps        core.AppRepository
 	secretMetas core.SecretMetaRepository
 	stages      core.StageRepository
 }
 
-func NewService(apps core.AppRepository, secretMetas core.SecretMetaRepository, stages core.StageRepository) Service {
-	return &service{apps, secretMetas, stages}
+func NewService(secretMetas core.SecretMetaRepository, stages core.StageRepository) Service {
+	return &service{secretMetas, stages}
 }
 
-func (s *service) FindByStage(appId uuid.UUID, stageName string) ([]core.SecretMeta, error) {
-	secretMetas, err := s.secretMetas.FindByStage(appId, stageName)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error retrieving secret metadata")
-	}
-
-	return secretMetas, nil
-}
-
-// TODO: Move namespace parameter into secretMeta (probably as part of namespace feature)
-func (s *service) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error {
+func (s *service) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error {
 	sealedSecretCert, err := s.getSealedSecretCert(plaintextSecret, secretMeta.StageName)
 	if err != nil {
 		return err
 	}
 
-	return s.sealAndSave(plaintextSecret, namespace, sealedSecretCert, secretMeta, committer)
+	return s.sealAndSave(plaintextSecret, sealedSecretCert, secretMeta, committer)
 }
 
-func (s *service) sealAndSave(plaintextSecret, namespace string, sealedSecretCert []byte, secretMeta *core.SecretMeta, committer state.Committer) error {
-	app, err := s.apps.Get(secretMeta.AppId)
-	if err != nil {
-		return errors.Wrap(err, "Error getting app")
-	}
-
+func (s *service) sealAndSave(plaintextSecret string, sealedSecretCert []byte, secretMeta *core.SecretMeta, committer state.Committer) error {
 	revision, err := s.secretMetas.Save(secretMeta)
 	if err != nil {
 		return errors.Wrap(err, "Error saving secret metadata")
@@ -59,12 +40,12 @@ func (s *service) sealAndSave(plaintextSecret, namespace string, sealedSecretCer
 
 	secretMeta.Revision = revision
 
-	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, app.Name, secretMeta, namespace, sealedSecretCert)
+	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, secretMeta, sealedSecretCert)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Error creating sealed secret %q in stage %q", secretMeta.Name, secretMeta.StageName))
 	}
 
-	resourceFiles, err := state.RenderSealedSecret(app.Name, secretMeta.StageName, sealedSecret)
+	resourceFiles, err := state.RenderSealedSecret(secretMeta.App.Name, secretMeta.StageName, sealedSecret)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Error rendering sealed secret resource %q in stage %q", secretMeta.Name, secretMeta.StageName))
 	}

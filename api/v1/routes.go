@@ -35,10 +35,10 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	appRepository := postgres.NewAppRepository(db)
 	appService := app.NewService(appRepository, namespaceService)
 	secretMetaRepository := postgres.NewSecretMetaRepository(db)
-	secretService := secret.NewService(appRepository, secretMetaRepository, stageRepository)
+	secretService := secret.NewService(secretMetaRepository, stageRepository)
 	deploymentReservationService := deploymentreservation.NewService(deploymentReservationRepository)
 	deploymentRepository := postgres.NewDeploymentRepository(db)
-	deploymentService := deployment.NewService(appRepository, namespaceService, secretService, stageRepository, deploymentRepository, deploymentReservationService)
+	deploymentService := deployment.NewService(appRepository, namespaceService, secretMetaRepository, stageRepository, deploymentRepository, deploymentReservationService)
 	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
 	rolloutService := rollout.NewService(appRepository, deploymentRepository)
 	userRepository := postgres.NewUserRepository(db)
@@ -92,9 +92,8 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return PutSecret(c, repo, secretService, stageService)
 	})
 
-	// TODO(sdk)
 	v1.GET("/secrets/:stageName/:namespace/:appName", func(c echo.Context) error {
-		return GetSecrets(c, secretService, stageService)
+		return GetSecrets(c, secretMetaRepository, stageService)
 	})
 
 	v1.GET("/namespaces", func(c echo.Context) error {

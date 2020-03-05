@@ -7,13 +7,13 @@ import (
 )
 
 type FakeService struct {
-	SealAndSaveFn        func(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error
+	SealAndSaveFn        func(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error
 	SealAndSaveCallCount int
 }
 
-func (f *FakeService) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error {
+func (f *FakeService) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error {
 	f.SealAndSaveCallCount++
-	return f.SealAndSaveFn(plaintextSecret, secretMeta, namespace, committer)
+	return f.SealAndSaveFn(plaintextSecret, secretMeta, committer)
 }
 
 func (f *FakeService) FindByStage(appId uuid.UUID, stageName string) ([]core.SecretMeta, error) {

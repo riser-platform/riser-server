@@ -1,16 +1,31 @@
 package model
 
-import "github.com/google/uuid"
+import validation "github.com/go-ozzo/ozzo-validation/v3"
 
 type UnsealedSecret struct {
 	SecretMeta `json:",inline"`
 	PlainText  string `json:"secretValue"`
 }
 
+func (v UnsealedSecret) Validate() error {
+	return validation.ValidateStruct(&v,
+		validation.Field(&v.SecretMeta),
+		validation.Field(&v.PlainText, validation.Required))
+}
+
 type SecretMeta struct {
-	AppId uuid.UUID `json:"appId"`
-	Stage string    `json:"stage"`
-	Name  string    `json:"secretName"`
+	AppName   AppName       `json:"app"`
+	Namespace NamespaceName `json:"namespace"`
+	Stage     string        `json:"stage"`
+	Name      string        `json:"secretName"`
+}
+
+func (v SecretMeta) Validate() error {
+	return validation.ValidateStruct(&v,
+		validation.Field(&v.AppName),
+		validation.Field(&v.Namespace),
+		validation.Field(&v.Name, validation.Required),
+		validation.Field(&v.Stage, validation.Required))
 }
 
 type SecretMetaStatus struct {

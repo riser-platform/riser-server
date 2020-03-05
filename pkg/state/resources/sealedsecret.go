@@ -28,19 +28,19 @@ type SealedSecretSpec struct {
 }
 
 // TODO: Consider using something like https://github.com/awnumar/memguard instead of passing the secret as a string
-func CreateSealedSecret(plaintextSecret string, appName string, secretMeta *core.SecretMeta, namespace string, certBytes []byte) (*SealedSecret, error) {
+func CreateSealedSecret(plaintextSecret string, secretMeta *core.SecretMeta, certBytes []byte) (*SealedSecret, error) {
 	publicKey, err := parsePublicKey(certBytes)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing public key")
 	}
 	objectMeta := metav1.ObjectMeta{
-		Name:      fmt.Sprintf("%s-%s-%d", appName, secretMeta.Name, secretMeta.Revision),
-		Namespace: namespace,
+		Name:      fmt.Sprintf("%s-%s-%d", secretMeta.App.Name, secretMeta.Name, secretMeta.Revision),
+		Namespace: secretMeta.App.Namespace,
 		Annotations: map[string]string{
 			riserLabel("revision"): fmt.Sprintf("%d", secretMeta.Revision),
 		},
 		Labels: map[string]string{
-			riserLabel("app"): appName,
+			riserLabel("app"): secretMeta.App.Name,
 		},
 	}
 	ciphertext, err := sealSecret(objectMeta, publicKey, []byte(plaintextSecret))

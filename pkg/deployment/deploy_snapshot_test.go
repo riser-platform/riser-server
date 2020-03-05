@@ -55,7 +55,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 		},
 	}
 
-	secrets := []core.SecretMeta{{AppId: newDeployment.App.Id, Name: "mysecret", Revision: 1}}
+	secrets := []core.SecretMeta{{Name: "mysecret", Revision: 1}}
 
 	dryRunCommitter := state.NewDryRunCommitter()
 	var committer state.Committer

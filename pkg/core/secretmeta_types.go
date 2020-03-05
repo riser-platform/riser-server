@@ -1,10 +1,8 @@
 package core
 
-import "github.com/google/uuid"
-
 type SecretMeta struct {
 	Name      string
-	AppId     uuid.UUID
+	App       *NamespacedName
 	StageName string
 	Revision  int64
 }

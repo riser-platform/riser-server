@@ -14,8 +14,6 @@ import (
 
 	"github.com/riser-platform/riser-server/pkg/state/resources"
 
-	"github.com/riser-platform/riser-server/pkg/secret"
-
 	"github.com/pkg/errors"
 
 	"github.com/riser-platform/riser-server/pkg/state"
@@ -28,7 +26,7 @@ type Service interface {
 
 type service struct {
 	namespaceService   namespace.Service
-	secrets            secret.Service
+	secrets            core.SecretMetaRepository
 	stages             core.StageRepository
 	deployments        core.DeploymentRepository
 	reservationService deploymentreservation.Service
@@ -37,7 +35,7 @@ type service struct {
 func NewService(
 	apps core.AppRepository,
 	namespaceService namespace.Service,
-	secrets secret.Service,
+	secrets core.SecretMetaRepository,
 	stages core.StageRepository,
 	deployments core.DeploymentRepository,
 	reservationService deploymentreservation.Service) Service {
@@ -45,7 +43,7 @@ func NewService(
 }
 
 func (s *service) Delete(name *core.NamespacedName, stageName string, committer state.Committer) error {
-	// This is safe to do before we perform the commit since it's idempotent
+	// Deleting the deployment is safe to do before we perform the commit since it's a soft delete and therefore idempotent
 	err := s.deployments.Delete(name, stageName)
 	if err != nil {
 		if err == core.ErrNotFound {
@@ -73,7 +71,7 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 		return err
 	}
 
-	secrets, err := s.secrets.FindByStage(deploymentConfig.App.Id, deploymentConfig.Stage)
+	secrets, err := s.secrets.ListByAppInStage(core.NewNamespacedName(deploymentConfig.Name, deploymentConfig.Namespace), deploymentConfig.Stage)
 	if err != nil {
 		return err
 	}

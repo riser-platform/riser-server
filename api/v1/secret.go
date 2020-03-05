@@ -3,7 +3,6 @@ package v1
 import (
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -31,8 +30,6 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 	err = secretService.SealAndSave(
 		unsealedSecret.PlainText,
 		mapSecretMetaFromModel(&unsealedSecret.SecretMeta),
-		// TODO(ns)
-		core.DefaultNamespace,
 		state.NewGitCommitter(stateRepo))
 	if err == core.ErrConflictNewerVersion {
 		return echo.NewHTTPError(http.StatusConflict, "A newer revision of the secret was saved while attempting to save this secret. This is usually caused by a race condition due to another user saving the secret at the same time.")
@@ -41,16 +38,17 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 	return err
 }
 
-func GetSecrets(c echo.Context, secretService secret.Service, stageService stage.Service) error {
+func GetSecrets(c echo.Context, secrets core.SecretMetaRepository, stageService stage.Service) error {
 	stageName := c.Param("stageName")
-	// TODO(ns) use app name nd namespace
-	appId := uuid.New()
+	namespace := c.Param("namespace")
+	appName := c.Param("appName")
+
 	err := stageService.ValidateDeployable(stageName)
 	if err != nil {
 		return err
 	}
 
-	secretMetas, err := secretService.FindByStage(appId, stageName)
+	secretMetas, err := secrets.ListByAppInStage(core.NewNamespacedName(appName, namespace), stageName)
 	if err != nil {
 		return err
 	}
@@ -61,9 +59,10 @@ func GetSecrets(c echo.Context, secretService secret.Service, stageService stage
 func mapSecretMetaStatusFromDomain(domain core.SecretMeta) model.SecretMetaStatus {
 	return model.SecretMetaStatus{
 		SecretMeta: model.SecretMeta{
-			AppId: domain.AppId,
-			Stage: domain.StageName,
-			Name:  domain.Name,
+			AppName:   model.AppName(domain.App.Name),
+			Namespace: model.NamespaceName(domain.App.Namespace),
+			Stage:     domain.StageName,
+			Name:      domain.Name,
 		},
 		Revision: domain.Revision,
 	}
@@ -80,7 +79,7 @@ func mapSecretMetaStatusArrayFromDomain(domainArray []core.SecretMeta) []model.S
 
 func mapSecretMetaFromModel(in *model.SecretMeta) *core.SecretMeta {
 	return &core.SecretMeta{
-		AppId:     in.AppId,
+		App:       core.NewNamespacedName(string(in.AppName), string(in.Namespace)),
 		Name:      in.Name,
 		StageName: in.Stage,
 	}

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -21,11 +20,8 @@ func PostApp(c echo.Context, appService app.Service) error {
 
 	createdApp, err := appService.CreateApp(core.NewNamespacedName(string(newAppRequest.Name), string(newAppRequest.Namespace)))
 	if err != nil {
-		if err == app.ErrAlreadyExists {
-			return echo.NewHTTPError(http.StatusConflict, fmt.Sprintf("The app \"%s\" already exists", newAppRequest.Name))
-		} else {
-			return err
-		}
+		return err
+
 	}
 	return c.JSON(http.StatusCreated, mapAppFromDomain(*createdApp))
 }

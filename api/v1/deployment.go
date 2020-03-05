@@ -40,10 +40,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		return err
 	}
 
-	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(deploymentRequest.Name, string(deploymentRequest.App.Namespace)))
-	if err == app.ErrInvalidAppName || err == app.ErrAppNotFound {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
+	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(string(deploymentRequest.App.Name), string(deploymentRequest.App.Namespace)))
 	if err != nil {
 		return err
 	}

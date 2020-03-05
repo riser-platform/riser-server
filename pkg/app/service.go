@@ -7,10 +7,13 @@ import (
 	"github.com/riser-platform/riser-server/pkg/namespace"
 )
 
-var ErrAlreadyExists = errors.New("an app already exists with the provided name")
-var ErrInvalidAppName = errors.New("the app name does not match the name associated with the provided app ID")
-var ErrInvalidAppNamespace = errors.New("the app namespace does not match the name associated with the provided app ID")
-var ErrAppNotFound = errors.New("app not found")
+var (
+	ErrAlreadyExists       = core.NewValidationErrorMessage("an app already exists with the provided name")
+	ErrInvalidAppName      = core.NewValidationErrorMessage("the app name does not match the app ID: you may not change the app's name after creation")
+	ErrInvalidAppNamespace = core.NewValidationErrorMessage("the app namespace does not match app ID: you may not change the app's namespace after creation")
+	// TODO: Consider removing and coming up with a better client error for non-fatal not founds (core.ErrorNotFound is considered fatal by default)
+	ErrAppNotFound = errors.New("app not found")
+)
 
 type Service interface {
 	CreateApp(name *core.NamespacedName) (*core.App, error)

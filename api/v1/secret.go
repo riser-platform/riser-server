@@ -25,7 +25,7 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 
 	err = stageService.ValidateDeployable(unsealedSecret.Stage)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	err = secretService.SealAndSave(
@@ -47,7 +47,7 @@ func GetSecrets(c echo.Context, secretService secret.Service, stageService stage
 	appId := uuid.New()
 	err := stageService.ValidateDeployable(stageName)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	secretMetas, err := secretService.FindByStage(appId, stageName)

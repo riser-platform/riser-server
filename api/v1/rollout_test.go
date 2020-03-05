@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/stage"
 
@@ -27,10 +26,7 @@ func Test_PutRollout_ValidatesStage(t *testing.T) {
 
 	err := PutRollout(ctx, nil, stageService, nil)
 
-	assert.IsType(t, &echo.HTTPError{}, err)
-	echoErr := err.(*echo.HTTPError)
-	assert.Equal(t, http.StatusBadRequest, echoErr.Code)
-	assert.Equal(t, "test", echoErr.Message)
+	assert.Equal(t, "test", err.Error())
 }
 
 func Test_PutRollout_ValidatesTraffic(t *testing.T) {

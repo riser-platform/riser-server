@@ -30,7 +30,7 @@ func PutRollout(c echo.Context, rolloutService rollout.Service, stageService sta
 
 	err = stageService.ValidateDeployable(stageName)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	err = validation.Validate(&rolloutRequest)

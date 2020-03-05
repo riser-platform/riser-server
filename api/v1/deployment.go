@@ -32,7 +32,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 
 	err = stageService.ValidateDeployable(deploymentRequest.Stage)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	newDeployment, err := mapDeploymentRequestToDomain(deploymentRequest)

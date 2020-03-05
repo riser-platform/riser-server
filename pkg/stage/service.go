@@ -90,8 +90,7 @@ func (s *service) ValidateDeployable(stageName string) error {
 		stageNames = append(stageNames, stage.Name)
 	}
 
-	// TODO: core.NewValidationError (and remove wrapping calling code)
-	return fmt.Errorf("Invalid stage. Must be one of: %s", strings.Join(stageNames, ", "))
+	return core.NewValidationErrorMessage(fmt.Sprintf("Invalid stage. Must be one of: %s", strings.Join(stageNames, ", ")))
 }
 
 func (s *service) Ping(stageName string) error {

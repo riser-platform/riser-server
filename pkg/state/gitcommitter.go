@@ -1,8 +1,6 @@
 package state
 
 import (
-	"sync"
-
 	"github.com/riser-platform/riser-server/pkg/core"
 
 	"github.com/riser-platform/riser-server/pkg/git"
@@ -18,7 +16,6 @@ type Committer interface {
 
 type GitCommitter struct {
 	git git.Repo
-	sync.Mutex
 }
 
 type KubeResource interface {
@@ -28,7 +25,7 @@ type KubeResource interface {
 }
 
 func NewGitCommitter(gitRepo git.Repo) *GitCommitter {
-	return &GitCommitter{gitRepo, sync.Mutex{}}
+	return &GitCommitter{gitRepo}
 }
 
 // Commit commits state changes to the state repo. Commits are authoritative i.e. they represent the absolute desired state.
@@ -40,8 +37,8 @@ func (committer *GitCommitter) Commit(message string, files []core.ResourceFile)
 		TODO: Timeout this lock and return an error after say 10 seconds.
 		The main scenario is that the repo is slow/unresponsive and we don't want a bunch of goroutines hanging here.
 	*/
-	committer.Lock()
-	defer committer.Unlock()
+	committer.git.Lock()
+	defer committer.git.Unlock()
 
 	// Always reset before committing as commits are authoritative
 	err := committer.git.ResetHardRemote()

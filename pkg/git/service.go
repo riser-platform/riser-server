@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -41,10 +42,15 @@ type Repo interface {
 	Commit(message string, files []core.ResourceFile) error
 	Push() error
 	ResetHardRemote() error
+	// Lock locks the repo. Be sure to call Unlock when your work is completed.
+	Lock()
+	// Unlock unlocks the repo.
+	Unlock()
 }
 
 type repo struct {
 	settings *RepoSettings
+	sync.Mutex
 }
 
 // NewRepo creates a new reference to a repo. There should only be one instance running per git folder.
@@ -52,6 +58,7 @@ type repo struct {
 func NewRepo(repoSettings RepoSettings) (Repo, error) {
 	repo := &repo{
 		settings: &repoSettings,
+		Mutex:    sync.Mutex{},
 	}
 
 	urlWithAuth, err := formatUrlWithAuth(repoSettings)

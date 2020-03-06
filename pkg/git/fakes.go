@@ -1,6 +1,8 @@
 package git
 
 import (
+	"sync"
+
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
@@ -11,6 +13,7 @@ type FakeRepo struct {
 	PushCallCount            int
 	ResetHardRemoteFn        func() error
 	ResetHardRemoteCallCount int
+	sync.Mutex
 }
 
 func (fake *FakeRepo) Commit(message string, files []core.ResourceFile) error {

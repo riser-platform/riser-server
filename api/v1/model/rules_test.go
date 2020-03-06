@@ -14,8 +14,8 @@ func Test_RulesAppName(t *testing.T) {
 		expected string
 	}{
 		{"good-app", ""},
-		{"a", "the length must be between 3 and 50"},
-		{"123456789012345678901234567890123456789012345678901", "the length must be between 3 and 50"},
+		{"a", "the length must be between 3 and 47"},
+		{"123456789012345678901234567890123456789012345678901", "the length must be between 3 and 47"},
 		{"1abc", "must be lowercase, alphanumeric, and start with a letter"},
 		{"ABCD", "must be lowercase, alphanumeric, and start with a letter"},
 		{"bad!", "must be lowercase, alphanumeric, and start with a letter"},

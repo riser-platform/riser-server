@@ -46,7 +46,8 @@ type DeploymentMeta struct {
 
 func (d DeploymentMeta) Validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.Name, append(RulesNamingIdentifier(), validation.Required)...),
+		// There's a separate RuneLength rule here to reserve 8 characters for the deployment prefix (e.g. for myapp: rev-100-myapp)
+		validation.Field(&d.Name, append(RulesNamingIdentifier(), validation.RuneLength(3, 55), validation.Required)...),
 		validation.Field(&d.Stage, validation.Required))
 }
 

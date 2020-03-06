@@ -12,8 +12,8 @@ import (
 func RulesAppName() []validation.Rule {
 	rules := []validation.Rule{
 		validation.Required,
-		// Max length takes into account possible deployment name prefixes and suffixes
-		validation.RuneLength(3, 50),
+		// Max length takes into account the RFC 1035 subdomain plus 8 characters reserved for prefix and suffix each.
+		validation.RuneLength(3, 47),
 	}
 	return append(rules, RulesNamingIdentifier()...)
 }
@@ -22,9 +22,9 @@ func RulesAppName() []validation.Rule {
 func RulesNamingIdentifier() []validation.Rule {
 	return []validation.Rule{
 		validation.RuneLength(1, 63),
-		// Change with care as we use naming identifiers for DNS names and this conforms to RFC 1035
+		// Change with care as we use naming identifiers for DNS names that must conform to RFC 1035
 		// Note that depending on the TLD the spec allows for more characters than allowed below. This restriction is
-		// designed for maximum portability and simplicity.
+		// designed for maximum portability.
 		validation.Match(regexp.MustCompile("^[a-z][a-z0-9-]+$")).Error("must be lowercase, alphanumeric, and start with a letter"),
 	}
 }

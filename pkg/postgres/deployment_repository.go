@@ -27,8 +27,12 @@ func (r *deploymentRepository) Create(deployment *core.DeploymentRecord) error {
 func (r *deploymentRepository) Delete(name *core.NamespacedName, stageName string) error {
 	_, err := r.db.Exec(`
 	UPDATE deployment SET deleted_at=now()
-	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
-	WHERE deployment_reservation.name = $1 deployment_reservation.namespace = $2 AND deployment.stage_name = $2
+	FROM deployment_reservation
+	WHERE
+	 deployment.deployment_reservation_id = deployment_reservation.id
+	 AND deployment_reservation.name = $1
+	 AND deployment_reservation.namespace = $2
+	 AND deployment.stage_name = $3
 	`, name.Name, name.Namespace, stageName)
 
 	return noRowsErrorHandler(err)

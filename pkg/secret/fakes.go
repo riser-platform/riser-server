@@ -1,24 +1,21 @@
 package secret
 
 import (
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/riser-platform/riser-server/pkg/state"
 )
 
 type FakeService struct {
-	SealAndSaveFn        func(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error
+	SealAndSaveFn        func(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error
 	SealAndSaveCallCount int
 }
 
-func (f *FakeService) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, namespace string, committer state.Committer) error {
+func (f *FakeService) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error {
 	f.SealAndSaveCallCount++
-	return f.SealAndSaveFn(plaintextSecret, secretMeta, namespace, committer)
+	return f.SealAndSaveFn(plaintextSecret, secretMeta, committer)
 }
 
-func (f *FakeService) FindByStage(appName, stageName string) ([]core.SecretMeta, error) {
-	panic("NI")
-}
-
-func (f *FakeService) FindNamesByStage(appName, stageName string) ([]string, error) {
+func (f *FakeService) FindByStage(appId uuid.UUID, stageName string) ([]core.SecretMeta, error) {
 	panic("NI")
 }

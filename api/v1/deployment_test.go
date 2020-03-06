@@ -19,12 +19,12 @@ import (
 )
 
 func Test_DeleteDeployment(t *testing.T) {
-	req := httptest.NewRequest(http.MethodDelete, "/deployments/mydep/dev", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/deployments/dev/myns/mydep", nil)
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, rec := newContextWithRecorder(req)
 
 	deploymentService := &deployment.FakeService{
-		DeleteFn: func(deploymentName, namespace, stageName string, committer state.Committer) error {
+		DeleteFn: func(name *core.NamespacedName, stageName string, committer state.Committer) error {
 			return nil
 		},
 	}
@@ -40,12 +40,12 @@ func Test_DeleteDeployment(t *testing.T) {
 }
 
 func Test_DeleteDeployment_NothingToDelete(t *testing.T) {
-	req := httptest.NewRequest(http.MethodDelete, "/deployments/mydep/dev", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/deployments/dev/myns/mydep", nil)
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, rec := newContextWithRecorder(req)
 
 	deploymentService := &deployment.FakeService{
-		DeleteFn: func(deploymentName, namespace, stageName string, committer state.Committer) error {
+		DeleteFn: func(name *core.NamespacedName, stageName string, committer state.Committer) error {
 			return git.ErrNoChanges
 		},
 	}
@@ -104,7 +104,8 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 		},
 		App: &model.AppConfigWithOverrides{
 			AppConfig: model.AppConfig{
-				Name: "myapp",
+				Name:      "myapp",
+				Namespace: "myns",
 			},
 		},
 	}
@@ -113,7 +114,7 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "mydeployment", result.Name)
-	assert.Equal(t, DefaultNamespace, result.Namespace)
+	assert.Equal(t, "myns", result.Namespace)
 	assert.Equal(t, "mystage", result.Stage)
 	assert.Equal(t, "mytag", result.Docker.Tag)
 	assert.Equal(t, request.App.AppConfig, *result.App)

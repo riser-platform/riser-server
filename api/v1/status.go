@@ -13,10 +13,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func GetStatus(c echo.Context, statusService deploymentstatus.Service) error {
-	appName := c.Param("appName")
+func GetAppStatus(c echo.Context, apps core.AppRepository, statusService deploymentstatus.Service) error {
+	domainApp, err := apps.GetByName(core.NewNamespacedName(c.Param("appName"), c.Param("namespace")))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
-	appStatus, err := statusService.GetByApp(appName)
+	appStatus, err := statusService.GetByApp(domainApp.Id)
 	if err != nil {
 		return err
 	}
@@ -44,7 +47,9 @@ func GetStatus(c echo.Context, statusService deploymentstatus.Service) error {
 
 func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus {
 	status := &model.DeploymentStatus{
+		AppId:          domain.AppId,
 		DeploymentName: domain.Name,
+		Namespace:      domain.Namespace,
 		StageName:      domain.StageName,
 		RiserRevision:  domain.RiserRevision,
 	}

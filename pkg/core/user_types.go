@@ -4,10 +4,12 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type User struct {
-	Id       int
+	Id       uuid.UUID
 	Username string
 	Doc      UserDoc
 }
@@ -17,6 +19,7 @@ type UserDoc struct {
 }
 
 type NewUser struct {
+	Id       uuid.UUID
 	Username string
 }
 

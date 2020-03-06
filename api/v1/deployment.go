@@ -4,10 +4,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/riser-platform/riser-server/pkg/deploymentstatus"
 	"github.com/riser-platform/riser-server/pkg/stage"
-
-	"github.com/riser-platform/riser-server/pkg/namespace"
 
 	"github.com/riser-platform/riser-server/pkg/deployment"
 
@@ -22,8 +19,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const DefaultNamespace = "apps"
-
 // TODO: Refactor and add unit test coverage
 func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
 	deploymentRequest := &model.DeploymentRequest{}
@@ -36,7 +31,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 
 	err = stageService.ValidateDeployable(deploymentRequest.Stage)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	newDeployment, err := mapDeploymentRequestToDomain(deploymentRequest)
@@ -44,19 +39,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		return err
 	}
 
-	err = newDeployment.App.Validate()
-	if err != nil {
-		return core.NewValidationError("Invalid app config", err)
-	}
-
-	appId, err := core.DecodeAppId(deploymentRequest.App.AppConfig.Id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "App Id must be a hex string")
-	}
-	err = appService.CheckAppId(deploymentRequest.App.Name, appId)
-	if err == app.ErrInvalidAppId || err == app.ErrAppNotFound {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
+	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(string(deploymentRequest.App.Name), string(deploymentRequest.App.Namespace)))
 	if err != nil {
 		return err
 	}
@@ -67,14 +50,6 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		committer = state.NewDryRunCommitter()
 	} else {
 		committer = state.NewGitCommitter(stateRepo)
-	}
-
-	// TODO: This is a hack that exists for ease of use since we only support the "apps" namespace.
-	// Once we support multiple namespace this should be in its own route
-	namespaceService := namespace.NewService()
-	err = namespaceService.Save(&core.Namespace{Name: DefaultNamespace, Stage: deploymentRequest.Stage}, committer)
-	if err != nil && err != git.ErrNoChanges {
-		return err
 	}
 
 	err = deploymentService.Update(newDeployment, committer, isDryRun)
@@ -98,7 +73,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 }
 
 func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService deployment.Service) error {
-	err := deploymentService.Delete(c.Param("deploymentName"), DefaultNamespace, c.Param("stageName"), state.NewGitCommitter(stateRepo))
+	err := deploymentService.Delete(core.NewNamespacedName(c.Param("deploymentName"), c.Param("namespace")), c.Param("stageName"), state.NewGitCommitter(stateRepo))
 	if err != nil {
 		if err == git.ErrNoChanges {
 			return c.JSON(http.StatusNotFound, model.APIResponse{Message: "Deployment not found"})
@@ -109,7 +84,7 @@ func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService depl
 	return c.JSON(http.StatusAccepted, model.APIResponse{Message: "Deployment deletion requested"})
 }
 
-func PutDeploymentStatus(c echo.Context, deploymentStatusService deploymentstatus.Service) error {
+func PutDeploymentStatus(c echo.Context, deployments core.DeploymentRepository) error {
 	deploymentStatus := &model.DeploymentStatusMutable{}
 	err := c.Bind(deploymentStatus)
 	if err != nil {
@@ -117,9 +92,10 @@ func PutDeploymentStatus(c echo.Context, deploymentStatusService deploymentstatu
 	}
 
 	deploymentName := c.Param("deploymentName")
+	namespace := c.Param("namespace")
 	stageName := c.Param("stageName")
 
-	return deploymentStatusService.UpdateStatus(deploymentName, stageName, mapDeploymentStatusFromModel(deploymentStatus))
+	return deployments.UpdateStatus(core.NewNamespacedName(deploymentName, namespace), stageName, mapDeploymentStatusFromModel(deploymentStatus))
 }
 
 func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunCommit {
@@ -144,7 +120,7 @@ func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*
 	}
 	return &core.DeploymentConfig{
 		Name:      deploymentRequest.Name,
-		Namespace: DefaultNamespace,
+		Namespace: string(app.Namespace),
 		Stage:     deploymentRequest.Stage,
 		Docker: core.DeploymentDocker{
 			Tag: deploymentRequest.Docker.Tag,

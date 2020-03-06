@@ -3,6 +3,8 @@ package deploymentstatus
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/riser-platform/riser-server/pkg/stage"
@@ -10,8 +12,7 @@ import (
 
 // TODO: Consider better homes for these
 type Service interface {
-	UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error
-	GetByApp(appName string) (*core.AppStatus, error)
+	GetByApp(appId uuid.UUID) (*core.AppStatus, error)
 }
 
 type service struct {
@@ -23,8 +24,8 @@ func NewService(deployments core.DeploymentRepository, stageService stage.Servic
 	return &service{deployments, stageService}
 }
 
-func (s *service) GetByApp(appName string) (*core.AppStatus, error) {
-	deployments, err := s.deployments.FindByApp(appName)
+func (s *service) GetByApp(appId uuid.UUID) (*core.AppStatus, error) {
+	deployments, err := s.deployments.FindByApp(appId)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error retrieving deployment status")
 	}
@@ -48,10 +49,4 @@ func (s *service) GetByApp(appName string) (*core.AppStatus, error) {
 	}
 
 	return appStatus, nil
-}
-
-// TODO: Move to deployment service
-func (s *service) UpdateStatus(deploymentName, stageName string, status *core.DeploymentStatus) error {
-	err := s.deployments.UpdateStatus(deploymentName, stageName, status)
-	return errors.Wrap(err, fmt.Sprintf("Error saving status for deployment %q in stage %q", deploymentName, stageName))
 }

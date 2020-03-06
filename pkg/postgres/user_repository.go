@@ -47,10 +47,10 @@ func (r *userRepository) GetByUsername(username string) (*core.User, error) {
 	return user, nil
 }
 
-func (r *userRepository) Create(newUser *core.NewUser) (id int, err error) {
+func (r *userRepository) Create(newUser *core.NewUser) error {
 	doc := &core.UserDoc{Created: time.Now().UTC()}
-	err = r.db.QueryRow("INSERT INTO riser_user (username, doc) VALUES ($1, $2) RETURNING id", newUser.Username, doc).Scan(&id)
-	return id, err
+	_, err := r.db.Exec("INSERT INTO riser_user (id, username, doc) VALUES ($1, $2, $3) RETURNING id", newUser.Id, newUser.Username, doc)
+	return err
 }
 
 func (r *userRepository) GetActiveCount() (activeUserCount int, err error) {

@@ -3,9 +3,19 @@ package model
 import (
 	"github.com/docker/distribution/reference"
 	validation "github.com/go-ozzo/ozzo-validation/v3"
+	"github.com/google/uuid"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
+)
+
+var (
+	DefaultAppConfig = &AppConfig{
+		Namespace: "apps",
+		Expose: &AppConfigExpose{
+			Protocol: "http",
+		},
+	}
 )
 
 // TODO: Move outside the API and into a separate module. The AppConfig should version independently of the API via a Version field on the root AppConfig object
@@ -35,15 +45,15 @@ func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig,
 
 // AppConfig is the root of the application config object graph without stage overrides
 type AppConfig struct {
-	Name        string                        `json:"name"`
+	Id          uuid.UUID                     `json:"id"`
+	Name        AppName                       `json:"name"`
+	Namespace   NamespaceName                 `json:"namespace"`
 	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
 	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
 	Expose      *AppConfigExpose              `json:"expose,omitempty"`
 	HealthCheck *AppConfigHealthCheck         `json:"healthcheck,omitempty"`
-	// Id is a random id used to prevent collisions (two apps with the same name and namespace)
-	Id        string              `json:"id"`
-	Image     string              `json:"image"`
-	Resources *AppConfigResources `json:"resources,omitempty"`
+	Image       string                        `json:"image"`
+	Resources   *AppConfigResources           `json:"resources,omitempty"`
 }
 
 type AppConfigAutoscale struct {
@@ -66,10 +76,16 @@ type AppConfigResources struct {
 	MemoryMB *int32   `json:"memoryMB,omitempty"`
 }
 
-func (appConfig *AppConfig) Validate() error {
-	err := validation.ValidateStruct(appConfig,
-		validation.Field(&appConfig.Name, RulesAppName()...),
-		validation.Field(&appConfig.Id, validation.Required),
+// ApplyDefaults sets any unset values with their defaults
+func (appConfig *AppConfig) ApplyDefaults() error {
+	return mergo.Merge(appConfig, DefaultAppConfig)
+}
+
+func (appConfig AppConfig) Validate() error {
+	err := validation.ValidateStruct(&appConfig,
+		validation.Field(&appConfig.Name),
+		validation.Field(&appConfig.Namespace),
+		validation.Field(&appConfig.Id, validation.By(validId)),
 		validation.Field(&appConfig.Image, validation.Required, validation.By(validDockerImageWithoutTagOrDigest)),
 		validation.Field(&appConfig.Expose, validation.Required),
 	)
@@ -113,5 +129,14 @@ func validDockerImageWithoutTagOrDigest(value interface{}) error {
 		return errors.New("must not contain a tag or digest")
 	}
 
+	return nil
+}
+
+func validId(v interface{}) error {
+	id, _ := v.(uuid.UUID)
+	if id == uuid.Nil {
+
+		return errors.New("cannot be blank")
+	}
 	return nil
 }

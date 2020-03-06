@@ -19,17 +19,19 @@ import (
 func PutRollout(c echo.Context, rolloutService rollout.Service, stageService stage.Service, stateRepo git.Repo) error {
 	rolloutRequest := &model.RolloutRequest{}
 
-	err := c.Bind(rolloutRequest)
+	deploymentName := c.Param("deploymentName")
+	namespace := c.Param("namespace")
+	stageName := c.Param("stageName")
+
+	// Validate stage before binding otherwise the client gets a confusing error about route rules when they pass in an invalid stage
+	err := stageService.ValidateDeployable(stageName)
 	if err != nil {
 		return err
 	}
 
-	deploymentName := c.Param("deploymentName")
-	stageName := c.Param("stageName")
-
-	err = stageService.ValidateDeployable(stageName)
+	err = c.Bind(rolloutRequest)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	err = validation.Validate(&rolloutRequest)
@@ -37,7 +39,7 @@ func PutRollout(c echo.Context, rolloutService rollout.Service, stageService sta
 		return core.NewValidationError("Invalid rollout request", err)
 	}
 
-	err = rolloutService.UpdateTraffic(deploymentName, stageName,
+	err = rolloutService.UpdateTraffic(core.NewNamespacedName(deploymentName, namespace), stageName,
 		mapTrafficRulesToDomain(deploymentName, rolloutRequest.Traffic),
 		state.NewGitCommitter(stateRepo))
 	if err != nil {

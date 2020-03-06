@@ -12,7 +12,7 @@ func deploymentLabels(ctx *core.DeploymentContext) map[string]string {
 	return map[string]string{
 		riserLabel("deployment"): ctx.Deployment.Name,
 		riserLabel("stage"):      ctx.Deployment.Stage,
-		riserLabel("app"):        ctx.Deployment.App.Name,
+		riserLabel("app"):        string(ctx.Deployment.App.Name),
 	}
 }
 

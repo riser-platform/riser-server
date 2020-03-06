@@ -1,14 +1,31 @@
 package model
 
+import validation "github.com/go-ozzo/ozzo-validation/v3"
+
 type UnsealedSecret struct {
 	SecretMeta `json:",inline"`
-	PlainText  string `json:"secretValue"`
+	PlainText  string `json:"plainTextValue"`
+}
+
+func (v UnsealedSecret) Validate() error {
+	return validation.ValidateStruct(&v,
+		validation.Field(&v.SecretMeta),
+		validation.Field(&v.PlainText, validation.Required))
 }
 
 type SecretMeta struct {
-	App   string `json:"app"`
-	Stage string `json:"stage"`
-	Name  string `json:"secretName"`
+	Name      string        `json:"name"`
+	AppName   AppName       `json:"app"`
+	Namespace NamespaceName `json:"namespace"`
+	Stage     string        `json:"stage"`
+}
+
+func (v SecretMeta) Validate() error {
+	return validation.ValidateStruct(&v,
+		validation.Field(&v.AppName),
+		validation.Field(&v.Namespace),
+		validation.Field(&v.Name, validation.Required),
+		validation.Field(&v.Stage, validation.Required))
 }
 
 type SecretMetaStatus struct {

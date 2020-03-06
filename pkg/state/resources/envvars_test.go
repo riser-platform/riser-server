@@ -11,11 +11,12 @@ import (
 
 func Test_k8sEnvVars(t *testing.T) {
 	secrets := []core.SecretMeta{
-		{AppName: "myapp", Name: "secret1", Revision: 5},
-		{AppName: "myapp", Name: "secret2", Revision: 1},
+		{Name: "secret1", Revision: 5},
+		{Name: "secret2", Revision: 1},
 	}
 	deployment := &core.DeploymentConfig{
 		App: &model.AppConfig{
+			Name: "myapp",
 			Environment: map[string]intstr.IntOrString{
 				"env1": intstr.Parse("env1Val"),
 				"env2": intstr.Parse("env2Val"),

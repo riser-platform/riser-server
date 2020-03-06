@@ -7,15 +7,15 @@ type SecretMetaRepository interface {
 	// Save saves the secret meta and returns a new revision. It is up to the caller to modify the secretMeta with the new revision.
 	// Important: You must call r.Commit to validate that the object has been committed. Uncommitted secrets are not applied to deployments
 	Save(secretMeta *SecretMeta) (revision int64, err error)
-	FindByStage(appName string, stageName string) ([]SecretMeta, error)
+	ListByAppInStage(appName *NamespacedName, stageName string) ([]SecretMeta, error)
 }
 
 type FakeSecretMetaRepository struct {
-	CommitFn        func(*SecretMeta) error
-	CommitCallCount int
-	SaveFn          func(*SecretMeta) (int64, error)
-	SaveCallCount   int
-	FindByStageFn   func(string, string) ([]SecretMeta, error)
+	CommitFn           func(*SecretMeta) error
+	CommitCallCount    int
+	SaveFn             func(*SecretMeta) (int64, error)
+	SaveCallCount      int
+	ListByAppInStageFn func(*NamespacedName, string) ([]SecretMeta, error)
 }
 
 func (fake *FakeSecretMetaRepository) Save(secretMeta *SecretMeta) (int64, error) {
@@ -23,8 +23,8 @@ func (fake *FakeSecretMetaRepository) Save(secretMeta *SecretMeta) (int64, error
 	return fake.SaveFn(secretMeta)
 }
 
-func (fake *FakeSecretMetaRepository) FindByStage(appName string, stageName string) ([]SecretMeta, error) {
-	return fake.FindByStageFn(appName, stageName)
+func (fake *FakeSecretMetaRepository) ListByAppInStage(appName *NamespacedName, stageName string) ([]SecretMeta, error) {
+	return fake.ListByAppInStageFn(appName, stageName)
 }
 
 func (fake *FakeSecretMetaRepository) Commit(secretMeta *SecretMeta) error {

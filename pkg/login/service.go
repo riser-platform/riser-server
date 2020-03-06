@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/pkg/errors"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -72,7 +74,7 @@ func (s *service) BootstrapRootUser(apiKeyPlainText string) error {
 	}
 
 	rootUser, err := s.users.GetByUsername(RootUsername)
-	var rootUserId int
+	var rootUserId uuid.UUID
 	if err == nil {
 		rootUserId = rootUser.Id
 		// In the event that that the root user exists without an apikey
@@ -88,13 +90,14 @@ func (s *service) BootstrapRootUser(apiKeyPlainText string) error {
 		if err != core.ErrNotFound {
 			return errors.Wrap(err, "Unable to retrieve root user")
 		}
-		rootUserId, err = s.users.Create(&core.NewUser{Username: RootUsername})
+		rootUserId = uuid.New()
+		err = s.users.Create(&core.NewUser{Id: rootUserId, Username: RootUsername})
 		if err != nil {
 			return errors.Wrap(err, "Unable to create root user")
 		}
 	}
 
-	_, err = s.apikeys.Create(rootUserId, hashApiKey([]byte(apiKeyPlainText)))
+	err = s.apikeys.Create(rootUserId, hashApiKey([]byte(apiKeyPlainText)))
 	if err != nil {
 		return errors.Wrap(err, "Error creating root API key")
 	}

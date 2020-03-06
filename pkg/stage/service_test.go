@@ -236,6 +236,7 @@ func Test_ValidateDeployable_WhenStageDoesNotExist(t *testing.T) {
 
 	err := service.ValidateDeployable("stage3")
 
+	assert.IsType(t, &core.ValidationError{}, err)
 	assert.Equal(t, "Invalid stage. Must be one of: stage1, stage2", err.Error())
 }
 

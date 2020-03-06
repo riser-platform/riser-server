@@ -1,8 +1,23 @@
 package model
 
+import validation "github.com/go-ozzo/ozzo-validation/v3"
+
 type DeploymentRequest struct {
 	DeploymentMeta `json:",inline"`
 	App            *AppConfigWithOverrides `json:"app"`
+}
+
+func (d *DeploymentRequest) ApplyDefaults() error {
+	if d.App == nil {
+		d.App = &AppConfigWithOverrides{}
+	}
+	return d.App.ApplyDefaults()
+}
+
+func (d DeploymentRequest) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.DeploymentMeta),
+		validation.Field(&d.App, validation.Required))
 }
 
 type DeploymentResponse struct {
@@ -21,10 +36,18 @@ type DryRunFile struct {
 }
 
 type DeploymentMeta struct {
-	Name          string           `json:"name"`
+	Name string `json:"name"`
+	// Namespace is an intentional omission. We always use the app's namespace as we do not allow an app to deploy to multiple namespaces at
+	// this time.
 	Stage         string           `json:"stage"`
 	Docker        DeploymentDocker `json:"docker"`
 	ManualRollout bool             `json:"manualRollout"`
+}
+
+func (d DeploymentMeta) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.Name, append(RulesNamingIdentifier(), validation.Required)...),
+		validation.Field(&d.Stage, validation.Required))
 }
 
 type DeploymentDocker struct {

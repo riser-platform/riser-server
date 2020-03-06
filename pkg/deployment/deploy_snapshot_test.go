@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -33,14 +34,16 @@ func Test_update_snapshot_simple(t *testing.T) {
 			Tag: "0.0.1",
 		},
 		App: &model.AppConfig{
-			Name: "myapp",
-			Id:   "myid",
+			Name:      "myapp",
+			Namespace: "apps",
+			Id:        uuid.MustParse("2516D5E4-1EC3-46B8-B3CD-C3D72AE38DC0"),
 			Autoscale: &model.AppConfigAutoscale{
 				Min: util.PtrInt(0),
 				Max: util.PtrInt(1),
 			},
 			Expose: &model.AppConfigExpose{
 				ContainerPort: 8080,
+				Protocol:      "http",
 			},
 		},
 		Traffic: core.TrafficConfig{
@@ -52,7 +55,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 		},
 	}
 
-	secrets := []core.SecretMeta{{AppName: "myapp", Name: "mysecret", Revision: 1}}
+	secrets := []core.SecretMeta{{Name: "mysecret", Revision: 1}}
 
 	dryRunCommitter := state.NewDryRunCommitter()
 	var committer state.Committer
@@ -73,8 +76,6 @@ func Test_update_snapshot_simple(t *testing.T) {
 		RiserRevision: 3,
 		Secrets:       secrets,
 	}
-	// TODO: Refactor prepareDeployment and call first
-	applyDefaults(newDeployment)
 	err = deploy(ctx, committer)
 
 	assert.NoError(t, err)

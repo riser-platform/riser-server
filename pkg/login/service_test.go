@@ -3,6 +3,7 @@ package login
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -79,21 +80,24 @@ func Test_LoginWithApiKey_Error_ReturnsError(t *testing.T) {
 }
 
 func Test_BootstrapRootUser(t *testing.T) {
+	var rootUserId uuid.UUID
 	userRepository := &core.FakeUserRepository{
 		GetByUsernameFn: func(username string) (*core.User, error) {
 			assert.Equal(t, RootUsername, username)
 			return nil, core.ErrNotFound
 		},
-		CreateFn: func(newUser *core.NewUser) (int, error) {
+		CreateFn: func(newUser *core.NewUser) error {
+			assert.NotEqual(t, uuid.Nil, newUser.Id)
 			assert.Equal(t, RootUsername, newUser.Username)
-			return 1, nil
+			rootUserId = newUser.Id
+			return nil
 		},
 	}
 	apikeyRepository := &core.FakeApiKeyRepository{
-		CreateFn: func(userId int, keyHash []byte) (int, error) {
-			assert.Equal(t, 1, userId)
+		CreateFn: func(userId uuid.UUID, keyHash []byte) error {
+			assert.Equal(t, rootUserId, userId)
 			assert.Equal(t, hashApiKey([]byte(testValidKey)), keyHash)
-			return 1, nil
+			return nil
 		},
 	}
 
@@ -111,13 +115,13 @@ func Test_BootstrapRootUser_UnableToCreateApiKey_ReturnsError(t *testing.T) {
 		GetByUsernameFn: func(username string) (*core.User, error) {
 			return nil, core.ErrNotFound
 		},
-		CreateFn: func(newUser *core.NewUser) (int, error) {
-			return 1, nil
+		CreateFn: func(newUser *core.NewUser) error {
+			return nil
 		},
 	}
 	apikeyRepository := &core.FakeApiKeyRepository{
-		CreateFn: func(userId int, keyHash []byte) (int, error) {
-			return 0, errors.New("test")
+		CreateFn: func(uuid.UUID, []byte) error {
+			return errors.New("test")
 		},
 	}
 
@@ -131,11 +135,11 @@ func Test_BootstrapRootUser_UnableToCreateApiKey_ReturnsError(t *testing.T) {
 func Test_BootstrapRootUser_UserWithKeyExists_ReturnsError(t *testing.T) {
 	userRepository := &core.FakeUserRepository{
 		GetByUsernameFn: func(string) (*core.User, error) {
-			return &core.User{Id: 1}, nil
+			return &core.User{Id: uuid.New()}, nil
 		},
 	}
 	apikeyRepository := &core.FakeApiKeyRepository{
-		GetByUserIdFn: func(int) ([]core.ApiKey, error) {
+		GetByUserIdFn: func(uuid.UUID) ([]core.ApiKey, error) {
 			return []core.ApiKey{core.ApiKey{}}, nil
 		},
 	}
@@ -152,8 +156,8 @@ func Test_BootstrapRootUser_UnableToCreateUser_ReturnsError(t *testing.T) {
 		GetByUsernameFn: func(string) (*core.User, error) {
 			return nil, core.ErrNotFound
 		},
-		CreateFn: func(newUser *core.NewUser) (int, error) {
-			return 0, errors.New("test")
+		CreateFn: func(newUser *core.NewUser) error {
+			return errors.New("test")
 		},
 	}
 	apikeyRepository := &core.FakeApiKeyRepository{}
@@ -168,11 +172,11 @@ func Test_BootstrapRootUser_UnableToCreateUser_ReturnsError(t *testing.T) {
 func Test_BootstrapRootUser_UnableToQueryKeys_ReturnsError(t *testing.T) {
 	userRepository := &core.FakeUserRepository{
 		GetByUsernameFn: func(string) (*core.User, error) {
-			return &core.User{Id: 1}, nil
+			return &core.User{Id: uuid.New()}, nil
 		},
 	}
 	apikeyRepository := &core.FakeApiKeyRepository{
-		GetByUserIdFn: func(int) ([]core.ApiKey, error) {
+		GetByUserIdFn: func(uuid.UUID) ([]core.ApiKey, error) {
 			return nil, errors.New("test")
 		},
 	}

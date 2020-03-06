@@ -3,6 +3,10 @@ package v1
 import (
 	"database/sql"
 
+	"github.com/riser-platform/riser-server/pkg/deploymentreservation"
+
+	"github.com/riser-platform/riser-server/pkg/namespace"
+
 	"github.com/riser-platform/riser-server/pkg/rollout"
 
 	"github.com/labstack/echo/v4/middleware"
@@ -23,16 +27,20 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	v1 := e.Group("/api/v1")
 
 	// TODO: Refactor dependency management
-	appRepository := postgres.NewAppRepository(db)
-	appService := app.NewService(appRepository)
-	secretMetaRepository := postgres.NewSecretMetaRepository(db)
 	stageRepository := postgres.NewStageRepository(db)
 	stageService := stage.NewService(stageRepository)
+	namespaceRepository := postgres.NewNamespaceRepository(db)
+	namespaceService := namespace.NewService(namespaceRepository, stageRepository)
+	deploymentReservationRepository := postgres.NewDeploymentReservationRepository(db)
+	appRepository := postgres.NewAppRepository(db)
+	appService := app.NewService(appRepository, namespaceService)
+	secretMetaRepository := postgres.NewSecretMetaRepository(db)
 	secretService := secret.NewService(secretMetaRepository, stageRepository)
+	deploymentReservationService := deploymentreservation.NewService(deploymentReservationRepository)
 	deploymentRepository := postgres.NewDeploymentRepository(db)
-	deploymentService := deployment.NewService(secretService, stageRepository, deploymentRepository)
+	deploymentService := deployment.NewService(appRepository, namespaceService, secretMetaRepository, stageRepository, deploymentRepository, deploymentReservationService)
 	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
-	rolloutService := rollout.NewService(deploymentRepository)
+	rolloutService := rollout.NewService(appRepository, deploymentRepository)
 	userRepository := postgres.NewUserRepository(db)
 	apiKeyRepository := postgres.NewApiKeyRepository(db)
 	loginService := login.NewService(userRepository, apiKeyRepository)
@@ -49,8 +57,12 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return ListApps(c, appRepository)
 	})
 
-	v1.GET("/apps/:appName/status", func(c echo.Context) error {
-		return GetStatus(c, deploymentStatusService)
+	v1.GET("/apps/:namespace/:appName", func(c echo.Context) error {
+		return GetApp(c, appRepository)
+	})
+
+	v1.GET("/apps/:namespace/:appName/status", func(c echo.Context) error {
+		return GetAppStatus(c, appRepository, deploymentStatusService)
 	})
 
 	v1.POST("/apps", func(c echo.Context) error {
@@ -63,23 +75,33 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	v1.PUT("/deployments", func(c echo.Context) error {
 		return PostDeployment(c, repo, appService, deploymentService, stageService)
 	})
-	v1.DELETE("/deployments/:deploymentName/:stageName", func(c echo.Context) error {
+
+	v1.DELETE("/deployments/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
 		return DeleteDeployment(c, repo, deploymentService)
 	})
 
-	v1.PUT("/deployments/:deploymentName/status/:stageName", func(c echo.Context) error {
-		return PutDeploymentStatus(c, deploymentStatusService)
+	v1.PUT("/deployments/:stageName/:namespace/:deploymentName/status", func(c echo.Context) error {
+		return PutDeploymentStatus(c, deploymentRepository)
 	})
 
-	v1.PUT("/rollout/:deploymentName/:stageName", func(c echo.Context) error {
+	v1.PUT("/rollout/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
 		return PutRollout(c, rolloutService, stageService, repo)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {
 		return PutSecret(c, repo, secretService, stageService)
 	})
-	v1.GET("/secrets/:appName/:stageName", func(c echo.Context) error {
-		return GetSecrets(c, secretService, stageService)
+
+	v1.GET("/secrets/:stageName/:namespace/:appName", func(c echo.Context) error {
+		return GetSecrets(c, secretMetaRepository, stageService)
+	})
+
+	v1.GET("/namespaces", func(c echo.Context) error {
+		return GetNamespaces(c, namespaceRepository)
+	})
+
+	v1.POST("/namespaces", func(c echo.Context) error {
+		return PostNamespace(c, namespaceService, repo)
 	})
 
 	v1.PUT("/stages/:stageName/config", func(c echo.Context) error {

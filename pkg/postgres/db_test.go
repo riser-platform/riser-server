@@ -72,7 +72,11 @@ func Test_ResultHasRows(t *testing.T) {
 	}
 
 	for idx, test := range tt {
-		assert.Equal(t, test.e, ResultHasRows(test.f), "test %d", idx)
+		assert.Equal(t, test.e, resultHasRows(test.f), "test %d", idx)
 	}
 
+}
+
+func Test_ResultHasRows_nil(t *testing.T) {
+	assert.False(t, resultHasRows(nil))
 }

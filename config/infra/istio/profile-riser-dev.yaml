@@ -1,0 +1,50 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: riser-dev-controlplane
+  namespace: istio-system
+spec:
+  addonComponents:
+    kiali:
+      enabled: false
+    prometheus:
+      enabled: false
+  components:
+    ingressGateways:
+    - enabled: true
+      k8s:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+      name: istio-ingressgateway
+    pilot:
+      k8s:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+    telemetry:
+      enabled: false
+  values:
+    gateways:
+      istio-ingressgateway:
+        sds:
+          enabled: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+    global:
+      controlPlaneSecurityEnabled: false
+      defaultPodDisruptionBudget:
+        enabled: false
+      mtls:
+        enabled: false
+      proxy:
+        resources:
+          requests:
+            cpu: 10m
+    tracing:
+      enabled: false
+

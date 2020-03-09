@@ -51,7 +51,6 @@ func (s *service) LoginWithApiKey(apiKeyPlainText string) (*core.User, error) {
 }
 
 // BootstrapRootUser is an idempotent function that will create the root user with the specified API key if needed.
-// An error is returned if the root user is already created.
 // Passing an empty value for the API key results in a NOOP unless no logins are specified, in which case an operator friendly error is returned.
 // If the root user exists with an API key, the request is ignored and ErrRootUserExists is returned
 func (s *service) BootstrapRootUser(apiKeyPlainText string) error {

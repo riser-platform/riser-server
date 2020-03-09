@@ -2,7 +2,7 @@ module github.com/riser-platform/riser-server
 
 replace github.com/riser-platform/riser-server/api/v1/model => ./api/v1/model
 
-go 1.13
+go 1.14
 
 require (
 	github.com/bitnami-labs/sealed-secrets v0.7.0

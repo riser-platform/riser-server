@@ -59,7 +59,7 @@ func Test_formatUrlWithAuth_badURL(t *testing.T) {
 	result, err := formatUrlWithAuth(settings)
 
 	assert.Empty(t, result)
-	assert.Equal(t, "parse \n: net/url: invalid control character in URL", err.Error())
+	assert.Contains(t, err.Error(), "net/url: invalid control character in URL")
 }
 
 func Test_processFiles(t *testing.T) {

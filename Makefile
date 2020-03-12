@@ -6,6 +6,7 @@ test: fmt lint tidy test-cmd
 	$(TEST_COMMAND)
 	# Nested go modules are not tested for some reason, so test them separately
 	cd api/v1/model && $(TEST_COMMAND)
+	cd pkg/sdk && $(TEST_COMMAND)
 
 test-cmd:
 ifeq (, $(shell which gotestsum))
@@ -17,6 +18,7 @@ endif
 tidy:
 	go mod tidy
 	cd api/v1/model && go mod tidy
+	cd pkg/sdk && go mod tidy
 
 # Runs the server
 run:
@@ -29,6 +31,8 @@ fmt:
 # Run go vet against code
 lint:
 	golangci-lint run
+	cd api/v1/model && golangci-lint run
+	cd pkg/sdk && golangci-lint run
 
 # compile and run unit tests on change. Always "make test" before comitting.
 # requires filewatcher and gotestsum

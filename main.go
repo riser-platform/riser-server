@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/riser-platform/riser-server/pkg/state"
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/pkg/namespace"
 
@@ -51,6 +52,8 @@ func main() {
 		logger.SetFormatter(&logrus.TextFormatter{})
 		logger.Info("Developer mode active")
 	}
+
+	logger.Infof("Server version %s", util.VersionString)
 
 	repoSettings := git.RepoSettings{
 		URL:         rc.GitUrl,

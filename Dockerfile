@@ -15,7 +15,7 @@ COPY ./api/v1/model/go.sum api/v1/model/go.sum
 RUN go mod download
 COPY . .
 
-RUN CGO_ENABLED=0 go build -ldflags="-w -s -X 'util.VersionString=${VERSION}'" -o /go/bin/riser-server
+RUN CGO_ENABLED=0 go build -ldflags="-w -s -X 'github.com/riser-platform/riser-server/pkg/util.VersionString=${VERSION}'" -o /go/bin/riser-server
 
 FROM alpine
 RUN apk update

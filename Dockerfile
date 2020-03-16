@@ -1,5 +1,5 @@
-ARG VERSION=0.0.0-docker
 FROM golang:1.14-alpine as builder
+ARG VERSION=0.0.0-docker
 WORKDIR /app
 RUN apk add --update --no-cache ca-certificates git
 

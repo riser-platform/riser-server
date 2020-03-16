@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,6 +57,7 @@ func Test_CreateSealedSecret(t *testing.T) {
 	assert.Equal(t, "SealedSecret", result.Kind)
 	assert.Equal(t, "bitnami.com/v1alpha1", result.APIVersion)
 	assert.Equal(t, "1", result.Annotations["riser.dev/revision"])
+	assert.Equal(t, util.VersionString, result.Annotations["riser.dev/server-version"])
 	assert.Equal(t, "myapp", result.Labels["riser.dev/app"])
 	// Sanity check that we're setting the encrypted data field.
 	// We'll use e2e integration testing that tests the mounting of secrets into a pod for better coverage.

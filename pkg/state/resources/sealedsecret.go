@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/pkg/errors"
 
@@ -37,7 +38,8 @@ func CreateSealedSecret(plaintextSecret string, secretMeta *core.SecretMeta, cer
 		Name:      fmt.Sprintf("%s-%s-%d", secretMeta.App.Name, secretMeta.Name, secretMeta.Revision),
 		Namespace: secretMeta.App.Namespace,
 		Annotations: map[string]string{
-			riserLabel("revision"): fmt.Sprintf("%d", secretMeta.Revision),
+			riserLabel("revision"):       fmt.Sprintf("%d", secretMeta.Revision),
+			riserLabel("server-version"): util.VersionString,
 		},
 		Labels: map[string]string{
 			riserLabel("app"): secretMeta.App.Name,

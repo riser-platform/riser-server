@@ -4,6 +4,7 @@ kind: Configuration
 metadata:
   annotations:
     riser.dev/revision: "3"
+    riser.dev/server-version: 0.0.0-local
   creationTimestamp: null
   labels:
     riser.dev/app: myapp
@@ -18,6 +19,7 @@ spec:
         autoscaling.knative.dev/maxScale: "1"
         autoscaling.knative.dev/minScale: "0"
         riser.dev/revision: "3"
+        riser.dev/server-version: 0.0.0-local
       creationTimestamp: null
       labels:
         riser.dev/app: myapp

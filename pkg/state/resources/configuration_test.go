@@ -46,8 +46,9 @@ func Test_createRevisionMeta_Autoscale(t *testing.T) {
 
 	result := createRevisionMeta(ctx)
 
-	assert.Len(t, result.Annotations, 3)
+	assert.Len(t, result.Annotations, 4)
 	assert.Equal(t, "1", result.Annotations["autoscaling.knative.dev/minScale"])
 	assert.Equal(t, "2", result.Annotations["autoscaling.knative.dev/maxScale"])
 	assert.Equal(t, "1", result.Annotations["riser.dev/revision"])
+	assert.Equal(t, util.VersionString, result.Annotations["riser.dev/server-version"])
 }

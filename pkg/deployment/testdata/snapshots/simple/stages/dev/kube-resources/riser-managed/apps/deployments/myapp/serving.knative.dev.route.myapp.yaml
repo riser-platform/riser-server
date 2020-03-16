@@ -4,6 +4,7 @@ kind: Route
 metadata:
   annotations:
     riser.dev/revision: "3"
+    riser.dev/server-version: 0.0.0-local
   creationTimestamp: null
   labels:
     riser.dev/app: myapp

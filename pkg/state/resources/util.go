@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/riser-platform/riser-server/pkg/util"
+
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
@@ -19,7 +21,8 @@ func deploymentLabels(ctx *core.DeploymentContext) map[string]string {
 // deploymentAnnotations are annotations common to Riser deployment resources
 func deploymentAnnotations(ctx *core.DeploymentContext) map[string]string {
 	return map[string]string{
-		riserLabel("revision"): strconv.FormatInt(ctx.RiserRevision, 10),
+		riserLabel("revision"):       strconv.FormatInt(ctx.RiserRevision, 10),
+		riserLabel("server-version"): util.VersionString,
 	}
 }
 

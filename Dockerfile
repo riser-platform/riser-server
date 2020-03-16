@@ -1,3 +1,4 @@
+ARG VERSION=0.0.0-docker
 FROM golang:1.14-alpine as builder
 WORKDIR /app
 RUN apk add --update --no-cache ca-certificates git
@@ -14,7 +15,7 @@ COPY ./api/v1/model/go.sum api/v1/model/go.sum
 RUN go mod download
 COPY . .
 
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /go/bin/riser-server
+RUN CGO_ENABLED=0 go build -ldflags="-w -s -X 'util.VersionString=${VERSION}'" -o /go/bin/riser-server
 
 FROM alpine
 RUN apk update

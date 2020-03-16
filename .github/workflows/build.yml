@@ -35,12 +35,16 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v1
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
       - id: docker_build
         uses: jerray/publish-docker-action@v1.0.3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: riserplatform/riser-server
+          build_args: VERSION=${{ steps.get_version.outputs.VERSION }}
           auto_tag: true
       - name: Create GitHub Release
         id: create_release

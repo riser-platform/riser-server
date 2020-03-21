@@ -75,7 +75,7 @@ func RenderRoute(deploymentName, namespace, stage string, resource KubeResource)
 func renderAppConfig(deployment *core.DeploymentConfig) (*core.ResourceFile, error) {
 	serialized, err := util.ToYaml(deployment.App)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Error serializing app config"))
+		return nil, errors.Wrap(err, "Error serializing app config")
 	}
 	return &core.ResourceFile{
 		Name:     getAppConfigScmPath(deployment.Name, deployment.Namespace, deployment.Stage),

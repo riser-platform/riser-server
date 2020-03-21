@@ -10,7 +10,7 @@ import (
 	"github.com/riser-platform/riser-server/api/v1/model"
 )
 
-var trafficRuleExp = regexp.MustCompile("rev-([0-9]+):([0-9]+)")
+var trafficRuleExp = regexp.MustCompile("r([0-9]+):([0-9]+)")
 
 type RolloutsClient interface {
 	Save(deploymentName, namespace, stageName string, trafficRule ...string) error
@@ -24,7 +24,7 @@ func (c *rolloutsClient) Save(deploymentName, namespace, stageName string, traff
 	rolloutRequest := model.RolloutRequest{}
 	for _, rule := range trafficRule {
 		if !trafficRuleExp.MatchString(rule) {
-			return errors.New("Rules must be in the format of \"rev-(rev):(percentage)\" e.g. \"rev-1:100\" routes 100% of traffic to rev 1")
+			return errors.New("Rules must be in the format of \"r(rev):(percentage)\" e.g. \"r1:100\" routes 100% of traffic to rev 1")
 		}
 		ruleSplit := trafficRuleExp.FindStringSubmatch(rule)
 		rolloutRequest.Traffic = append(rolloutRequest.Traffic,

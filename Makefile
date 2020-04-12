@@ -47,7 +47,7 @@ docker-push:
 	docker push ${IMG}:${TAG}
 
 docker-run: docker-build
-	docker run -it --rm -p 8000:8000 -e "TEST_DIR=/riser-server" riser-server
+	docker run -it --rm -p 8000:8000 -v $(shell pwd)/.env:/.env riser-server
 
 # Updates snapshot tests.
 update-snapshot:

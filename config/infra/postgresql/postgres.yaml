@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:11.4-alpine
+        image: postgres:12.2-alpine
         envFrom:
           - configMapRef:
               name: postgres

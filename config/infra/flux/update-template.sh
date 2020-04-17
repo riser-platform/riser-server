@@ -10,4 +10,4 @@ if [ -z $FLUX_PATH ]; then
 fi
 
 
-helm template $FLUX_PATH/chart/flux --namespace=flux --values=helm_values.yaml > apply.yaml
+helm template flux $FLUX_PATH/chart/flux --namespace=flux --values=helm_values.yaml > apply.yaml

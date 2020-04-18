@@ -41,7 +41,7 @@ func ErrorHandler(err error, c echo.Context) {
 			if ozzoValidation, ok := validationError.ValidationError.(validation.Errors); ok {
 				jsonResponse = &ValidationErrorResponse{
 					Message:          validationError.Message,
-					ValidationErrors: formatValidationErrors(ozzoValidation),
+					ValidationErrors: formatValidationErrors("", ozzoValidation),
 				}
 			} else {
 				message := validationError.Message
@@ -73,13 +73,24 @@ func ErrorHandler(err error, c echo.Context) {
 	}
 }
 
-func formatValidationErrors(errors validation.Errors) map[string]string {
+func formatValidationErrors(fieldPrefix string, errors validation.Errors) map[string]string {
 	result := map[string]string{}
 	if errors == nil {
 		return result
 	}
 	for k, v := range errors {
-		result[k] = v.Error()
+		errorKey := k
+		if fieldPrefix != "" {
+			errorKey = fmt.Sprintf("%s.%s", fieldPrefix, k)
+		}
+		if ozzoErrors, ok := v.(validation.Errors); ok {
+			nested := formatValidationErrors(errorKey, ozzoErrors)
+			for nestedK, nestedV := range nested {
+				result[nestedK] = nestedV
+			}
+		} else {
+			result[errorKey] = v.Error()
+		}
 	}
 
 	return result

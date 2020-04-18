@@ -116,5 +116,7 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return ListStages(c, stageRepository)
 	})
 
-	v1.POST("/validate/appconfig", PostValidateAppConfig)
+	v1.POST("/validate/appconfig", func(c echo.Context) error {
+		return PostValidateAppConfig(c, appService)
+	})
 }

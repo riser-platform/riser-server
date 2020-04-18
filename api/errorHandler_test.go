@@ -79,6 +79,9 @@ func Test_ErrorHandler_WhenValidationErrorWithFields_FormatsResponse(t *testing.
 		validation.Errors{
 			"field1": errors.New("field1 error"),
 			"field2": errors.New("field2 error"),
+			"field3": validation.Errors{
+				"nested": errors.New("nested1 error"),
+			},
 		},
 	)
 
@@ -89,9 +92,10 @@ func Test_ErrorHandler_WhenValidationErrorWithFields_FormatsResponse(t *testing.
 	jsonResponse := ValidationErrorResponse{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jsonResponse), rec.Body.String())
 	assert.Equal(t, jsonResponse.Message, "validation failed")
-	assert.Len(t, jsonResponse.ValidationErrors, 2)
+	assert.Len(t, jsonResponse.ValidationErrors, 3)
 	assert.Equal(t, "field1 error", jsonResponse.ValidationErrors["field1"])
 	assert.Equal(t, "field2 error", jsonResponse.ValidationErrors["field2"])
+	assert.Equal(t, "nested1 error", jsonResponse.ValidationErrors["field3.nested"])
 }
 
 func Test_ErrorHandler_WhenValidationErrorNoFields(t *testing.T) {

@@ -5,67 +5,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/riser-platform/riser-server/pkg/state"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_UpdateTraffic(t *testing.T) {
-	appId := uuid.New()
-	name := core.NewNamespacedName("myapp", "myns")
-	committer := state.NewDryRunCommitter()
-
-	deployments := &core.FakeDeploymentRepository{
-		GetByNameFn: func(nameArg *core.NamespacedName, stageName string) (*core.Deployment, error) {
-			assert.Equal(t, name, nameArg)
-			return &core.Deployment{
-				DeploymentReservation: core.DeploymentReservation{
-					Name:  "myapp",
-					AppId: appId,
-				},
-				DeploymentRecord: core.DeploymentRecord{
-					Doc: core.DeploymentDoc{
-						Status: &core.DeploymentStatus{
-							Revisions: []core.DeploymentRevisionStatus{
-								core.DeploymentRevisionStatus{
-									RiserRevision: 1,
-								},
-							},
-						},
-					},
-				},
-			}, nil
-		},
-	}
-
-	apps := &core.FakeAppRepository{
-		GetFn: func(id uuid.UUID) (*core.App, error) {
-			assert.Equal(t, appId, id)
-			return &core.App{
-				Id:   id,
-				Name: "myapp",
-			}, nil
-		},
-	}
-
-	traffic := core.TrafficConfig{
-		core.TrafficConfigRule{
-			RiserRevision: 1,
-			Percent:       100,
-		},
-	}
-
-	svc := service{apps, deployments}
-
-	err := svc.UpdateTraffic(name, "dev", traffic, committer)
-
-	assert.NoError(t, err)
-	assert.Len(t, committer.Commits, 1)
-	assert.Equal(t, `Updating resources for "myapp.myns" in stage "dev"`, committer.Commits[0].Message)
-	assert.Len(t, committer.Commits[0].Files, 1)
-	// TODO: Factor out snapshot code from pkg/deployment and add snapshot test for route file contents
-}
+// See snapshot test for happy path
 
 func Test_UpdateTraffic_ReturnsGetDeploymentError(t *testing.T) {
 	deployments := &core.FakeDeploymentRepository{
@@ -105,7 +50,7 @@ func Test_UpdateTraffic_ValidatesRevisionStatus(t *testing.T) {
 					Doc: core.DeploymentDoc{
 						Status: &core.DeploymentStatus{
 							Revisions: []core.DeploymentRevisionStatus{
-								core.DeploymentRevisionStatus{
+								{
 									RiserRevision: 1,
 								},
 							},

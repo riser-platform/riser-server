@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"testing"
 
@@ -99,7 +100,7 @@ func Test_sealAndSave(t *testing.T) {
 
 	committer := state.NewDryRunCommitter()
 
-	service := service{secretMetas: secretMetaRepository}
+	service := service{secretMetas: secretMetaRepository, rand: rand.Reader}
 
 	result := service.sealAndSave("plain", testCertBytes, meta, committer)
 
@@ -132,7 +133,7 @@ func Test_sealAndSave_WhenNewerRevisionExists(t *testing.T) {
 
 	committer := state.NewDryRunCommitter()
 
-	service := service{secretMetas: secretMetaRepository}
+	service := service{secretMetas: secretMetaRepository, rand: rand.Reader}
 
 	result := service.sealAndSave("plain", testCertBytes, meta, committer)
 

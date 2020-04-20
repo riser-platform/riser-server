@@ -2,7 +2,6 @@ package deployment
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -61,7 +60,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 	var committer state.Committer
 	snapshotDir, err := filepath.Abs("testdata/snapshots/simple")
 	require.NoError(t, err)
-	if shouldUpdateSnapshot() {
+	if util.ShouldUpdateSnapshot() {
 		fmt.Printf("Updating snapshot for %q", snapshotDir)
 		err = os.RemoveAll(snapshotDir)
 		require.NoError(t, err)
@@ -79,50 +78,9 @@ func Test_update_snapshot_simple(t *testing.T) {
 	err = deploy(ctx, committer)
 
 	assert.NoError(t, err)
-	if !shouldUpdateSnapshot() {
+	if !util.ShouldUpdateSnapshot() {
 		require.Len(t, dryRunCommitter.Commits, 1)
 		assert.Equal(t, "Updating resources for \"myapp\" in stage \"dev\"", dryRunCommitter.Commits[0].Message)
-		AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
+		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
-}
-
-func AssertSnapshot(t *testing.T, snapshotDir string, actualFiles []core.ResourceFile) {
-	actualFileMap := map[string][]byte{}
-	snapshotFileMap := map[string][]byte{}
-
-	for _, file := range actualFiles {
-		actualFileMap[file.Name] = file.Contents
-	}
-
-	err := filepath.Walk(snapshotDir, func(filePath string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			bytes, err := ioutil.ReadFile(filePath)
-			if err != nil {
-				return err
-			}
-			relPath, err := filepath.Rel(snapshotDir, filePath)
-			if err != nil {
-				return err
-			}
-			snapshotFileMap[relPath] = bytes
-		}
-		return nil
-	})
-
-	require.NoError(t, err)
-
-	assert.Len(t, actualFileMap, len(snapshotFileMap))
-
-	for snapshotPath, snapshotContents := range snapshotFileMap {
-		if actualFile, ok := actualFileMap[snapshotPath]; ok {
-			message := fmt.Sprintf("File: %s", snapshotPath)
-			assert.Equal(t, string(snapshotContents), string(actualFile), message)
-		} else {
-			assert.Fail(t, "Missing expected file", snapshotPath)
-		}
-	}
-}
-
-func shouldUpdateSnapshot() bool {
-	return os.Getenv("UPDATESNAPSHOT") == "true"
 }

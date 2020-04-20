@@ -1,7 +1,9 @@
 package secret
 
 import (
+	"crypto/rand"
 	"fmt"
+	"io"
 
 	"github.com/riser-platform/riser-server/pkg/state/resources"
 
@@ -17,10 +19,11 @@ type Service interface {
 type service struct {
 	secretMetas core.SecretMetaRepository
 	stages      core.StageRepository
+	rand        io.Reader
 }
 
 func NewService(secretMetas core.SecretMetaRepository, stages core.StageRepository) Service {
-	return &service{secretMetas, stages}
+	return &service{secretMetas, stages, rand.Reader}
 }
 
 func (s *service) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error {
@@ -40,7 +43,7 @@ func (s *service) sealAndSave(plaintextSecret string, sealedSecretCert []byte, s
 
 	secretMeta.Revision = revision
 
-	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, secretMeta, sealedSecretCert)
+	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, secretMeta, sealedSecretCert, s.rand)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Error creating sealed secret %q in stage %q", secretMeta.Name, secretMeta.StageName))
 	}

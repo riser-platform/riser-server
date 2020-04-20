@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"crypto/rand"
 	"testing"
 
 	"github.com/riser-platform/riser-server/pkg/core"
@@ -47,7 +48,7 @@ func Test_CreateSealedSecret(t *testing.T) {
 		Revision:  1,
 	}
 
-	result, err := CreateSealedSecret("mysecretvalue", secret, []byte(testSealedSecretCert))
+	result, err := CreateSealedSecret("mysecretvalue", secret, []byte(testSealedSecretCert), rand.Reader)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)

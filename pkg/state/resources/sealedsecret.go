@@ -1,9 +1,9 @@
 package resources
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
+	"io"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 	"github.com/riser-platform/riser-server/pkg/util"
@@ -29,7 +29,7 @@ type SealedSecretSpec struct {
 }
 
 // TODO: Consider using something like https://github.com/awnumar/memguard instead of passing the secret as a string
-func CreateSealedSecret(plaintextSecret string, secretMeta *core.SecretMeta, certBytes []byte) (*SealedSecret, error) {
+func CreateSealedSecret(plaintextSecret string, secretMeta *core.SecretMeta, certBytes []byte, rand io.Reader) (*SealedSecret, error) {
 	publicKey, err := parsePublicKey(certBytes)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing public key")
@@ -45,7 +45,7 @@ func CreateSealedSecret(plaintextSecret string, secretMeta *core.SecretMeta, cer
 			riserLabel("app"): secretMeta.App.Name,
 		},
 	}
-	ciphertext, err := sealSecret(objectMeta, publicKey, []byte(plaintextSecret))
+	ciphertext, err := sealSecret(objectMeta, publicKey, []byte(plaintextSecret), rand)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error sealing secret")
 	}
@@ -83,9 +83,9 @@ func parsePublicKey(certBytes []byte) (*rsa.PublicKey, error) {
 	return cert, nil
 }
 
-func sealSecret(secretMeta metav1.ObjectMeta, publicKey *rsa.PublicKey, plaintext []byte) ([]byte, error) {
+func sealSecret(secretMeta metav1.ObjectMeta, publicKey *rsa.PublicKey, plaintext []byte, rand io.Reader) ([]byte, error) {
 	// Simplified version of labelFor (https://github.com/bitnami-labs/sealed-secrets/blob/d875137740275f7dea36c54f981a90c795e7e681/pkg/apis/sealed-secrets/v1alpha1/sealedsecret_expansion.go#L22)
 	// We don't support namespace or cluster wide annotations
 	label := []byte(fmt.Sprintf("%s/%s", secretMeta.GetNamespace(), secretMeta.GetName()))
-	return sealedCrypto.HybridEncrypt(rand.Reader, publicKey, plaintext, label)
+	return sealedCrypto.HybridEncrypt(rand, publicKey, plaintext, label)
 }

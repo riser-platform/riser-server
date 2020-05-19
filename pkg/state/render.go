@@ -122,7 +122,7 @@ func getSecretScmPath(app string, stage string, sealedSecret KubeResource) strin
 
 func getAppConfigScmPath(deploymentName, namespace, stage string) string {
 	return strings.ToLower(filepath.Join(
-		"stages",
+		"state",
 		stage,
 		"configs",
 		namespace,
@@ -131,7 +131,7 @@ func getAppConfigScmPath(deploymentName, namespace, stage string) string {
 
 func getPlatformResourcesPath(stageName string) string {
 	return strings.ToLower(filepath.Join(
-		"stages",
+		"state",
 		stageName,
 		"kube-resources",
 		"riser-managed",

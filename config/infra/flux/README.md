@@ -14,7 +14,7 @@ should reflect the riser stage name so that only resources for that stage are ap
 
 ```
 kubectl create secret generic flux-git --namespace flux --from-literal=GIT_URL=<GIT_URL>
---from-literal=GIT_PATH=state/<STAGE_NAME>/kube-resources
+--from-literal=GIT_PATH=state/<STAGE_NAME>
 ```
 > :warning: Do not include a leading "slash" in the `GIT_PATH`
 
@@ -23,7 +23,7 @@ If your cluster is serving the riser stage named `dev`:
 
 ```
 kubectl create secret generic flux-git --namespace flux --from-literal=GIT_URL=https://myoathtoken@github.com/myorg/riser-state
---from-literal=GIT_PATH=state/dev/kube-resources
+--from-literal=GIT_PATH=state/dev
 ```
 
 

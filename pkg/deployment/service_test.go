@@ -40,9 +40,9 @@ func Test_Delete(t *testing.T) {
 	assert.Len(t, committer.Commits, 1)
 	assert.Equal(t, `Deleting deployment "mydep.apps"`, committer.Commits[0].Message)
 	assert.Len(t, committer.Commits[0].Files, 2)
-	assert.Equal(t, "state/mystage/kube-resources/riser-managed/apps/deployments/mydep", committer.Commits[0].Files[0].Name)
+	assert.Equal(t, "state/mystage/riser-managed/apps/deployments/mydep", committer.Commits[0].Files[0].Name)
 	assert.True(t, committer.Commits[0].Files[0].Delete)
-	assert.Equal(t, "state/mystage/configs/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
+	assert.Equal(t, "config/mystage/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
 	assert.True(t, committer.Commits[0].Files[1].Delete)
 }
 

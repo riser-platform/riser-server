@@ -17,7 +17,7 @@ at the time of writing that GitHub is the only officially supported git host. Ot
 a single repo between multiple Riser stages.
 
 Review each required component's README in this folder. With the exception of `Flux`, the final yaml for each component should be placed in your `riser-state` git repo in the
- `/stages/<stageName>/kube-resources/infra` folder. `Flux` must be installed manually after the cluster is ready. Once you push your changes, `Flux` should begin installing the remaining components. This may take a few minutes depending on cluster capacity and internet speed.
+ `/state/<stageName>/infra` folder. `Flux` must be installed manually after the cluster is ready. Once you push your changes, `Flux` should begin installing the remaining components. This may take a few minutes depending on cluster capacity and internet speed.
 
 
 # Install and configure KNative

@@ -30,7 +30,7 @@ func RenderDeleteDeployment(deploymentName, namespace, stage string) []core.Reso
 // RenderGeneric is used for generic resources (e.g. riser app namespaces). They will be placed in the root of the namespaced folder.
 func RenderGeneric(stage string, resources ...KubeResource) ([]core.ResourceFile, error) {
 	return renderKubeResources(func(resource KubeResource) string {
-		return getGenericResourcesPath(stage, resource)
+		return getGenericStatePath(stage, resource)
 	}, resources...)
 }
 
@@ -99,7 +99,7 @@ func renderKubeResources(pathFunc getResourcePathFunc, resources ...KubeResource
 }
 
 func getDeploymentScmDir(deploymentName, namespace, stage string) string {
-	return strings.ToLower(filepath.Join(getPlatformResourcesPath(stage),
+	return strings.ToLower(filepath.Join(getRiserManagedStatePath(stage),
 		namespace,
 		"deployments",
 		deploymentName))
@@ -113,7 +113,7 @@ func getDeploymentScmPath(deploymentName, namespace, stage string, resource Kube
 
 func getSecretScmPath(app string, stage string, sealedSecret KubeResource) string {
 	return strings.ToLower(filepath.Join(
-		getPlatformResourcesPath(stage),
+		getRiserManagedStatePath(stage),
 		sealedSecret.GetNamespace(),
 		"secrets",
 		app,
@@ -122,25 +122,23 @@ func getSecretScmPath(app string, stage string, sealedSecret KubeResource) strin
 
 func getAppConfigScmPath(deploymentName, namespace, stage string) string {
 	return strings.ToLower(filepath.Join(
-		"state",
+		"config",
 		stage,
-		"configs",
 		namespace,
 		fmt.Sprintf("%s.yaml", deploymentName)))
 }
 
-func getPlatformResourcesPath(stageName string) string {
+func getRiserManagedStatePath(stageName string) string {
 	return strings.ToLower(filepath.Join(
 		"state",
 		stageName,
-		"kube-resources",
 		"riser-managed",
 	))
 }
 
-func getGenericResourcesPath(stageName string, resource KubeResource) string {
+func getGenericStatePath(stageName string, resource KubeResource) string {
 	return strings.ToLower(filepath.Join(
-		getPlatformResourcesPath(stageName),
+		getRiserManagedStatePath(stageName),
 		resource.GetNamespace(),
 		getFileNameFromResource(resource),
 	))

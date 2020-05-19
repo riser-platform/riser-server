@@ -111,7 +111,7 @@ func Test_sealAndSave(t *testing.T) {
 	assert.Len(t, committer.Commits, 1)
 	assert.Equal(t, "Updating secret \"myapp-mysecret-1\" in stage \"mystage\"", committer.Commits[0].Message)
 	assert.Len(t, committer.Commits[0].Files, 1)
-	assert.Equal(t, "state/mystage/kube-resources/riser-managed/myns/secrets/myapp/bitnami.com.sealedsecret.myapp-mysecret-1.yaml", committer.Commits[0].Files[0].Name)
+	assert.Equal(t, "state/mystage/riser-managed/myns/secrets/myapp/bitnami.com.sealedsecret.myapp-mysecret-1.yaml", committer.Commits[0].Files[0].Name)
 }
 
 func Test_sealAndSave_WhenNewerRevisionExists(t *testing.T) {

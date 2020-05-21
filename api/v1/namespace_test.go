@@ -17,8 +17,8 @@ func Test_mapNamespaceFromDomain(t *testing.T) {
 
 func Test_mapNamespaceArrayFromDomain(t *testing.T) {
 	domainArray := []core.Namespace{
-		core.Namespace{Name: "myns1"},
-		core.Namespace{Name: "myns2"},
+		{Name: "myns1"},
+		{Name: "myns2"},
 	}
 
 	result := mapNamespaceArrayFromDomain(domainArray)

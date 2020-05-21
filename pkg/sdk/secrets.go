@@ -8,16 +8,16 @@ import (
 )
 
 type SecretsClient interface {
-	List(appName, namepsace, stageName string) ([]model.SecretMetaStatus, error)
-	Save(appName, namepsace, stageName, secretName, plainTextSecret string) error
+	List(appName, namepsace, envName string) ([]model.SecretMetaStatus, error)
+	Save(appName, namepsace, envName, secretName, plainTextSecret string) error
 }
 
 type secretsClient struct {
 	client *Client
 }
 
-func (c *secretsClient) List(appName, namespace, stageName string) ([]model.SecretMetaStatus, error) {
-	request, err := c.client.NewGetRequest(fmt.Sprintf("/api/v1/secrets/%s/%s/%s", stageName, namespace, appName))
+func (c *secretsClient) List(appName, namespace, envName string) ([]model.SecretMetaStatus, error) {
+	request, err := c.client.NewGetRequest(fmt.Sprintf("/api/v1/secrets/%s/%s/%s", envName, namespace, appName))
 	if err != nil {
 		return nil, err
 	}
@@ -30,13 +30,13 @@ func (c *secretsClient) List(appName, namespace, stageName string) ([]model.Secr
 	return secretMetas, nil
 }
 
-func (c *secretsClient) Save(appName, namespace, stageName, secretName, plainTextSecret string) error {
+func (c *secretsClient) Save(appName, namespace, envName, secretName, plainTextSecret string) error {
 	unsealed := model.UnsealedSecret{
 		SecretMeta: model.SecretMeta{
-			AppName:   model.AppName(appName),
-			Namespace: model.NamespaceName(namespace),
-			Stage:     stageName,
-			Name:      secretName,
+			AppName:     model.AppName(appName),
+			Namespace:   model.NamespaceName(namespace),
+			Environment: envName,
+			Name:        secretName,
 		},
 		PlainText: plainTextSecret,
 	}

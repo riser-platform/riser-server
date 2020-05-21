@@ -19,25 +19,25 @@ func Test_Create(t *testing.T) {
 		},
 	}
 
-	stages := &core.FakeStageRepository{
-		ListFn: func() ([]core.Stage, error) {
-			return []core.Stage{
-				core.Stage{Name: "stage1"},
-				core.Stage{Name: "stage2"},
+	environments := &core.FakeEnvironmentRepository{
+		ListFn: func() ([]core.Environment, error) {
+			return []core.Environment{
+				{Name: "myenv1"},
+				{Name: "myenv2"},
 			}, nil
 		},
 	}
 
-	svc := &service{namespaces, stages}
+	svc := &service{namespaces, environments}
 
 	err := svc.Create("myns", committer)
 
 	assert.NoError(t, err)
 	assert.Len(t, committer.Commits, 2)
 	assert.Len(t, committer.Commits[0].Files, 1)
-	assert.Equal(t, `Updating namespace "myns" in stage "stage1"`, committer.Commits[0].Message)
+	assert.Equal(t, `Updating namespace "myns" in environment "myenv1"`, committer.Commits[0].Message)
 	assert.Len(t, committer.Commits[1].Files, 1)
-	assert.Equal(t, `Updating namespace "myns" in stage "stage2"`, committer.Commits[1].Message)
+	assert.Equal(t, `Updating namespace "myns" in environment "myenv2"`, committer.Commits[1].Message)
 }
 
 func Test_Create_WhenNamespaceCreateErr(t *testing.T) {
@@ -54,7 +54,7 @@ func Test_Create_WhenNamespaceCreateErr(t *testing.T) {
 	assert.Equal(t, "error creating namespace: test", err.Error())
 }
 
-func Test_Create_WhenGetStagesErr(t *testing.T) {
+func Test_Create_WhenGetEnvironmentsErr(t *testing.T) {
 	namespaces := &core.FakeNamespaceRepository{
 		CreateFn: func(namespace *core.Namespace) error {
 			assert.Equal(t, "myns", namespace.Name)
@@ -62,20 +62,20 @@ func Test_Create_WhenGetStagesErr(t *testing.T) {
 		},
 	}
 
-	stages := &core.FakeStageRepository{
-		ListFn: func() ([]core.Stage, error) {
+	environments := &core.FakeEnvironmentRepository{
+		ListFn: func() ([]core.Environment, error) {
 			return nil, errors.New("test")
 		},
 	}
 
-	svc := &service{namespaces, stages}
+	svc := &service{namespaces, environments}
 
 	err := svc.Create("myns", state.NewDryRunCommitter())
 
 	assert.Equal(t, "test", err.Error())
 }
 
-func Test_EnsureNamespaceInStage(t *testing.T) {
+func Test_EnsureNamespaceInEnvironment(t *testing.T) {
 	committer := state.NewDryRunCommitter()
 	namespaces := &core.FakeNamespaceRepository{
 		GetFn: func(namespaceName string) (*core.Namespace, error) {
@@ -86,15 +86,15 @@ func Test_EnsureNamespaceInStage(t *testing.T) {
 
 	svc := &service{namespaces: namespaces}
 
-	err := svc.EnsureNamespaceInStage("myns", "mystage", committer)
+	err := svc.EnsureNamespaceInEnvironment("myns", "myenv", committer)
 
 	assert.NoError(t, err)
 	assert.Len(t, committer.Commits, 1)
 	assert.Len(t, committer.Commits[0].Files, 1)
-	assert.Equal(t, `Updating namespace "myns" in stage "mystage"`, committer.Commits[0].Message)
+	assert.Equal(t, `Updating namespace "myns" in environment "myenv"`, committer.Commits[0].Message)
 }
 
-func Test_EnsureNamespaceInStage_WhenNamespaceDoesNotExist(t *testing.T) {
+func Test_EnsureNamespaceInEnvironment_WhenNamespaceDoesNotExist(t *testing.T) {
 	committer := state.NewDryRunCommitter()
 	namespaces := &core.FakeNamespaceRepository{
 		GetFn: func(namespaceName string) (*core.Namespace, error) {
@@ -104,7 +104,7 @@ func Test_EnsureNamespaceInStage_WhenNamespaceDoesNotExist(t *testing.T) {
 
 	svc := &service{namespaces: namespaces}
 
-	err := svc.EnsureNamespaceInStage("myns", "mystage", committer)
+	err := svc.EnsureNamespaceInEnvironment("myns", "myenv", committer)
 
 	assert.Equal(t, `the namespace "myns" does not exist`, err.Error())
 }
@@ -160,8 +160,8 @@ func Test_ValidateDeployable_NamespaceMissing(t *testing.T) {
 		},
 		ListFn: func() ([]core.Namespace, error) {
 			return []core.Namespace{
-				core.Namespace{Name: "ns1"},
-				core.Namespace{Name: "ns2"},
+				{Name: "ns1"},
+				{Name: "ns2"},
 			}, nil
 		},
 	}

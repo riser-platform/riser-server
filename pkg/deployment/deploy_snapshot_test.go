@@ -26,9 +26,9 @@ import (
 
 func Test_update_snapshot_simple(t *testing.T) {
 	newDeployment := &core.DeploymentConfig{
-		Name:      "myapp",
-		Namespace: "apps",
-		Stage:     "dev",
+		Name:            "myapp",
+		Namespace:       "apps",
+		EnvironmentName: "dev",
 		Docker: core.DeploymentDocker{
 			Tag: "0.0.1",
 		},
@@ -70,17 +70,17 @@ func Test_update_snapshot_simple(t *testing.T) {
 	}
 
 	ctx := &core.DeploymentContext{
-		Deployment:    newDeployment,
-		Stage:         &core.StageConfig{PublicGatewayHost: "dev.riser.org"},
-		RiserRevision: 3,
-		Secrets:       secrets,
+		DeploymentConfig:  newDeployment,
+		EnvironmentConfig: &core.EnvironmentConfig{PublicGatewayHost: "dev.riser.org"},
+		RiserRevision:     3,
+		Secrets:           secrets,
 	}
 	err = deploy(ctx, committer)
 
 	assert.NoError(t, err)
 	if !util.ShouldUpdateSnapshot() {
 		require.Len(t, dryRunCommitter.Commits, 1)
-		assert.Equal(t, "Updating resources for \"myapp\" in stage \"dev\"", dryRunCommitter.Commits[0].Message)
+		assert.Equal(t, "Updating resources for \"myapp\" in environment \"dev\"", dryRunCommitter.Commits[0].Message)
 		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }

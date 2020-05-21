@@ -18,13 +18,13 @@ func NewDeploymentRepository(db *sql.DB) core.DeploymentRepository {
 
 func (r *deploymentRepository) Create(deployment *core.DeploymentRecord) error {
 	_, err := r.db.Exec(`
-	INSERT INTO deployment (id, deployment_reservation_id, stage_name, riser_revision, doc)
+	INSERT INTO deployment (id, deployment_reservation_id, environment_name, riser_revision, doc)
 	VALUES ($1,$2,$3,$4,$5)`,
-		deployment.Id, deployment.ReservationId, deployment.StageName, deployment.RiserRevision, &deployment.Doc)
+		deployment.Id, deployment.ReservationId, deployment.EnvironmentName, deployment.RiserRevision, &deployment.Doc)
 	return err
 }
 
-func (r *deploymentRepository) Delete(name *core.NamespacedName, stageName string) error {
+func (r *deploymentRepository) Delete(name *core.NamespacedName, envName string) error {
 	_, err := r.db.Exec(`
 	UPDATE deployment SET deleted_at=now()
 	FROM deployment_reservation
@@ -32,14 +32,14 @@ func (r *deploymentRepository) Delete(name *core.NamespacedName, stageName strin
 	 deployment.deployment_reservation_id = deployment_reservation.id
 	 AND deployment_reservation.name = $1
 	 AND deployment_reservation.namespace = $2
-	 AND deployment.stage_name = $3
-	`, name.Name, name.Namespace, stageName)
+	 AND deployment.environment_name = $3
+	`, name.Name, name.Namespace, envName)
 
 	return noRowsErrorHandler(err)
 }
 
 // GetByName returns a deployment by its name whether or not it's been deleted.
-func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName string) (*core.Deployment, error) {
+func (r *deploymentRepository) GetByName(name *core.NamespacedName, envName string) (*core.Deployment, error) {
 	deployment := &core.Deployment{}
 	err := r.db.QueryRow(`
 	SELECT
@@ -50,13 +50,13 @@ func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName st
 		deployment.id,
 		deployment.deleted_at,
 		deployment.deployment_reservation_id,
-		deployment.stage_name,
+		deployment.environment_name,
 		deployment.riser_revision,
 		deployment.doc
 	FROM deployment
 	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id=deployment_reservation.id
-	WHERE deployment_reservation.name=$1 AND deployment_reservation.namespace=$2 AND deployment.stage_name=$3
-	`, name.Name, name.Namespace, stageName).Scan(
+	WHERE deployment_reservation.name=$1 AND deployment_reservation.namespace=$2 AND deployment.environment_name=$3
+	`, name.Name, name.Namespace, envName).Scan(
 		&deployment.DeploymentReservation.Id,
 		&deployment.AppId,
 		&deployment.Name,
@@ -64,7 +64,7 @@ func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName st
 		&deployment.DeploymentRecord.Id,
 		&deployment.DeletedAt,
 		&deployment.ReservationId,
-		&deployment.StageName,
+		&deployment.EnvironmentName,
 		&deployment.RiserRevision,
 		&deployment.Doc)
 
@@ -72,7 +72,7 @@ func (r *deploymentRepository) GetByName(name *core.NamespacedName, stageName st
 }
 
 // GetByReservation returns a deployment by its reservation ID whether or not it has been deleted.
-func (r *deploymentRepository) GetByReservation(reservationId uuid.UUID, stageName string) (*core.Deployment, error) {
+func (r *deploymentRepository) GetByReservation(reservationId uuid.UUID, envName string) (*core.Deployment, error) {
 	deployment := &core.Deployment{}
 
 	err := r.db.QueryRow(`
@@ -84,13 +84,13 @@ func (r *deploymentRepository) GetByReservation(reservationId uuid.UUID, stageNa
 		deployment.id,
 		deployment.deleted_at,
 		deployment.deployment_reservation_id,
-		deployment.stage_name,
+		deployment.environment_name,
 		deployment.riser_revision,
 		deployment.doc
 	FROM deployment
 	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
-	WHERE deployment_reservation.id = $1 AND deployment.stage_name = $2
-	`, reservationId, stageName).Scan(
+	WHERE deployment_reservation.id = $1 AND deployment.environment_name = $2
+	`, reservationId, envName).Scan(
 		&deployment.DeploymentReservation.Id,
 		&deployment.AppId,
 		&deployment.Name,
@@ -98,13 +98,13 @@ func (r *deploymentRepository) GetByReservation(reservationId uuid.UUID, stageNa
 		&deployment.DeploymentRecord.Id,
 		&deployment.DeletedAt,
 		&deployment.ReservationId,
-		&deployment.StageName,
+		&deployment.EnvironmentName,
 		&deployment.RiserRevision,
 		&deployment.Doc)
 	return deployment, noRowsErrorHandler(err)
 }
 
-// FindByApp returns all active deployments in all stages by a given app ID
+// FindByApp returns all active deployments in all environments by a given app ID
 func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, error) {
 	deployments := []core.Deployment{}
 	rows, err := r.db.Query(`
@@ -116,13 +116,13 @@ func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, er
 		deployment.id,
 		deployment.deleted_at,
 		deployment.deployment_reservation_id,
-		deployment.stage_name,
+		deployment.environment_name,
 		deployment.riser_revision,
 		deployment.doc
 	FROM deployment
 	INNER JOIN deployment_reservation ON deployment.deployment_reservation_id = deployment_reservation.id
 	WHERE deployment_reservation.app_id = $1 AND deployment.deleted_at IS NULL
-	ORDER BY deployment.stage_name, deployment_reservation.name
+	ORDER BY deployment.environment_name, deployment_reservation.name
 	`, appId)
 
 	if err != nil {
@@ -140,7 +140,7 @@ func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, er
 			&deployment.DeploymentRecord.Id,
 			&deployment.DeletedAt,
 			&deployment.ReservationId,
-			&deployment.StageName,
+			&deployment.EnvironmentName,
 			&deployment.RiserRevision,
 			&deployment.Doc)
 		if err != nil {
@@ -154,7 +154,7 @@ func (r *deploymentRepository) FindByApp(appId uuid.UUID) ([]core.Deployment, er
 
 // IncrementeRevision increments the revision of a deployment. If the deployment was previously soft deleted, it will mark
 // the deployment as no longer being deleted
-func (r *deploymentRepository) IncrementRevision(name *core.NamespacedName, stageName string) (revision int64, err error) {
+func (r *deploymentRepository) IncrementRevision(name *core.NamespacedName, envName string) (revision int64, err error) {
 	err = r.db.QueryRow(`
 	UPDATE deployment SET riser_revision = riser_revision + 1, deleted_at = NULL
 	FROM deployment_reservation
@@ -162,9 +162,9 @@ func (r *deploymentRepository) IncrementRevision(name *core.NamespacedName, stag
 	deployment.deployment_reservation_id = deployment_reservation.id
 	AND deployment_reservation.name = $1
 	AND deployment_reservation.namespace = $2
-	AND stage_name = $3
+	AND environment_name = $3
 	RETURNING riser_revision
-	`, name.Name, name.Namespace, stageName).Scan(&revision)
+	`, name.Name, name.Namespace, envName).Scan(&revision)
 	if err != nil {
 		return 0, err
 	}
@@ -172,7 +172,7 @@ func (r *deploymentRepository) IncrementRevision(name *core.NamespacedName, stag
 	return revision, nil
 }
 
-func (r *deploymentRepository) RollbackRevision(name *core.NamespacedName, stageName string, failedRevision int64) (revision int64, err error) {
+func (r *deploymentRepository) RollbackRevision(name *core.NamespacedName, envName string, failedRevision int64) (revision int64, err error) {
 	err = r.db.QueryRow(`
 	UPDATE deployment SET riser_revision = riser_revision - 1
 	FROM deployment_reservation
@@ -180,10 +180,10 @@ func (r *deploymentRepository) RollbackRevision(name *core.NamespacedName, stage
 	deployment.deployment_reservation_id = deployment_reservation.id
 	AND deployment_reservation.name = $1
 	AND deployment_reservation.namespace = $2
-	AND stage_name = $3
+	AND environment_name = $3
 	AND riser_revision = $4
 	RETURNING riser_revision
-	`, name.Name, name.Namespace, stageName, failedRevision).Scan(&revision)
+	`, name.Name, name.Namespace, envName, failedRevision).Scan(&revision)
 	if err != nil {
 		return 0, err
 	}
@@ -191,7 +191,7 @@ func (r *deploymentRepository) RollbackRevision(name *core.NamespacedName, stage
 	return revision, nil
 }
 
-func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, stageName string, status *core.DeploymentStatus) error {
+func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, envName string, status *core.DeploymentStatus) error {
 	result, err := r.db.Exec(`
 	  UPDATE deployment
 		SET doc = jsonb_set(doc, '{status}', $4),
@@ -202,14 +202,14 @@ func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, stageName
 		deployment.deployment_reservation_id = deployment_reservation.id
 		AND deployment_reservation.name = $1
 		AND deployment_reservation.namespace = $2
-		AND deployment.stage_name = $3
+		AND deployment.environment_name = $3
 		-- Don't update status from an older observed revision
 		AND (
 			(deployment.doc->'status'->>'observedRiserRevision')::int <= $5
 			OR deployment.doc->'status' IS NULL
 			OR deployment.doc->'status'->>'observedRiserRevision' IS NULL
 		)
-	`, name.Name, name.Namespace, stageName, status, status.ObservedRiserRevision)
+	`, name.Name, name.Namespace, envName, status, status.ObservedRiserRevision)
 
 	if err != nil {
 		return err
@@ -223,7 +223,7 @@ func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, stageName
 	return nil
 }
 
-func (r *deploymentRepository) UpdateTraffic(name *core.NamespacedName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+func (r *deploymentRepository) UpdateTraffic(name *core.NamespacedName, envName string, riserRevision int64, traffic core.TrafficConfig) error {
 	result, err := r.db.Exec(`
 		UPDATE deployment
 		SET doc = jsonb_set(doc, '{traffic}', $5)
@@ -232,10 +232,10 @@ func (r *deploymentRepository) UpdateTraffic(name *core.NamespacedName, stageNam
 		deployment.deployment_reservation_id = deployment_reservation.id
 		AND deployment_reservation.name = $1
 		AND deployment_reservation.namespace = $2
-		AND deployment.stage_name = $3
+		AND deployment.environment_name = $3
 		AND riser_revision = $4
 		AND deleted_at IS NULL
-	`, name.Name, name.Namespace, stageName, riserRevision, traffic)
+	`, name.Name, name.Namespace, envName, riserRevision, traffic)
 
 	if err != nil {
 		return err

@@ -39,12 +39,12 @@ func Test_UpdateTraffic_WhenDeploymentDoesNotExist(t *testing.T) {
 
 	assert.IsType(t, &core.ValidationError{}, result)
 	vErr := result.(*core.ValidationError)
-	assert.Equal(t, `a deployment with the name "myapp.myns" does not exist in stage "dev"`, vErr.Error())
+	assert.Equal(t, `a deployment with the name "myapp.myns" does not exist in environment "dev"`, vErr.Error())
 }
 
 func Test_UpdateTraffic_ValidatesRevisionStatus(t *testing.T) {
 	deployments := &core.FakeDeploymentRepository{
-		GetByNameFn: func(name *core.NamespacedName, stageName string) (*core.Deployment, error) {
+		GetByNameFn: func(name *core.NamespacedName, envName string) (*core.Deployment, error) {
 			return &core.Deployment{
 				DeploymentRecord: core.DeploymentRecord{
 					Doc: core.DeploymentDoc{
@@ -88,7 +88,7 @@ func Test_UpdateTraffic_ValidatesRevisionStatus(t *testing.T) {
 	assert.Equal(t, `revision "2" either does not exist or has not reported its status yet`, result.Error())
 }
 
-// Race condition for a brand new deployment in a new stage
+// Race condition for a brand new deployment in a new environment
 func Test_UpdateTraffic_ValidatesRevisionStatus_NoStatus(t *testing.T) {
 	deployments := &core.FakeDeploymentRepository{
 		GetByNameFn: func(*core.NamespacedName, string) (*core.Deployment, error) {

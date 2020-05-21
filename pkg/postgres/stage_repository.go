@@ -6,17 +6,17 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-type stageRepository struct {
+type environmentRepository struct {
 	db *sql.DB
 }
 
-func NewStageRepository(db *sql.DB) core.StageRepository {
-	return &stageRepository{db}
+func NewEnvironmentRepository(db *sql.DB) core.EnvironmentRepository {
+	return &environmentRepository{db}
 }
 
-func (r *stageRepository) Get(name string) (*core.Stage, error) {
-	stage := &core.Stage{}
-	err := r.db.QueryRow("SELECT name, doc FROM stage WHERE name = $1", name).Scan(&stage.Name, &stage.Doc)
+func (r *environmentRepository) Get(name string) (*core.Environment, error) {
+	environment := &core.Environment{}
+	err := r.db.QueryRow("SELECT name, doc FROM environment WHERE name = $1", name).Scan(&environment.Name, &environment.Doc)
 	if err == sql.ErrNoRows {
 		return nil, core.ErrNotFound
 	}
@@ -24,12 +24,12 @@ func (r *stageRepository) Get(name string) (*core.Stage, error) {
 		return nil, err
 	}
 
-	return stage, nil
+	return environment, nil
 }
 
-func (r *stageRepository) List() ([]core.Stage, error) {
-	stages := []core.Stage{}
-	rows, err := r.db.Query("SELECT name, doc FROM stage")
+func (r *environmentRepository) List() ([]core.Environment, error) {
+	environments := []core.Environment{}
+	rows, err := r.db.Query("SELECT name, doc FROM environment")
 
 	if err != nil {
 		return nil, err
@@ -37,23 +37,23 @@ func (r *stageRepository) List() ([]core.Stage, error) {
 
 	defer rows.Close()
 	for rows.Next() {
-		stage := core.Stage{}
-		err := rows.Scan(&stage.Name, &stage.Doc)
+		environment := core.Environment{}
+		err := rows.Scan(&environment.Name, &environment.Doc)
 		if err != nil {
 			return nil, err
 		}
-		stages = append(stages, stage)
+		environments = append(environments, environment)
 	}
 
-	return stages, nil
+	return environments, nil
 }
 
-func (r *stageRepository) Save(stage *core.Stage) error {
+func (r *environmentRepository) Save(environment *core.Environment) error {
 	_, err := r.db.Exec(`
-		INSERT INTO stage(name, doc) VALUES($1,$2)
+		INSERT INTO environment(name, doc) VALUES($1,$2)
 		ON CONFLICT (name) DO
 		UPDATE SET
-			doc = $2;`, stage.Name, &stage.Doc)
+			doc = $2;`, environment.Name, &environment.Doc)
 
 	return err
 }

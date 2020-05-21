@@ -17,17 +17,17 @@ type Service interface {
 }
 
 type service struct {
-	secretMetas core.SecretMetaRepository
-	stages      core.StageRepository
-	rand        io.Reader
+	secretMetas  core.SecretMetaRepository
+	environments core.EnvironmentRepository
+	rand         io.Reader
 }
 
-func NewService(secretMetas core.SecretMetaRepository, stages core.StageRepository) Service {
-	return &service{secretMetas, stages, rand.Reader}
+func NewService(secretMetas core.SecretMetaRepository, environments core.EnvironmentRepository) Service {
+	return &service{secretMetas, environments, rand.Reader}
 }
 
 func (s *service) SealAndSave(plaintextSecret string, secretMeta *core.SecretMeta, committer state.Committer) error {
-	sealedSecretCert, err := s.getSealedSecretCert(plaintextSecret, secretMeta.StageName)
+	sealedSecretCert, err := s.getSealedSecretCert(plaintextSecret, secretMeta.EnvironmentName)
 	if err != nil {
 		return err
 	}
@@ -45,15 +45,15 @@ func (s *service) sealAndSave(plaintextSecret string, sealedSecretCert []byte, s
 
 	sealedSecret, err := resources.CreateSealedSecret(plaintextSecret, secretMeta, sealedSecretCert, s.rand)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Error creating sealed secret %q in stage %q", secretMeta.Name, secretMeta.StageName))
+		return errors.Wrap(err, fmt.Sprintf("Error creating sealed secret %q in environment %q", secretMeta.Name, secretMeta.EnvironmentName))
 	}
 
-	resourceFiles, err := state.RenderSealedSecret(secretMeta.App.Name, secretMeta.StageName, sealedSecret)
+	resourceFiles, err := state.RenderSealedSecret(secretMeta.App.Name, secretMeta.EnvironmentName, sealedSecret)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Error rendering sealed secret resource %q in stage %q", secretMeta.Name, secretMeta.StageName))
+		return errors.Wrap(err, fmt.Sprintf("Error rendering sealed secret resource %q in environment %q", secretMeta.Name, secretMeta.EnvironmentName))
 	}
 
-	err = committer.Commit(fmt.Sprintf("Updating secret %q in stage %q", sealedSecret.Name, secretMeta.StageName), resourceFiles)
+	err = committer.Commit(fmt.Sprintf("Updating secret %q in environment %q", sealedSecret.Name, secretMeta.EnvironmentName), resourceFiles)
 	if err != nil {
 		return errors.Wrap(err, "Error committing sealed secret resources")
 	}
@@ -69,15 +69,15 @@ func (s *service) sealAndSave(plaintextSecret string, sealedSecretCert []byte, s
 	return nil
 }
 
-func (s *service) getSealedSecretCert(plaintextSecret, stageName string) ([]byte, error) {
-	stage, err := s.stages.Get(stageName)
+func (s *service) getSealedSecretCert(plaintextSecret, envName string) ([]byte, error) {
+	environment, err := s.environments.Get(envName)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("Error retrieving stage %q", stageName))
+		return nil, errors.Wrap(err, fmt.Sprintf("Error retrieving environment %q", envName))
 	}
 
-	if len(stage.Doc.Config.SealedSecretCert) == 0 {
-		return nil, errors.New(fmt.Sprintf("No certificate configured in stage %q", stageName))
+	if len(environment.Doc.Config.SealedSecretCert) == 0 {
+		return nil, errors.New(fmt.Sprintf("No certificate configured in environment %q", envName))
 	}
 
-	return stage.Doc.Config.SealedSecretCert, nil
+	return environment.Doc.Config.SealedSecretCert, nil
 }

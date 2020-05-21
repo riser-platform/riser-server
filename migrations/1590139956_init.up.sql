@@ -4,7 +4,7 @@ CREATE TABLE namespace
   PRIMARY KEY (name)
 );
 
-CREATE TABLE stage
+CREATE TABLE environment
 (
   name character varying(63) NOT NULL,
   doc jsonb NOT NULL,
@@ -36,24 +36,24 @@ CREATE TABLE deployment
 (
   id uuid NOT NULL,
   deployment_reservation_id uuid NOT NULL REFERENCES deployment_reservation(id),
-  stage_name character varying(63) NOT NULL REFERENCES stage(name),
+  environment_name character varying(63) NOT NULL REFERENCES environment(name),
   riser_revision integer NOT NULL DEFAULT(0),
   deleted_at TIMESTAMP WITH TIME ZONE,
   doc jsonb NOT NULL,
   PRIMARY KEY (id)
 );
 
-CREATE UNIQUE INDEX ix_deployment_stage_name ON deployment(deployment_reservation_id, stage_name);
+CREATE UNIQUE INDEX ix_deployment_environment_name ON deployment(deployment_reservation_id, environment_name);
 CREATE INDEX ix_deployment_riser_revision ON deployment(riser_revision);
 CREATE INDEX ix_deployment_deleted_at ON deployment(deleted_at);
 
 CREATE TABLE secret_meta (
   name character varying(63) NOT NULL,
   app_id uuid NOT NULL REFERENCES app(id),
-  stage_name character varying(63) NOT NULL REFERENCES stage(name),
+  environment_name character varying(63) NOT NULL REFERENCES environment(name),
   revision integer NOT NULL DEFAULT(0),
   committed_revision integer NOT NULL DEFAULT(0),
-  PRIMARY KEY (name, app_id, stage_name)
+  PRIMARY KEY (name, app_id, environment_name)
 );
 
 CREATE INDEX ix_secretmeta_revision ON secret_meta(revision);

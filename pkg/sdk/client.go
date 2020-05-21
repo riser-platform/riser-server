@@ -26,13 +26,13 @@ type Client struct {
 	client  *http.Client
 
 	// Model clients
-	Apps        AppsClient
-	Deployments DeploymentsClient
-	Namespaces  NamespacesClient
-	Rollouts    RolloutsClient
-	Secrets     SecretsClient
-	Stages      StagesClient
-	Validate    ValidateClient
+	Apps         AppsClient
+	Deployments  DeploymentsClient
+	Namespaces   NamespacesClient
+	Rollouts     RolloutsClient
+	Secrets      SecretsClient
+	Environments EnvironmentsClient
+	Validate     ValidateClient
 }
 
 func NewClient(baseURI string, apikey string) (*Client, error) {
@@ -49,7 +49,7 @@ func NewClient(baseURI string, apikey string) (*Client, error) {
 	client.Namespaces = &namespacesClient{client}
 	client.Rollouts = &rolloutsClient{client}
 	client.Secrets = &secretsClient{client}
-	client.Stages = &stagesClient{client}
+	client.Environments = &environmentsClient{client}
 	client.Validate = &validateClient{client}
 
 	return client, nil

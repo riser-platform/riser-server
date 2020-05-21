@@ -12,7 +12,7 @@ func (fake *FakeService) ValidateDeployable(namespaceName string) error {
 func (fake *FakeService) EnsureDefaultNamespace(committer state.Committer) error {
 	panic("NI")
 }
-func (fake *FakeService) EnsureNamespaceInStage(namespaceName string, stageName string, committer state.Committer) error {
+func (fake *FakeService) EnsureNamespaceInEnvironment(namespaceName string, envName string, committer state.Committer) error {
 	panic("NI")
 }
 func (fake *FakeService) Create(namespaceName string, committer state.Committer) error {

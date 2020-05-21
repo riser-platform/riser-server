@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/core"
-	"github.com/riser-platform/riser-server/pkg/stage"
+	"github.com/riser-platform/riser-server/pkg/environment"
 )
 
 // TODO: Consider better homes for these
@@ -16,12 +16,12 @@ type Service interface {
 }
 
 type service struct {
-	deployments  core.DeploymentRepository
-	stageService stage.Service
+	deployments core.DeploymentRepository
+	envService  environment.Service
 }
 
-func NewService(deployments core.DeploymentRepository, stageService stage.Service) Service {
-	return &service{deployments, stageService}
+func NewService(deployments core.DeploymentRepository, envService environment.Service) Service {
+	return &service{deployments, envService}
 }
 
 func (s *service) GetByApp(appId uuid.UUID) (*core.AppStatus, error) {
@@ -31,20 +31,20 @@ func (s *service) GetByApp(appId uuid.UUID) (*core.AppStatus, error) {
 	}
 
 	appStatus := &core.AppStatus{
-		Deployments:   deployments,
-		StageStatuses: []core.StageStatus{},
+		Deployments:       deployments,
+		EnvironmentStatus: []core.EnvironmentStatus{},
 	}
 
-	stageMap := map[string]core.StageStatus{}
+	environmentMap := map[string]core.EnvironmentStatus{}
 
 	for _, deploymentStatus := range deployments {
-		if _, ok := stageMap[deploymentStatus.StageName]; !ok {
-			stageStatus, err := s.stageService.GetStatus(deploymentStatus.StageName)
+		if _, ok := environmentMap[deploymentStatus.EnvironmentName]; !ok {
+			environmentStatus, err := s.envService.GetStatus(deploymentStatus.EnvironmentName)
 			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("Error retrieving stage status for stage %q", deploymentStatus.StageName))
+				return nil, errors.Wrap(err, fmt.Sprintf("Error retrieving status for environment %q", deploymentStatus.EnvironmentName))
 			}
-			stageMap[deploymentStatus.StageName] = *stageStatus
-			appStatus.StageStatuses = append(appStatus.StageStatuses, *stageStatus)
+			environmentMap[deploymentStatus.EnvironmentName] = *environmentStatus
+			appStatus.EnvironmentStatus = append(appStatus.EnvironmentStatus, *environmentStatus)
 		}
 	}
 

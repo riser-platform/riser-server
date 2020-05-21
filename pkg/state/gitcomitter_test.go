@@ -28,7 +28,7 @@ func Test_Commit(t *testing.T) {
 	committer := NewGitCommitter(repo)
 
 	resources := []core.ResourceFile{
-		core.ResourceFile{
+		{
 			Name: "test.yaml",
 		},
 	}
@@ -56,7 +56,7 @@ func Test_Commit_NoChanges_DoesNotPush(t *testing.T) {
 	committer := NewGitCommitter(repo)
 
 	resources := []core.ResourceFile{
-		core.ResourceFile{
+		{
 			Name: "test.yaml",
 		},
 	}
@@ -94,7 +94,7 @@ func Test_Commit_Serialized(t *testing.T) {
 
 	doCommit := func(committer *GitCommitter) {
 		wg.Add(1)
-		err := committer.Commit("", []core.ResourceFile{core.ResourceFile{}})
+		err := committer.Commit("", []core.ResourceFile{{}})
 		wg.Done()
 		assert.NoError(t, err)
 	}

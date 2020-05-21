@@ -17,18 +17,18 @@ type Service interface {
 	ValidateDeployable(namespaceName string) error
 	// EnsureDefaultNamespace ensures that the default namespace has been provisioned. Designed to be used only at server startup.
 	EnsureDefaultNamespace(committer state.Committer) error
-	// EnsureNamespaceInStage ensures that a namespace has been committed to a stage. Returns an error if the namespace has not been created
-	EnsureNamespaceInStage(namespaceName string, stageName string, committer state.Committer) error
+	// EnsureNamespaceInEnvironment ensures that a namespace has been committed to a environment. Returns an error if the namespace has not been created
+	EnsureNamespaceInEnvironment(namespaceName string, envName string, committer state.Committer) error
 	Create(namespaceName string, committer state.Committer) error
 }
 
 type service struct {
-	namespaces core.NamespaceRepository
-	stages     core.StageRepository
+	namespaces   core.NamespaceRepository
+	environments core.EnvironmentRepository
 }
 
-func NewService(namespaces core.NamespaceRepository, stages core.StageRepository) Service {
-	return &service{namespaces, stages}
+func NewService(namespaces core.NamespaceRepository, environments core.EnvironmentRepository) Service {
+	return &service{namespaces, environments}
 }
 
 func (s *service) EnsureDefaultNamespace(committer state.Committer) error {
@@ -43,7 +43,7 @@ func (s *service) EnsureDefaultNamespace(committer state.Committer) error {
 	return nil
 }
 
-func (s *service) EnsureNamespaceInStage(namespaceName string, stageName string, committer state.Committer) error {
+func (s *service) EnsureNamespaceInEnvironment(namespaceName string, envName string, committer state.Committer) error {
 	_, err := s.namespaces.Get(namespaceName)
 	if err != nil {
 		if err == core.ErrNotFound {
@@ -51,7 +51,7 @@ func (s *service) EnsureNamespaceInStage(namespaceName string, stageName string,
 		}
 		return err
 	}
-	err = commitNamespace(namespaceName, stageName, committer)
+	err = commitNamespace(namespaceName, envName, committer)
 	if err == git.ErrNoChanges {
 		return nil
 	}
@@ -64,12 +64,12 @@ func (s *service) Create(namespaceName string, committer state.Committer) error 
 		return errors.Wrap(err, "error creating namespace")
 	}
 
-	stages, err := s.stages.List()
+	environments, err := s.environments.List()
 	if err != nil {
 		return err
 	}
-	for _, stage := range stages {
-		err = commitNamespace(namespaceName, stage.Name, committer)
+	for _, environment := range environments {
+		err = commitNamespace(namespaceName, environment.Name, committer)
 		if err != nil && err != git.ErrNoChanges {
 			return err
 		}
@@ -102,15 +102,15 @@ func toNameList(namespaces []core.Namespace) []string {
 	return names
 }
 
-func commitNamespace(namespaceName string, stageName string, committer state.Committer) error {
-	nsResource, err := resources.CreateNamespace(namespaceName, stageName)
+func commitNamespace(namespaceName string, envName string, committer state.Committer) error {
+	nsResource, err := resources.CreateNamespace(namespaceName, envName)
 	if err != nil {
 		return err
 	}
-	resourceFiles, err := state.RenderGeneric(stageName, nsResource)
+	resourceFiles, err := state.RenderGeneric(envName, nsResource)
 	if err != nil {
 		return err
 	}
 
-	return committer.Commit(fmt.Sprintf("Updating namespace %q in stage %q", namespaceName, stageName), resourceFiles)
+	return committer.Commit(fmt.Sprintf("Updating namespace %q in environment %q", namespaceName, envName), resourceFiles)
 }

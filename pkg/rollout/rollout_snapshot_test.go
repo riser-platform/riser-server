@@ -23,7 +23,7 @@ func Test_update_snapshot_rollout(t *testing.T) {
 	name := core.NewNamespacedName("myapp", "myns")
 
 	deployments := &core.FakeDeploymentRepository{
-		GetByNameFn: func(nameArg *core.NamespacedName, stageName string) (*core.Deployment, error) {
+		GetByNameFn: func(nameArg *core.NamespacedName, envName string) (*core.Deployment, error) {
 			assert.Equal(t, name, nameArg)
 			return &core.Deployment{
 				DeploymentReservation: core.DeploymentReservation{
@@ -83,7 +83,7 @@ func Test_update_snapshot_rollout(t *testing.T) {
 	assert.NoError(t, err)
 	if !util.ShouldUpdateSnapshot() {
 		require.Len(t, dryRunCommitter.Commits, 1)
-		assert.Equal(t, `Updating resources for "myapp.myns" in stage "dev"`, dryRunCommitter.Commits[0].Message)
+		assert.Equal(t, `Updating resources for "myapp.myns" in environment "dev"`, dryRunCommitter.Commits[0].Message)
 		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }

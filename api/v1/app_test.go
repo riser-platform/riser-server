@@ -26,12 +26,12 @@ func Test_mapAppFromDomain(t *testing.T) {
 
 func Test_mapAppArrayFromDomain(t *testing.T) {
 	domainArray := []core.App{
-		core.App{
+		{
 			Id:        uuid.New(),
 			Name:      "myapp1",
 			Namespace: "myns1",
 		},
-		core.App{
+		{
 			Name: "myapp2",
 		},
 	}

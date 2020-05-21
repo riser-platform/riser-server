@@ -95,7 +95,7 @@ func main() {
 }
 
 func bootstrapDefaultNamespace(db *sql.DB, repo git.Repo) {
-	namespaceService := namespace.NewService(postgres.NewNamespaceRepository(db), postgres.NewStageRepository(db))
+	namespaceService := namespace.NewService(postgres.NewNamespaceRepository(db), postgres.NewEnvironmentRepository(db))
 	err := namespaceService.EnsureDefaultNamespace(state.NewGitCommitter(repo))
 	exitIfError(err, "Error ensuring default namespace")
 }

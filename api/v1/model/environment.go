@@ -1,10 +1,10 @@
 package model
 
-type StageMeta struct {
+type EnvironmentMeta struct {
 	Name string
 }
 
-type StageConfig struct {
+type EnvironmentConfig struct {
 	SealedSecretCert  []byte `json:"sealedSecretCert,omitempty"`
 	PublicGatewayHost string `json:"publicGatewayHost,omitempty"`
 }

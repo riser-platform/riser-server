@@ -36,7 +36,7 @@ func Test_Secrets_Save(t *testing.T) {
 		mustUnmarshalR(r.Body, unsealed)
 		assert.EqualValues(t, "myapp", unsealed.AppName)
 		assert.EqualValues(t, "myns", unsealed.Namespace)
-		assert.Equal(t, "dev", unsealed.Stage)
+		assert.Equal(t, "dev", unsealed.Environment)
 		assert.Equal(t, "mysecret", unsealed.Name)
 		assert.Equal(t, "myval", unsealed.PlainText)
 	})

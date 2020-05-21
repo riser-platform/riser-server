@@ -6,7 +6,7 @@ import (
 )
 
 type FakeService struct {
-	DeleteFn        func(name *core.NamespacedName, stageName string, committer state.Committer) error
+	DeleteFn        func(name *core.NamespacedName, envName string, committer state.Committer) error
 	DeleteCallCount int
 }
 
@@ -14,7 +14,7 @@ func (f *FakeService) Update(deployment *core.DeploymentConfig, committer state.
 	panic("NI!")
 }
 
-func (f *FakeService) Delete(name *core.NamespacedName, stageName string, committer state.Committer) error {
+func (f *FakeService) Delete(name *core.NamespacedName, envName string, committer state.Committer) error {
 	f.DeleteCallCount++
-	return f.DeleteFn(name, stageName, committer)
+	return f.DeleteFn(name, envName, committer)
 }

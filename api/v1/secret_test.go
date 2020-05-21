@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	"github.com/riser-platform/riser-server/pkg/stage"
 
+	"github.com/riser-platform/riser-server/pkg/environment"
 	"github.com/riser-platform/riser-server/pkg/secret"
 	"github.com/riser-platform/riser-server/pkg/state"
 
@@ -21,10 +21,10 @@ import (
 func Test_PutSecret(t *testing.T) {
 	unsealed := model.UnsealedSecret{
 		SecretMeta: model.SecretMeta{
-			AppName:   "myapp",
-			Namespace: "myns",
-			Stage:     "dev",
-			Name:      "mysecret",
+			AppName:     "myapp",
+			Namespace:   "myns",
+			Environment: "dev",
+			Name:        "mysecret",
 		},
 		PlainText: "myplain",
 	}
@@ -42,14 +42,14 @@ func Test_PutSecret(t *testing.T) {
 		},
 	}
 
-	stageService := &stage.FakeService{
-		ValidateDeployableFn: func(stageName string) error {
-			assert.Equal(t, "dev", stageName)
+	environmentService := &environment.FakeService{
+		ValidateDeployableFn: func(envName string) error {
+			assert.Equal(t, "dev", envName)
 			return nil
 		},
 	}
 
-	err := PutSecret(ctx, nil, secretService, stageService)
+	err := PutSecret(ctx, nil, secretService, environmentService)
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Result().StatusCode)
@@ -59,10 +59,10 @@ func Test_PutSecret(t *testing.T) {
 func Test_PutSecret_WhenRevisionConflict(t *testing.T) {
 	unsealed := model.UnsealedSecret{
 		SecretMeta: model.SecretMeta{
-			AppName:   "myapp",
-			Namespace: "myns",
-			Stage:     "dev",
-			Name:      "mysecret",
+			AppName:     "myapp",
+			Namespace:   "myns",
+			Environment: "dev",
+			Name:        "mysecret",
 		},
 		PlainText: "myplain",
 	}
@@ -78,13 +78,13 @@ func Test_PutSecret_WhenRevisionConflict(t *testing.T) {
 		},
 	}
 
-	stageService := &stage.FakeService{
-		ValidateDeployableFn: func(stageName string) error {
+	environmentService := &environment.FakeService{
+		ValidateDeployableFn: func(envName string) error {
 			return nil
 		},
 	}
 
-	err := PutSecret(ctx, nil, secretService, stageService)
+	err := PutSecret(ctx, nil, secretService, environmentService)
 	require.IsType(t, &echo.HTTPError{}, err)
 	httpErr := err.(*echo.HTTPError)
 	assert.Equal(t, "A newer revision of the secret was saved while attempting to save this secret. This is usually caused by a race condition due to another user saving the secret at the same time.", httpErr.Message)
@@ -93,25 +93,25 @@ func Test_PutSecret_WhenRevisionConflict(t *testing.T) {
 
 func Test_mapSecretMetaStatusFromDomain(t *testing.T) {
 	domain := core.SecretMeta{
-		App:       core.NewNamespacedName("myapp", "myns"),
-		StageName: "mystage",
-		Name:      "mysecret",
-		Revision:  1,
+		App:             core.NewNamespacedName("myapp", "myns"),
+		EnvironmentName: "myenv",
+		Name:            "mysecret",
+		Revision:        1,
 	}
 
 	result := mapSecretMetaStatusFromDomain(domain)
 
 	assert.EqualValues(t, "myapp", result.AppName)
 	assert.EqualValues(t, "myns", result.Namespace)
-	assert.Equal(t, "mystage", result.Stage)
+	assert.Equal(t, "myenv", result.Environment)
 	assert.Equal(t, "mysecret", result.Name)
 	assert.EqualValues(t, 1, result.Revision)
 }
 
 func Test_mapSecretMetaStatusArrayFromDomain(t *testing.T) {
 	domainArray := []core.SecretMeta{
-		core.SecretMeta{Name: "secret1", App: &core.NamespacedName{}},
-		core.SecretMeta{Name: "secret2", App: &core.NamespacedName{}},
+		{Name: "secret1", App: &core.NamespacedName{}},
+		{Name: "secret2", App: &core.NamespacedName{}},
 	}
 
 	result := mapSecretMetaStatusArrayFromDomain(domainArray)
@@ -123,10 +123,10 @@ func Test_mapSecretMetaStatusArrayFromDomain(t *testing.T) {
 
 func Test_mapSecretMetaFromModel(t *testing.T) {
 	model := &model.SecretMeta{
-		AppName:   "myapp",
-		Namespace: "myns",
-		Name:      "mysecret",
-		Stage:     "mystage",
+		AppName:     "myapp",
+		Namespace:   "myns",
+		Name:        "mysecret",
+		Environment: "myenv",
 	}
 
 	result := mapSecretMetaFromModel(model)
@@ -134,5 +134,5 @@ func Test_mapSecretMetaFromModel(t *testing.T) {
 	assert.Equal(t, "myapp", result.App.Name)
 	assert.Equal(t, "myns", result.App.Namespace)
 	assert.Equal(t, "mysecret", result.Name)
-	assert.Equal(t, "mystage", result.StageName)
+	assert.Equal(t, "myenv", result.EnvironmentName)
 }

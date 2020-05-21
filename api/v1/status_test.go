@@ -22,15 +22,15 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 			Namespace: "myns",
 		},
 		DeploymentRecord: core.DeploymentRecord{
-			StageName:     "mystage",
-			RiserRevision: 4,
+			EnvironmentName: "myenv",
+			RiserRevision:   4,
 			Doc: core.DeploymentDoc{
 				Status: &core.DeploymentStatus{
 					ObservedRiserRevision:     3,
 					LatestCreatedRevisionName: "rev2",
 					LatestReadyRevisionName:   "rev1",
 					Revisions: []core.DeploymentRevisionStatus{
-						core.DeploymentRevisionStatus{
+						{
 							Name:                 "rev1",
 							AvailableReplicas:    1,
 							RevisionStatus:       "myrevisionstatus",
@@ -38,7 +38,7 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 							DockerImage:          "mydockerimage",
 							RiserRevision:        3,
 						},
-						core.DeploymentRevisionStatus{
+						{
 							Name:                 "rev2",
 							AvailableReplicas:    1,
 							RevisionStatus:       "myrevisionstatus2",
@@ -48,12 +48,12 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 						},
 					},
 					Traffic: []core.DeploymentTrafficStatus{
-						core.DeploymentTrafficStatus{
+						{
 							Percent:      util.PtrInt64(90),
 							RevisionName: "rev1",
 							Tag:          "r1",
 						},
-						core.DeploymentTrafficStatus{
+						{
 							Percent:      util.PtrInt64(10),
 							RevisionName: "rev2",
 							Tag:          "r2",
@@ -69,7 +69,7 @@ func Test_mapDeploymentToStatusModel(t *testing.T) {
 	assert.Equal(t, deployment.AppId, result.AppId)
 	assert.Equal(t, "mydeployment", result.DeploymentName)
 	assert.Equal(t, "myns", result.Namespace)
-	assert.Equal(t, "mystage", result.StageName)
+	assert.Equal(t, "myenv", result.EnvironmentName)
 	assert.Equal(t, int64(3), result.ObservedRiserRevision)
 	assert.Equal(t, int64(4), result.RiserRevision)
 	assert.Equal(t, "rev2", result.LatestCreatedRevisionName)
@@ -109,8 +109,8 @@ func Test_mapDeploymentToStatusModel_NilStatus(t *testing.T) {
 		},
 		DeploymentRecord: core.DeploymentRecord{
 
-			StageName: "mystage",
-			Doc:       core.DeploymentDoc{},
+			EnvironmentName: "myenv",
+			Doc:             core.DeploymentDoc{},
 		},
 	}
 
@@ -119,7 +119,7 @@ func Test_mapDeploymentToStatusModel_NilStatus(t *testing.T) {
 	assert.Equal(t, deployment.AppId, result.AppId)
 	assert.Equal(t, "mydeployment", result.DeploymentName)
 	assert.Equal(t, "myns", result.Namespace)
-	assert.Equal(t, "mystage", result.StageName)
+	assert.Equal(t, "myenv", result.EnvironmentName)
 }
 
 func Test_mapDeploymentStatusFromModel(t *testing.T) {
@@ -128,7 +128,7 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 		LatestReadyRevisionName:   "rev1",
 		LatestCreatedRevisionName: "rev2",
 		Revisions: []model.DeploymentRevisionStatus{
-			model.DeploymentRevisionStatus{
+			{
 				Name:                 "rev1",
 				AvailableReplicas:    1,
 				RiserRevision:        2,
@@ -136,7 +136,7 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 				RevisionStatusReason: "myrevisionstatusreason",
 				DockerImage:          "mydockerimage",
 			},
-			model.DeploymentRevisionStatus{
+			{
 				Name:                 "rev2",
 				AvailableReplicas:    1,
 				RiserRevision:        3,
@@ -146,12 +146,12 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 			},
 		},
 		Traffic: []model.DeploymentTrafficStatus{
-			model.DeploymentTrafficStatus{
+			{
 				Percent:      util.PtrInt64(90),
 				RevisionName: "rev1",
 				Tag:          "r1",
 			},
-			model.DeploymentTrafficStatus{
+			{
 				Percent:      util.PtrInt64(10),
 				RevisionName: "rev2",
 				Tag:          "r2",

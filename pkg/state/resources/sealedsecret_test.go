@@ -42,10 +42,10 @@ xbU=
 
 func Test_CreateSealedSecret(t *testing.T) {
 	secret := &core.SecretMeta{
-		Name:      "mysecretname",
-		App:       core.NewNamespacedName("myapp", "apps"),
-		StageName: "dev",
-		Revision:  1,
+		Name:            "mysecretname",
+		App:             core.NewNamespacedName("myapp", "apps"),
+		EnvironmentName: "dev",
+		Revision:        1,
 	}
 
 	result, err := CreateSealedSecret("mysecretvalue", secret, []byte(testSealedSecretCert), rand.Reader)

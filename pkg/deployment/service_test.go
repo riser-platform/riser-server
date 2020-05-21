@@ -22,9 +22,9 @@ import (
 func Test_Delete(t *testing.T) {
 	name := core.NewNamespacedName("mydep", "apps")
 	deploymentRepository := &core.FakeDeploymentRepository{
-		DeleteFn: func(nameArg *core.NamespacedName, stageName string) error {
+		DeleteFn: func(nameArg *core.NamespacedName, envName string) error {
 			assert.Equal(t, name, nameArg)
-			assert.Equal(t, "mystage", stageName)
+			assert.Equal(t, "myenv", envName)
 			return nil
 		},
 	}
@@ -33,16 +33,16 @@ func Test_Delete(t *testing.T) {
 
 	service := service{deployments: deploymentRepository}
 
-	err := service.Delete(name, "mystage", committer)
+	err := service.Delete(name, "myenv", committer)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, deploymentRepository.DeleteCallCount)
 	assert.Len(t, committer.Commits, 1)
 	assert.Equal(t, `Deleting deployment "mydep.apps"`, committer.Commits[0].Message)
 	assert.Len(t, committer.Commits[0].Files, 2)
-	assert.Equal(t, "state/mystage/riser-managed/apps/deployments/mydep", committer.Commits[0].Files[0].Name)
+	assert.Equal(t, "state/myenv/riser-managed/apps/deployments/mydep", committer.Commits[0].Files[0].Name)
 	assert.True(t, committer.Commits[0].Files[0].Delete)
-	assert.Equal(t, "config/mystage/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
+	assert.Equal(t, "config/myenv/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
 	assert.True(t, committer.Commits[0].Files[1].Delete)
 }
 
@@ -57,7 +57,7 @@ func Test_Delete_SoftDeleteFails(t *testing.T) {
 
 	service := service{deployments: deploymentRepository}
 
-	err := service.Delete(core.NewNamespacedName("mydep", "myns"), "mystage", committer)
+	err := service.Delete(core.NewNamespacedName("mydep", "myns"), "myenv", committer)
 
 	assert.Equal(t, "error deleting deployment: test", err.Error())
 }
@@ -71,17 +71,17 @@ func Test_Delete_DeploymentNotFound(t *testing.T) {
 
 	service := service{deployments: deploymentRepository}
 
-	err := service.Delete(core.NewNamespacedName("mydep", "myns"), "mystage", nil)
+	err := service.Delete(core.NewNamespacedName("mydep", "myns"), "myenv", nil)
 
-	assert.Equal(t, `There is no deployment by the name "mydep.myns" in stage "mystage"`, err.Error())
+	assert.Equal(t, `There is no deployment by the name "mydep.myns" in environment "myenv"`, err.Error())
 	assert.IsType(t, &core.ValidationError{}, err)
 }
 
 func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:      "myapp-mydep",
-		Namespace: "myns",
-		Stage:     "mystage",
+		Name:            "myapp-mydep",
+		Namespace:       "myns",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -101,15 +101,15 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, envNameArg string) (*core.Deployment, error) {
 			assert.Equal(t, reservation.Id, reservationId)
-			assert.Equal(t, "mystage", stageNameArg)
+			assert.Equal(t, "myenv", envNameArg)
 			return nil, core.ErrNotFound
 		},
 		CreateFn: func(deploymentArg *core.DeploymentRecord) error {
 			assert.NotEqual(t, uuid.Nil, deploymentArg.Id)
 			assert.Equal(t, reservation.Id, deploymentArg.ReservationId)
-			assert.Equal(t, "mystage", deploymentArg.StageName)
+			assert.Equal(t, "myenv", deploymentArg.EnvironmentName)
 			assert.Equal(t, int64(1), deploymentArg.RiserRevision)
 			return nil
 		},
@@ -127,9 +127,9 @@ func Test_prepareForDeployment_whenNewDeploymentCreates(t *testing.T) {
 
 func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:      "myapp-mydep",
-		Namespace: "myns",
-		Stage:     "mystage",
+		Name:            "myapp-mydep",
+		Namespace:       "myns",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -151,24 +151,24 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, envNameArg string) (*core.Deployment, error) {
 			return &core.Deployment{
 				DeploymentReservation: reservation,
 				DeploymentRecord: core.DeploymentRecord{
-					Id:            deploymentId,
-					ReservationId: reservation.Id,
-					StageName:     "mystage"}}, nil
+					Id:              deploymentId,
+					ReservationId:   reservation.Id,
+					EnvironmentName: "myenv"}}, nil
 		},
-		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name *core.NamespacedName, envName string) (int64, error) {
 			assert.Equal(t, "myapp-mydep", name.Name)
 			assert.Equal(t, "myns", name.Namespace)
-			assert.Equal(t, "mystage", stageName)
+			assert.Equal(t, "myenv", envName)
 			return 3, nil
 		},
-		UpdateTrafficFn: func(name *core.NamespacedName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+		UpdateTrafficFn: func(name *core.NamespacedName, envName string, riserRevision int64, traffic core.TrafficConfig) error {
 			assert.Equal(t, "myapp-mydep", name.Name)
 			assert.Equal(t, "myns", name.Namespace)
-			assert.Equal(t, "mystage", stageName)
+			assert.Equal(t, "myenv", envName)
 			assert.Len(t, traffic, 1)
 			assert.Equal(t, int64(3), traffic[0].RiserRevision)
 			assert.Equal(t, "myapp-mydep-3", traffic[0].RevisionName)
@@ -192,9 +192,9 @@ func Test_prepareForDeployment_whenExistingDeployment(t *testing.T) {
 // the old deployment as they will not be valid. ManualRollout is effectively ignored in this case.
 func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:      "myapp-mydep",
-		Namespace: "myns",
-		Stage:     "mystage",
+		Name:            "myapp-mydep",
+		Namespace:       "myns",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -219,15 +219,15 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, envNameArg string) (*core.Deployment, error) {
 			deletedAt := time.Now()
 			return &core.Deployment{
 				DeploymentReservation: reservation,
 				DeploymentRecord: core.DeploymentRecord{
-					Id:            deploymentId,
-					ReservationId: reservation.Id,
-					StageName:     "mystage",
-					DeletedAt:     &deletedAt,
+					Id:              deploymentId,
+					ReservationId:   reservation.Id,
+					EnvironmentName: "myenv",
+					DeletedAt:       &deletedAt,
 					Doc: core.DeploymentDoc{
 						// This rule should be ignored since the deployment was previously deleted
 						Traffic: core.TrafficConfig{
@@ -241,16 +241,16 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 				},
 			}, nil
 		},
-		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name *core.NamespacedName, envName string) (int64, error) {
 			assert.Equal(t, "myapp-mydep", name.Name)
 			assert.Equal(t, "myns", name.Namespace)
-			assert.Equal(t, "mystage", stageName)
+			assert.Equal(t, "myenv", envName)
 			return 3, nil
 		},
-		UpdateTrafficFn: func(name *core.NamespacedName, stageName string, riserRevision int64, traffic core.TrafficConfig) error {
+		UpdateTrafficFn: func(name *core.NamespacedName, envName string, riserRevision int64, traffic core.TrafficConfig) error {
 			assert.Equal(t, "myapp-mydep", name.Name)
 			assert.Equal(t, "myns", name.Namespace)
-			assert.Equal(t, "mystage", stageName)
+			assert.Equal(t, "myenv", envName)
 			// Even though a manual rollout is requested, a previously deleted deployment is treated as if there are no previous traffic rules
 			// Therefore we route all traffic to the new revision.
 			assert.Len(t, traffic, 1)
@@ -274,8 +274,8 @@ func Test_prepareForDeployment_manualRollout_previouslyDeletedDeployment(t *test
 
 func Test_prepareForDeployment_whenIncrementRevisionFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:            "myapp-mydep",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -297,15 +297,15 @@ func Test_prepareForDeployment_whenIncrementRevisionFails(t *testing.T) {
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, envNameArg string) (*core.Deployment, error) {
 			return &core.Deployment{
 				DeploymentReservation: reservation,
 				DeploymentRecord: core.DeploymentRecord{
-					Id:            deploymentId,
-					ReservationId: reservation.Id,
-					StageName:     "mystage"}}, nil
+					Id:              deploymentId,
+					ReservationId:   reservation.Id,
+					EnvironmentName: "myenv"}}, nil
 		},
-		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name *core.NamespacedName, envName string) (int64, error) {
 			return 0, errors.New("test")
 		},
 	}
@@ -319,8 +319,8 @@ func Test_prepareForDeployment_whenIncrementRevisionFails(t *testing.T) {
 
 func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:            "myapp-mydep",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -342,13 +342,13 @@ func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, envNameArg string) (*core.Deployment, error) {
 			return &core.Deployment{
 				DeploymentReservation: reservation,
 				DeploymentRecord: core.DeploymentRecord{
-					Id:            deploymentId,
-					ReservationId: reservation.Id,
-					StageName:     "mystage"}}, nil
+					Id:              deploymentId,
+					ReservationId:   reservation.Id,
+					EnvironmentName: "myenv"}}, nil
 		},
 	}
 
@@ -371,8 +371,8 @@ func Test_prepareForDeployment_doesNotUpdateWhenDryRun(t *testing.T) {
 
 func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:            "myapp-mydep",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -394,15 +394,15 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, envNameArg string) (*core.Deployment, error) {
 			return &core.Deployment{
 				DeploymentReservation: reservation,
 				DeploymentRecord: core.DeploymentRecord{
-					Id:            deploymentId,
-					ReservationId: reservation.Id,
-					StageName:     "mystage"}}, nil
+					Id:              deploymentId,
+					ReservationId:   reservation.Id,
+					EnvironmentName: "myenv"}}, nil
 		},
-		IncrementRevisionFn: func(name *core.NamespacedName, stageName string) (int64, error) {
+		IncrementRevisionFn: func(name *core.NamespacedName, envName string) (int64, error) {
 			return 1, nil
 		},
 		UpdateTrafficFn: func(*core.NamespacedName, string, int64, core.TrafficConfig) error {
@@ -419,8 +419,8 @@ func Test_prepareForDeployment_whenUpdateTrafficFails(t *testing.T) {
 
 func Test_prepareForDeployment_whenEnsureReservationErr(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:            "myapp-mydep",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Id:   uuid.New(),
 			Name: "myapp",
@@ -442,8 +442,8 @@ func Test_prepareForDeployment_whenEnsureReservationErr(t *testing.T) {
 
 func Test_prepareForDeployment_whenGetFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:            "myapp-mydep",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Name: "myapp",
 		},
@@ -472,13 +472,13 @@ func Test_prepareForDeployment_whenGetFails(t *testing.T) {
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
-	assert.Equal(t, `Error retrieving deployment "myapp-mydep" in stage "mystage": test`, err.Error())
+	assert.Equal(t, `Error retrieving deployment "myapp-mydep" in environment "myenv": test`, err.Error())
 }
 
 func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:  "myapp-mydep",
-		Stage: "mystage",
+		Name:            "myapp-mydep",
+		EnvironmentName: "myenv",
 		App: &model.AppConfig{
 			Name: "myapp",
 		},
@@ -498,7 +498,7 @@ func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 	}
 
 	deploymentRepository := &core.FakeDeploymentRepository{
-		GetByReservationFn: func(reservationId uuid.UUID, stageNameArg string) (*core.Deployment, error) {
+		GetByReservationFn: func(reservationId uuid.UUID, envNameArg string) (*core.Deployment, error) {
 			return nil, core.ErrNotFound
 		},
 		CreateFn: func(newDeploymentArg *core.DeploymentRecord) error {
@@ -510,7 +510,7 @@ func Test_prepareForDeployment_whenCreateFails(t *testing.T) {
 	result, err := service.prepareForDeployment(deployment, false)
 
 	assert.Zero(t, result)
-	assert.Equal(t, `Error creating deployment "myapp-mydep" in stage "mystage": test`, err.Error())
+	assert.Equal(t, `Error creating deployment "myapp-mydep" in environment "myenv": test`, err.Error())
 }
 
 func Test_computeTraffic_NewDeployment(t *testing.T) {

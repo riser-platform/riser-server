@@ -9,7 +9,7 @@ import (
 	"github.com/riser-platform/riser-server/api/v1/model"
 )
 
-// Deployment represents a deployment in a particular stage
+// Deployment represents a deployment in a particular environment
 type Deployment struct {
 	DeploymentReservation
 	DeploymentRecord
@@ -17,9 +17,9 @@ type Deployment struct {
 
 // DeploymentRecord represents the database fields specific for a deployment
 type DeploymentRecord struct {
-	Id            uuid.UUID
-	ReservationId uuid.UUID
-	StageName     string
+	Id              uuid.UUID
+	ReservationId   uuid.UUID
+	EnvironmentName string
 	// RiserRevision is for tracking deployment changes and has no relation to a k8s deployment revision
 	RiserRevision int64
 	DeletedAt     *time.Time
@@ -27,10 +27,10 @@ type DeploymentRecord struct {
 }
 
 type DeploymentConfig struct {
-	Name      string
-	Namespace string
-	Stage     string
-	Docker    DeploymentDocker
+	Name            string
+	Namespace       string
+	EnvironmentName string
+	Docker          DeploymentDocker
 	// TODO: Move to core and remove api/v1/model dependency
 	App           *model.AppConfig
 	Traffic       TrafficConfig
@@ -85,11 +85,11 @@ type StatusProblem struct {
 }
 
 type DeploymentContext struct {
-	Deployment    *DeploymentConfig
-	Stage         *StageConfig
-	RiserRevision int64
-	Secrets       []SecretMeta
-	ManualRollout bool
+	DeploymentConfig  *DeploymentConfig
+	EnvironmentConfig *EnvironmentConfig
+	RiserRevision     int64
+	Secrets           []SecretMeta
+	ManualRollout     bool
 }
 
 // Needed for sql.Scanner interface

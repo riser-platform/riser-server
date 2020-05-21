@@ -10,15 +10,15 @@ const (
 )
 
 type AppStatus struct {
-	Stages      []StageStatus      `json:"stages"`
-	Deployments []DeploymentStatus `json:"deployments"`
+	Environments []EnvironmentStatus `json:"environments"`
+	Deployments  []DeploymentStatus  `json:"deployments"`
 }
 
 type DeploymentStatus struct {
 	AppId                   uuid.UUID `json:"appId"`
 	DeploymentName          string    `json:"deployment"`
 	Namespace               string    `json:"namespace"`
-	StageName               string    `json:"stage"`
+	EnvironmentName         string    `json:"environment"`
 	RiserRevision           int64     `json:"riserRevision"`
 	DeploymentStatusMutable `json:",inline"`
 }
@@ -46,8 +46,8 @@ type DeploymentRevisionStatus struct {
 	RevisionStatusReason string `json:"revisionStatusReason,omitempty"`
 }
 
-type StageStatus struct {
-	StageName string `json:"stageName"`
-	Healthy   bool   `json:"healthy"`
-	Reason    string `json:"string"`
+type EnvironmentStatus struct {
+	EnvironmentName string `json:"environmentName"`
+	Healthy         bool   `json:"healthy"`
+	Reason          string `json:"string"`
 }

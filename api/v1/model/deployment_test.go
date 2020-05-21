@@ -11,9 +11,9 @@ import (
 
 var minimumValidDeploymentRequest = &DeploymentRequest{
 	DeploymentMeta: DeploymentMeta{
-		Name:   "mydep",
-		Stage:  "test",
-		Docker: DeploymentDocker{},
+		Name:        "mydep",
+		Environment: "test",
+		Docker:      DeploymentDocker{},
 	},
 	App: &AppConfigWithOverrides{AppConfig: *minimumValidAppConfig},
 }
@@ -52,7 +52,7 @@ func Test_DeploymentRequest_ValidateRequired(t *testing.T) {
 	assert.IsType(t, validation.Errors{}, err)
 	validationErrors := err.(validation.Errors)
 	assert.Len(t, validationErrors, 3)
-	assertFieldsRequired(t, validationErrors, "app", "name", "stage")
+	assertFieldsRequired(t, validationErrors, "app", "name", "environment")
 }
 
 func Test_DeploymentRequest_ValidateEmptyApp(t *testing.T) {

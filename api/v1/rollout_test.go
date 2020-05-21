@@ -6,25 +6,25 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
+	"github.com/riser-platform/riser-server/pkg/environment"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_PutRollout_ValidatesStage(t *testing.T) {
+func Test_PutRollout_ValidatesEnvironment(t *testing.T) {
 	rollout := model.RolloutRequest{}
 	req := httptest.NewRequest(http.MethodPut, "/", safeMarshal(rollout))
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, _ := newContextWithRecorder(req)
 
-	stageService := &stage.FakeService{
-		ValidateDeployableFn: func(stageName string) error {
+	service := &environment.FakeService{
+		ValidateDeployableFn: func(envName string) error {
 			return errors.New("test")
 		},
 	}
 
-	err := PutRollout(ctx, nil, stageService, nil)
+	err := PutRollout(ctx, nil, service, nil)
 
 	assert.Equal(t, "test", err.Error())
 }
@@ -35,24 +35,24 @@ func Test_PutRollout_ValidatesTraffic(t *testing.T) {
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, _ := newContextWithRecorder(req)
 
-	stageService := &stage.FakeService{
-		ValidateDeployableFn: func(stageName string) error {
+	service := &environment.FakeService{
+		ValidateDeployableFn: func(envName string) error {
 			return nil
 		},
 	}
 
-	err := PutRollout(ctx, nil, stageService, nil)
+	err := PutRollout(ctx, nil, service, nil)
 
 	assert.Equal(t, "Invalid rollout request: traffic: must specify one or more traffic rules.", err.Error())
 }
 
 func Test_mapTrafficRulesToDomain(t *testing.T) {
 	in := []model.TrafficRule{
-		model.TrafficRule{
+		{
 			RiserRevision: 1,
 			Percent:       10,
 		},
-		model.TrafficRule{
+		{
 			RiserRevision: 2,
 			Percent:       90,
 		},

@@ -35,9 +35,9 @@ lint:
 	cd pkg/sdk && golangci-lint run
 
 # compile and run unit tests on change. Always "make test" before comitting.
-# requires filewatcher and gotestsum
+# requires fswatch and gotestsum
 watch:
-	filewatcher -d api,pkg gotestsum
+	fswatch -l 1 -o . | xargs -n1 -I{} gotestsum
 
 docker-build:
 	docker build . -t riser-server

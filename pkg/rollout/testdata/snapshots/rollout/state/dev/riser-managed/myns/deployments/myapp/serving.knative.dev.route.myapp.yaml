@@ -9,7 +9,7 @@ metadata:
   labels:
     riser.dev/app: myapp
     riser.dev/deployment: myapp
-    riser.dev/stage: dev
+    riser.dev/environment: dev
   name: myapp
   namespace: myns
 spec:

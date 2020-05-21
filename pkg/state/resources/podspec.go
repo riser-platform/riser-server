@@ -16,13 +16,13 @@ func createPodSpec(ctx *core.DeploymentContext) corev1.PodSpec {
 	return corev1.PodSpec{
 		EnableServiceLinks: util.PtrBool(false),
 		Containers: []corev1.Container{
-			corev1.Container{
-				Name:           ctx.Deployment.Name,
-				Image:          fmt.Sprintf("%s:%s", ctx.Deployment.App.Image, ctx.Deployment.Docker.Tag),
-				Resources:      resources(ctx.Deployment.App),
-				ReadinessProbe: readinessProbe(ctx.Deployment.App),
+			{
+				Name:           ctx.DeploymentConfig.Name,
+				Image:          fmt.Sprintf("%s:%s", ctx.DeploymentConfig.App.Image, ctx.DeploymentConfig.Docker.Tag),
+				Resources:      resources(ctx.DeploymentConfig.App),
+				ReadinessProbe: readinessProbe(ctx.DeploymentConfig.App),
 				Env:            k8sEnvVars(ctx),
-				Ports:          createPodPorts(ctx.Deployment.App.Expose),
+				Ports:          createPodPorts(ctx.DeploymentConfig.App.Expose),
 			},
 		},
 	}
@@ -35,7 +35,7 @@ func createPodPorts(expose *model.AppConfigExpose) []corev1.ContainerPort {
 		containerPortName = "h2c"
 	}
 	ports := []corev1.ContainerPort{
-		corev1.ContainerPort{
+		{
 			Protocol:      corev1.ProtocolTCP,
 			ContainerPort: expose.ContainerPort,
 			Name:          containerPortName,

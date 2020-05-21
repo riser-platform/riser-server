@@ -10,16 +10,16 @@ kubectl create namespace flux
 
 ## Configure Flux
 Create a secret with your git URL and your git path. The git path
-should reflect the riser stage name so that only resources for that stage are applied to this cluster.
+should reflect the riser environment name so that only resources for that environment are applied to this cluster.
 
 ```
 kubectl create secret generic flux-git --namespace flux --from-literal=GIT_URL=<GIT_URL>
---from-literal=GIT_PATH=state/<STAGE_NAME>
+--from-literal=GIT_PATH=state/<ENVIRONMENT_NAME>
 ```
 > :warning: Do not include a leading "slash" in the `GIT_PATH`
 
 ### Example Secret
-If your cluster is serving the riser stage named `dev`:
+If your cluster is serving the riser environment named `dev`:
 
 ```
 kubectl create secret generic flux-git --namespace flux --from-literal=GIT_URL=https://myoathtoken@github.com/myorg/riser-state

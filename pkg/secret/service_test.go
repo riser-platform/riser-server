@@ -18,13 +18,13 @@ const testCert = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVyakNDQXBhZ0F3SUJBZ0
 
 func Test_getSealedSecretCert(t *testing.T) {
 	testCertBytes, _ := base64.StdEncoding.DecodeString(testCert)
-	stageRepository := &core.FakeStageRepository{
-		GetFn: func(stageName string) (*core.Stage, error) {
-			assert.Equal(t, "mystage", stageName)
-			return &core.Stage{
-				Name: "mystage",
-				Doc: core.StageDoc{
-					Config: core.StageConfig{
+	environmentRepository := &core.FakeEnvironmentRepository{
+		GetFn: func(envName string) (*core.Environment, error) {
+			assert.Equal(t, "myenv", envName)
+			return &core.Environment{
+				Name: "myenv",
+				Doc: core.EnvironmentDoc{
+					Config: core.EnvironmentConfig{
 						SealedSecretCert: testCertBytes,
 					},
 				},
@@ -32,46 +32,46 @@ func Test_getSealedSecretCert(t *testing.T) {
 		},
 	}
 
-	service := service{stages: stageRepository}
+	service := service{environments: environmentRepository}
 
-	result, err := service.getSealedSecretCert("plain", "mystage")
+	result, err := service.getSealedSecretCert("plain", "myenv")
 
 	assert.NoError(t, err)
 	assert.Equal(t, testCertBytes, result)
 }
 
 func Test_getSealedSecretCert_WhenCertNotPresent(t *testing.T) {
-	stageRepository := &core.FakeStageRepository{
-		GetFn: func(stageName string) (*core.Stage, error) {
-			return &core.Stage{
-				Name: "mystage",
-				Doc: core.StageDoc{
-					Config: core.StageConfig{},
+	environmentRepository := &core.FakeEnvironmentRepository{
+		GetFn: func(envName string) (*core.Environment, error) {
+			return &core.Environment{
+				Name: "myenv",
+				Doc: core.EnvironmentDoc{
+					Config: core.EnvironmentConfig{},
 				},
 			}, nil
 		},
 	}
 
-	service := service{stages: stageRepository}
+	service := service{environments: environmentRepository}
 
-	result, err := service.getSealedSecretCert("plain", "mystage")
+	result, err := service.getSealedSecretCert("plain", "myenv")
 
-	assert.Equal(t, `No certificate configured in stage "mystage"`, err.Error())
+	assert.Equal(t, `No certificate configured in environment "myenv"`, err.Error())
 	assert.Empty(t, result)
 }
 
-func Test_getSealedSecretCert_WhenGetStageErr(t *testing.T) {
-	stageRepository := &core.FakeStageRepository{
-		GetFn: func(stageName string) (*core.Stage, error) {
+func Test_getSealedSecretCert_WhenGetEnvironmentErr(t *testing.T) {
+	environmentRepository := &core.FakeEnvironmentRepository{
+		GetFn: func(envName string) (*core.Environment, error) {
 			return nil, errors.New("test")
 		},
 	}
 
-	service := service{stages: stageRepository}
+	service := service{environments: environmentRepository}
 
-	result, err := service.getSealedSecretCert("plain", "mystage")
+	result, err := service.getSealedSecretCert("plain", "myenv")
 
-	assert.Equal(t, `Error retrieving stage "mystage": test`, err.Error())
+	assert.Equal(t, `Error retrieving environment "myenv": test`, err.Error())
 	assert.Empty(t, result)
 }
 
@@ -85,17 +85,17 @@ func Test_sealAndSave(t *testing.T) {
 		SaveFn: func(secretMeta *core.SecretMeta) (int64, error) {
 			assert.Equal(t, "myapp", secretMeta.App.Name)
 			assert.Equal(t, "myns", secretMeta.App.Namespace)
-			assert.Equal(t, "mystage", secretMeta.StageName)
+			assert.Equal(t, "myenv", secretMeta.EnvironmentName)
 			assert.Equal(t, "mysecret", secretMeta.Name)
 			return 1, nil
 		},
 	}
 
 	meta := &core.SecretMeta{
-		App:       core.NewNamespacedName("myapp", "myns"),
-		StageName: "mystage",
-		Name:      "mysecret",
-		Revision:  1,
+		App:             core.NewNamespacedName("myapp", "myns"),
+		EnvironmentName: "myenv",
+		Name:            "mysecret",
+		Revision:        1,
 	}
 
 	committer := state.NewDryRunCommitter()
@@ -109,9 +109,9 @@ func Test_sealAndSave(t *testing.T) {
 	assert.Equal(t, 1, secretMetaRepository.SaveCallCount)
 	assert.Equal(t, 1, secretMetaRepository.CommitCallCount)
 	assert.Len(t, committer.Commits, 1)
-	assert.Equal(t, "Updating secret \"myapp-mysecret-1\" in stage \"mystage\"", committer.Commits[0].Message)
+	assert.Equal(t, "Updating secret \"myapp-mysecret-1\" in environment \"myenv\"", committer.Commits[0].Message)
 	assert.Len(t, committer.Commits[0].Files, 1)
-	assert.Equal(t, "state/mystage/riser-managed/myns/secrets/myapp/bitnami.com.sealedsecret.myapp-mysecret-1.yaml", committer.Commits[0].Files[0].Name)
+	assert.Equal(t, "state/myenv/riser-managed/myns/secrets/myapp/bitnami.com.sealedsecret.myapp-mysecret-1.yaml", committer.Commits[0].Files[0].Name)
 }
 
 func Test_sealAndSave_WhenNewerRevisionExists(t *testing.T) {
@@ -126,9 +126,9 @@ func Test_sealAndSave_WhenNewerRevisionExists(t *testing.T) {
 	}
 
 	meta := &core.SecretMeta{
-		App:       core.NewNamespacedName("myapp", "myns"),
-		StageName: "mystage",
-		Name:      "mysecret",
+		App:             core.NewNamespacedName("myapp", "myns"),
+		EnvironmentName: "myenv",
+		Name:            "mysecret",
 	}
 
 	committer := state.NewDryRunCommitter()

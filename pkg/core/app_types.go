@@ -11,8 +11,8 @@ type App struct {
 }
 
 type AppStatus struct {
-	StageStatuses []StageStatus
+	EnvironmentStatus []EnvironmentStatus
 	// Deployments returns the whole deployment. We should probably use a different type here with less data, but we can't just pass
-	// Deployment.Doc.Status as we also need the DeploymentName and the Stage.
+	// Deployment.Doc.Status as we also need the DeploymentName and the environment.
 	Deployments []Deployment
 }

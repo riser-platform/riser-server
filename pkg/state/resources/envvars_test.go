@@ -24,7 +24,7 @@ func Test_k8sEnvVars(t *testing.T) {
 		},
 	}
 
-	result := k8sEnvVars(&core.DeploymentContext{Deployment: deployment, Secrets: secrets})
+	result := k8sEnvVars(&core.DeploymentContext{DeploymentConfig: deployment, Secrets: secrets})
 
 	assert.Len(t, result, 4)
 	assert.Equal(t, "ENV1", result[0].Name)

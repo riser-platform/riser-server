@@ -11,11 +11,11 @@ import (
 func Test_RolloutRequest_Valid(t *testing.T) {
 	rolloutRequest := &RolloutRequest{
 		Traffic: []TrafficRule{
-			TrafficRule{
+			{
 				RiserRevision: 1,
 				Percent:       10,
 			},
-			TrafficRule{
+			{
 				RiserRevision: 2,
 				Percent:       90,
 			},
@@ -38,11 +38,11 @@ func Test_RolloutRequest_ValidateTrafficRequired(t *testing.T) {
 func Test_RolloutRequest_ValidateTraffic100Percent(t *testing.T) {
 	rolloutRequest := &RolloutRequest{
 		Traffic: []TrafficRule{
-			TrafficRule{
+			{
 				RiserRevision: 1,
 				Percent:       10,
 			},
-			TrafficRule{
+			{
 				RiserRevision: 2,
 				Percent:       80,
 			},
@@ -57,15 +57,15 @@ func Test_RolloutRequest_ValidateTraffic100Percent(t *testing.T) {
 func Test_RolloutRequest_Validate_NoDupeRevisions(t *testing.T) {
 	rolloutRequest := &RolloutRequest{
 		Traffic: []TrafficRule{
-			TrafficRule{
+			{
 				RiserRevision: 1,
 				Percent:       10,
 			},
-			TrafficRule{
+			{
 				RiserRevision: 2,
 				Percent:       70,
 			},
-			TrafficRule{
+			{
 				RiserRevision: 1,
 				Percent:       20,
 			},
@@ -83,10 +83,10 @@ func Test_RolloutRequest_Validate_NoDupeRevisions(t *testing.T) {
 func Test_RolloutRequest_ValidateTrafficRule(t *testing.T) {
 	rolloutRequest := &RolloutRequest{
 		Traffic: []TrafficRule{
-			TrafficRule{
+			{
 				Percent: 105,
 			},
-			TrafficRule{
+			{
 				RiserRevision: 2,
 				Percent:       -5,
 			},

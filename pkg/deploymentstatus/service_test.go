@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/pkg/errors"
 
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/environment"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,11 +20,11 @@ func Test_GetByApp(t *testing.T) {
 			AppId: uuid.New(),
 		},
 		DeploymentRecord: core.DeploymentRecord{
-			StageName: "mystage",
+			EnvironmentName: "myenv",
 			Doc: core.DeploymentDoc{
 				Status: &core.DeploymentStatus{
 					Revisions: []core.DeploymentRevisionStatus{
-						core.DeploymentRevisionStatus{
+						{
 							Name:                 "rev1",
 							RiserRevision:        1,
 							RevisionStatus:       "InProgress",
@@ -44,26 +44,26 @@ func Test_GetByApp(t *testing.T) {
 		},
 	}
 
-	stageService := &stage.FakeService{
-		GetStatusFn: func(stageName string) (*core.StageStatus, error) {
-			assert.Equal(t, "mystage", stageName)
-			return &core.StageStatus{
-				StageName: "mystage",
-				Healthy:   true,
+	environmentService := &environment.FakeService{
+		GetStatusFn: func(envName string) (*core.EnvironmentStatus, error) {
+			assert.Equal(t, "myenv", envName)
+			return &core.EnvironmentStatus{
+				EnvironmentName: "myenv",
+				Healthy:         true,
 			}, nil
 		},
 	}
 
-	service := service{deployments: deploymentRepository, stageService: stageService}
+	service := service{deployments: deploymentRepository, envService: environmentService}
 
 	result, err := service.GetByApp(status.AppId)
 
 	assert.NoError(t, err)
-	assert.Len(t, result.StageStatuses, 1)
-	assert.Equal(t, "mystage", result.StageStatuses[0].StageName)
+	assert.Len(t, result.EnvironmentStatus, 1)
+	assert.Equal(t, "myenv", result.EnvironmentStatus[0].EnvironmentName)
 	assert.Len(t, result.Deployments, 1)
 	assert.Equal(t, status, result.Deployments[0])
-	assert.Equal(t, 1, stageService.GetStatusCallCount)
+	assert.Equal(t, 1, environmentService.GetStatusCallCount)
 }
 
 func Test_GetByApp_StatusRepoErr_ReturnsErr(t *testing.T) {
@@ -81,10 +81,10 @@ func Test_GetByApp_StatusRepoErr_ReturnsErr(t *testing.T) {
 	assert.Equal(t, err.Error(), "Error retrieving deployment status: test")
 }
 
-func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
+func Test_GetByApp_EnvironmentStatusError_ReturnsError(t *testing.T) {
 	deployment := core.Deployment{
 		DeploymentRecord: core.DeploymentRecord{
-			StageName: "mystage",
+			EnvironmentName: "myenv",
 		},
 	}
 
@@ -94,16 +94,16 @@ func Test_GetByApp_StageStatusError_ReturnsError(t *testing.T) {
 		},
 	}
 
-	stageService := &stage.FakeService{
-		GetStatusFn: func(string) (*core.StageStatus, error) {
+	environmentService := &environment.FakeService{
+		GetStatusFn: func(string) (*core.EnvironmentStatus, error) {
 			return nil, errors.New("test")
 		},
 	}
 
-	service := service{deployments: deploymentRepository, stageService: stageService}
+	service := service{deployments: deploymentRepository, envService: environmentService}
 
 	result, err := service.GetByApp(uuid.New())
 
 	assert.Nil(t, result)
-	assert.Equal(t, "Error retrieving stage status for stage \"mystage\": test", err.Error())
+	assert.Equal(t, "Error retrieving status for environment \"myenv\": test", err.Error())
 }

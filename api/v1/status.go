@@ -25,16 +25,16 @@ func GetAppStatus(c echo.Context, apps core.AppRepository, statusService deploym
 	}
 
 	statusModel := model.AppStatus{
-		Stages:      []model.StageStatus{},
-		Deployments: []model.DeploymentStatus{},
+		Environments: []model.EnvironmentStatus{},
+		Deployments:  []model.DeploymentStatus{},
 	}
 
 	// TODO: Move and test model conversion.
-	for _, stageStatus := range appStatus.StageStatuses {
-		statusModel.Stages = append(statusModel.Stages, model.StageStatus{
-			StageName: stageStatus.StageName,
-			Healthy:   stageStatus.Healthy,
-			Reason:    stageStatus.Reason,
+	for _, envStatus := range appStatus.EnvironmentStatus {
+		statusModel.Environments = append(statusModel.Environments, model.EnvironmentStatus{
+			EnvironmentName: envStatus.EnvironmentName,
+			Healthy:         envStatus.Healthy,
+			Reason:          envStatus.Reason,
 		})
 	}
 
@@ -47,11 +47,11 @@ func GetAppStatus(c echo.Context, apps core.AppRepository, statusService deploym
 
 func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus {
 	status := &model.DeploymentStatus{
-		AppId:          domain.AppId,
-		DeploymentName: domain.Name,
-		Namespace:      domain.Namespace,
-		StageName:      domain.StageName,
-		RiserRevision:  domain.RiserRevision,
+		AppId:           domain.AppId,
+		DeploymentName:  domain.Name,
+		Namespace:       domain.Namespace,
+		EnvironmentName: domain.EnvironmentName,
+		RiserRevision:   domain.RiserRevision,
 	}
 	if domain.Doc.Status == nil {
 		status.DeploymentStatusMutable = model.DeploymentStatusMutable{}

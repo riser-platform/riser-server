@@ -20,19 +20,19 @@ import (
 
 func Test_update_snapshot_sealedsecret(t *testing.T) {
 	secretMeta := &core.SecretMeta{
-		Name:      "mysecret",
-		App:       core.NewNamespacedName("myapp", "apps"),
-		Revision:  2,
-		StageName: "dev",
+		Name:            "mysecret",
+		App:             core.NewNamespacedName("myapp", "apps"),
+		Revision:        2,
+		EnvironmentName: "dev",
 	}
 
 	testCertBytes, _ := base64.StdEncoding.DecodeString(testCert)
-	stageRepository := &core.FakeStageRepository{
-		GetFn: func(stageName string) (*core.Stage, error) {
-			return &core.Stage{
-				Name: "mystage",
-				Doc: core.StageDoc{
-					Config: core.StageConfig{
+	environmentRepository := &core.FakeEnvironmentRepository{
+		GetFn: func(envName string) (*core.Environment, error) {
+			return &core.Environment{
+				Name: "myenv",
+				Doc: core.EnvironmentDoc{
+					Config: core.EnvironmentConfig{
 						SealedSecretCert: testCertBytes,
 					},
 				},
@@ -62,14 +62,14 @@ func Test_update_snapshot_sealedsecret(t *testing.T) {
 		committer = dryRunCommitter
 	}
 
-	secretService := service{secretMetaRepository, stageRepository, staticReader{}}
+	secretService := service{secretMetaRepository, environmentRepository, staticReader{}}
 
 	err = secretService.SealAndSave("mysecretval", secretMeta, committer)
 
 	assert.NoError(t, err)
 	if !util.ShouldUpdateSnapshot() {
 		require.Len(t, dryRunCommitter.Commits, 1)
-		assert.Equal(t, "Updating secret \"myapp-mysecret-2\" in stage \"dev\"", dryRunCommitter.Commits[0].Message)
+		assert.Equal(t, "Updating secret \"myapp-mysecret-2\" in environment \"dev\"", dryRunCommitter.Commits[0].Message)
 		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }

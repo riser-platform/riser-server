@@ -12,9 +12,9 @@ import (
 // deploymentLabels are labels common to Riser deployment resources
 func deploymentLabels(ctx *core.DeploymentContext) map[string]string {
 	return map[string]string{
-		riserLabel("deployment"): ctx.Deployment.Name,
-		riserLabel("stage"):      ctx.Deployment.Stage,
-		riserLabel("app"):        string(ctx.Deployment.App.Name),
+		riserLabel("deployment"):  ctx.DeploymentConfig.Name,
+		riserLabel("environment"): ctx.DeploymentConfig.EnvironmentName,
+		riserLabel("app"):         string(ctx.DeploymentConfig.App.Name),
 	}
 }
 

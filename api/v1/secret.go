@@ -3,9 +3,8 @@ package v1
 import (
 	"net/http"
 
-	"github.com/riser-platform/riser-server/pkg/stage"
-
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/environment"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -15,14 +14,14 @@ import (
 	"github.com/riser-platform/riser-server/pkg/state"
 )
 
-func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service, stageService stage.Service) error {
+func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service, environmentService environment.Service) error {
 	unsealedSecret := &model.UnsealedSecret{}
 	err := c.Bind(unsealedSecret)
 	if err != nil {
 		return errors.Wrap(err, "Error binding secret")
 	}
 
-	err = stageService.ValidateDeployable(unsealedSecret.Stage)
+	err = environmentService.ValidateDeployable(unsealedSecret.Environment)
 	if err != nil {
 		return err
 	}
@@ -38,17 +37,17 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 	return err
 }
 
-func GetSecrets(c echo.Context, secrets core.SecretMetaRepository, stageService stage.Service) error {
-	stageName := c.Param("stageName")
+func GetSecrets(c echo.Context, secrets core.SecretMetaRepository, environmentService environment.Service) error {
+	envName := c.Param("envName")
 	namespace := c.Param("namespace")
 	appName := c.Param("appName")
 
-	err := stageService.ValidateDeployable(stageName)
+	err := environmentService.ValidateDeployable(envName)
 	if err != nil {
 		return err
 	}
 
-	secretMetas, err := secrets.ListByAppInStage(core.NewNamespacedName(appName, namespace), stageName)
+	secretMetas, err := secrets.ListByAppInEnvironment(core.NewNamespacedName(appName, namespace), envName)
 	if err != nil {
 		return err
 	}
@@ -59,10 +58,10 @@ func GetSecrets(c echo.Context, secrets core.SecretMetaRepository, stageService 
 func mapSecretMetaStatusFromDomain(domain core.SecretMeta) model.SecretMetaStatus {
 	return model.SecretMetaStatus{
 		SecretMeta: model.SecretMeta{
-			AppName:   model.AppName(domain.App.Name),
-			Namespace: model.NamespaceName(domain.App.Namespace),
-			Stage:     domain.StageName,
-			Name:      domain.Name,
+			AppName:     model.AppName(domain.App.Name),
+			Namespace:   model.NamespaceName(domain.App.Namespace),
+			Environment: domain.EnvironmentName,
+			Name:        domain.Name,
 		},
 		Revision: domain.Revision,
 	}
@@ -79,8 +78,8 @@ func mapSecretMetaStatusArrayFromDomain(domainArray []core.SecretMeta) []model.S
 
 func mapSecretMetaFromModel(in *model.SecretMeta) *core.SecretMeta {
 	return &core.SecretMeta{
-		App:       core.NewNamespacedName(string(in.AppName), string(in.Namespace)),
-		Name:      in.Name,
-		StageName: in.Stage,
+		App:             core.NewNamespacedName(string(in.AppName), string(in.Namespace)),
+		Name:            in.Name,
+		EnvironmentName: in.Environment,
 	}
 }

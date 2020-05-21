@@ -13,7 +13,7 @@ import (
 
 func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 	envVars := []corev1.EnvVar{}
-	for key, val := range ctx.Deployment.App.Environment {
+	for key, val := range ctx.DeploymentConfig.App.Environment {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  strings.ToUpper(key),
 			Value: val.String(),
@@ -28,7 +28,7 @@ func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 					Key:      "data",
 					Optional: util.PtrBool(false),
 					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("%s-%s-%d", ctx.Deployment.App.Name, secret.Name, secret.Revision),
+						Name: fmt.Sprintf("%s-%s-%d", ctx.DeploymentConfig.App.Name, secret.Name, secret.Revision),
 					},
 				},
 			},

@@ -66,9 +66,9 @@ func Test_getSecretScmPath(t *testing.T) {
 
 func Test_renderDeploymentResources(t *testing.T) {
 	deployment := &core.DeploymentConfig{
-		Name:      "mydeployment",
-		Namespace: "apps",
-		Stage:     "dev",
+		Name:            "mydeployment",
+		Namespace:       "apps",
+		EnvironmentName: "dev",
 		App: &model.AppConfig{
 			Name: "myapp01",
 		},

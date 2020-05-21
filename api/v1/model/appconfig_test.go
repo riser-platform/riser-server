@@ -144,7 +144,7 @@ func Test_AppConfig_ValidateAutoscaleMax_NilMin(t *testing.T) {
 	assert.Equal(t, "must be no less than 1", validationErrors["autoscale.max"].Error())
 }
 
-// Note: We may not allow registry to be set here - it may be dictated by an admin on a per stage basis instead.
+// Note: We may not allow registry to be set here - it may be dictated by an admin on a per environment basis instead.
 var imageTests = []struct {
 	image string
 	valid bool
@@ -218,7 +218,7 @@ func Test_ApplyOverrides_NoOverrides(t *testing.T) {
 	assert.EqualValues(t, "myapp", result.Name)
 }
 
-func Test_ApplyOverrides_NoOverridesForStage(t *testing.T) {
+func Test_ApplyOverrides_NoOverridesForEnvironment(t *testing.T) {
 	cpuCores := float32(2)
 	cpuCoresDev := float32(0.1)
 	appConfig := &AppConfigWithOverrides{
@@ -229,7 +229,7 @@ func Test_ApplyOverrides_NoOverridesForStage(t *testing.T) {
 			},
 		},
 		Overrides: map[string]AppConfig{
-			"dev": AppConfig{
+			"dev": {
 				Resources: &AppConfigResources{
 					CpuCores: &cpuCoresDev,
 				},
@@ -266,7 +266,7 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 			},
 		},
 		Overrides: map[string]AppConfig{
-			"dev": AppConfig{
+			"dev": {
 				Resources: &AppConfigResources{
 					CpuCores: &cpuCoresDev,
 				},

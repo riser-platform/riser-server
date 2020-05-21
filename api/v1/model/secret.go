@@ -14,10 +14,10 @@ func (v UnsealedSecret) Validate() error {
 }
 
 type SecretMeta struct {
-	Name      string        `json:"name"`
-	AppName   AppName       `json:"app"`
-	Namespace NamespaceName `json:"namespace"`
-	Stage     string        `json:"stage"`
+	Name        string        `json:"name"`
+	AppName     AppName       `json:"app"`
+	Namespace   NamespaceName `json:"namespace"`
+	Environment string        `json:"environment"`
 }
 
 func (v SecretMeta) Validate() error {
@@ -25,7 +25,7 @@ func (v SecretMeta) Validate() error {
 		validation.Field(&v.AppName),
 		validation.Field(&v.Namespace),
 		validation.Field(&v.Name, validation.Required),
-		validation.Field(&v.Stage, validation.Required))
+		validation.Field(&v.Environment, validation.Required))
 }
 
 type SecretMetaStatus struct {

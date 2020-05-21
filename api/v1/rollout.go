@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/riser-platform/riser-server/pkg/environment"
 	"github.com/riser-platform/riser-server/pkg/git"
 
-	"github.com/riser-platform/riser-server/pkg/stage"
 	"github.com/riser-platform/riser-server/pkg/state"
 
 	validation "github.com/go-ozzo/ozzo-validation/v3"
@@ -16,15 +16,15 @@ import (
 	"github.com/riser-platform/riser-server/pkg/rollout"
 )
 
-func PutRollout(c echo.Context, rolloutService rollout.Service, stageService stage.Service, stateRepo git.Repo) error {
+func PutRollout(c echo.Context, rolloutService rollout.Service, environmentService environment.Service, stateRepo git.Repo) error {
 	rolloutRequest := &model.RolloutRequest{}
 
 	deploymentName := c.Param("deploymentName")
 	namespace := c.Param("namespace")
-	stageName := c.Param("stageName")
+	envName := c.Param("envName")
 
-	// Validate stage before binding otherwise the client gets a confusing error about route rules when they pass in an invalid stage
-	err := stageService.ValidateDeployable(stageName)
+	// Validate environment before binding otherwise the client gets a confusing error about route rules when they pass in an invalid environment
+	err := environmentService.ValidateDeployable(envName)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func PutRollout(c echo.Context, rolloutService rollout.Service, stageService sta
 		return core.NewValidationError("Invalid rollout request", err)
 	}
 
-	err = rolloutService.UpdateTraffic(core.NewNamespacedName(deploymentName, namespace), stageName,
+	err = rolloutService.UpdateTraffic(core.NewNamespacedName(deploymentName, namespace), envName,
 		mapTrafficRulesToDomain(deploymentName, rolloutRequest.Traffic),
 		state.NewGitCommitter(stateRepo))
 	if err != nil {

@@ -18,8 +18,8 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 
 	return &Configuration{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        ctx.Deployment.Name,
-			Namespace:   ctx.Deployment.Namespace,
+			Name:        ctx.DeploymentConfig.Name,
+			Namespace:   ctx.DeploymentConfig.Namespace,
 			Labels:      deploymentLabels(ctx),
 			Annotations: deploymentAnnotations(ctx),
 		},
@@ -40,16 +40,16 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 
 func createRevisionMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
 	revisionMeta := metav1.ObjectMeta{
-		Name:        fmt.Sprintf("%s-%d", ctx.Deployment.Name, ctx.RiserRevision),
+		Name:        fmt.Sprintf("%s-%d", ctx.DeploymentConfig.Name, ctx.RiserRevision),
 		Labels:      deploymentLabels(ctx),
 		Annotations: deploymentAnnotations(ctx),
 	}
-	if ctx.Deployment.App.Autoscale != nil {
-		if ctx.Deployment.App.Autoscale.Min != nil {
-			revisionMeta.Annotations["autoscaling.knative.dev/minScale"] = fmt.Sprintf("%d", *ctx.Deployment.App.Autoscale.Min)
+	if ctx.DeploymentConfig.App.Autoscale != nil {
+		if ctx.DeploymentConfig.App.Autoscale.Min != nil {
+			revisionMeta.Annotations["autoscaling.knative.dev/minScale"] = fmt.Sprintf("%d", *ctx.DeploymentConfig.App.Autoscale.Min)
 		}
-		if ctx.Deployment.App.Autoscale.Max != nil {
-			revisionMeta.Annotations["autoscaling.knative.dev/maxScale"] = fmt.Sprintf("%d", *ctx.Deployment.App.Autoscale.Max)
+		if ctx.DeploymentConfig.App.Autoscale.Max != nil {
+			revisionMeta.Annotations["autoscaling.knative.dev/maxScale"] = fmt.Sprintf("%d", *ctx.DeploymentConfig.App.Autoscale.Max)
 		}
 	}
 

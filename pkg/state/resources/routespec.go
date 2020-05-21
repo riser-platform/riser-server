@@ -11,8 +11,8 @@ import (
 func CreateKNativeRoute(ctx *core.DeploymentContext) *Route {
 	return &Route{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        ctx.Deployment.Name,
-			Namespace:   ctx.Deployment.Namespace,
+			Name:        ctx.DeploymentConfig.Name,
+			Namespace:   ctx.DeploymentConfig.Namespace,
 			Labels:      deploymentLabels(ctx),
 			Annotations: deploymentAnnotations(ctx),
 		},
@@ -20,7 +20,7 @@ func CreateKNativeRoute(ctx *core.DeploymentContext) *Route {
 			Kind:       "Route",
 			APIVersion: "serving.knative.dev/v1",
 		},
-		Spec: createRouteSpec(ctx.Deployment.Traffic),
+		Spec: createRouteSpec(ctx.DeploymentConfig.Traffic),
 	}
 }
 

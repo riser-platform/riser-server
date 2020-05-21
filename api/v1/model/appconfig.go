@@ -22,15 +22,15 @@ var (
 // Also, pkg/* should not have a dependency here. However, moving this into pkg/core (for example) would cause a circular module dependency so we
 // may need to create a separate module e.g. pkg/core/appconfig
 
-// AppConfigWithOverrides contains an app with stage level overrides
+// AppConfigWithOverrides contains an app with environment level overrides
 type AppConfigWithOverrides struct {
 	AppConfig
-	Overrides map[string]AppConfig `json:"stages,omitempty"`
+	Overrides map[string]AppConfig `json:"environmentOverrides,omitempty"`
 }
 
-func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig, error) {
+func (cfg *AppConfigWithOverrides) ApplyOverrides(envName string) (*AppConfig, error) {
 	app := &cfg.AppConfig
-	if overrideApp, ok := cfg.Overrides[stageName]; ok {
+	if overrideApp, ok := cfg.Overrides[envName]; ok {
 		err := mergo.Merge(&overrideApp, app)
 		if err != nil {
 			return nil, err
@@ -43,7 +43,7 @@ func (cfg *AppConfigWithOverrides) ApplyOverrides(stageName string) (*AppConfig,
 
 }
 
-// AppConfig is the root of the application config object graph without stage overrides
+// AppConfig is the root of the application config object graph without environment overrides
 type AppConfig struct {
 	Id          uuid.UUID                     `json:"id"`
 	Name        AppName                       `json:"name"`

@@ -1,9 +1,9 @@
-> :information_source: For a simple single cluster stage demo, try `riser demo install`. This README is for more advanced exploration of the riser platform.
+> :information_source: For a single cluster demo, try `riser demo install`. This README is for more advanced exploration of the riser platform.
 
 This folder contains demo infrastructure for components required by Riser. These are configured for demonstration purposes only and have not been rigorously tested for stability or security. It is recommended that you configure and install these dependencies using the recommended approach by each respective dependency. This documentation assumes that the reader already has prior experience installing Kubernetes.
 
 ### Riser Server
-The Riser Server spans all stages and only needs to be installed on one stage. Please review the [server README](../server/README.md) for installing the riser server.
+The Riser Server spans all clusters (environments). Please review the [server README](../server/README.md) for installing the riser server.
 
 ## Create Kubernetes Cluster
 While Riser is supported on theoretically any kubernetes cluster, the demo has been tested with GKE. You may wish review the example script in `gke/create.sh`. Once the cluster is created you may continue.
@@ -11,20 +11,20 @@ While Riser is supported on theoretically any kubernetes cluster, the demo has b
 ## Install and configure Flux
 See the [README](flux/README.md).
 
-## Creating a new stage (one per cluster)
+## Create a New Environment
 Riser requires a git repo to manage all of its state, referred to as the `riser-state` repo. It is recommended that you use it to manage Riser required infrastructure as well. Note that
-at the time of writing that GitHub is the only officially supported git host. Others are planned to be be supported in the future. You may share
-a single repo between multiple Riser stages.
+at the time of writing that GitHub is the only officially supported git host. Others are planned to be be supported in the future. You may use
+a single repo between multiple Riser environments as each environment will have its own state folder.
 
-Review each required component's README in this folder. With the exception of `Flux`, the final yaml for each component should be placed in your `riser-state` git repo in the
- `/state/<stageName>/infra` folder. `Flux` must be installed manually after the cluster is ready. Once you push your changes, `Flux` should begin installing the remaining components. This may take a few minutes depending on cluster capacity and internet speed.
+Review each required component's README in this folder. With the exception of `Flux`, the manifest yaml for each component should be placed in your `riser-state` git repo in the
+ `/state/<envName>/infra` folder. `Flux` must be installed manually after the cluster is ready. Once you push your changes, `Flux` should begin installing the remaining components. This may take a few minutes depending on cluster capacity and internet speed.
 
 
 # Install and configure KNative
 See the [README](knative/README.md).
 
 ### Update DNS to point to the istio ingress gateway external IP
-Create an A record for your domain (e.g. `*.apps.<stage>.riser.<your-domain>`) using the IP from the command below.
+Create an A record for your domain (e.g. `*.apps.<environment>.riser.<your-domain>`) using the IP from the command below.
 
 ```
 kubectl get service istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'

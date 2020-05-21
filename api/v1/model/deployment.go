@@ -39,7 +39,7 @@ type DeploymentMeta struct {
 	Name string `json:"name"`
 	// Namespace is an intentional omission. We always use the app's namespace as we do not allow an app to deploy to multiple namespaces at
 	// this time.
-	Stage         string           `json:"stage"`
+	Environment   string           `json:"environment"`
 	Docker        DeploymentDocker `json:"docker"`
 	ManualRollout bool             `json:"manualRollout"`
 }
@@ -48,7 +48,7 @@ func (d DeploymentMeta) Validate() error {
 	return validation.ValidateStruct(&d,
 		// There's a separate RuneLength rule here to reserve 8 characters for the deployment prefix (e.g. for myapp: r100-myapp)
 		validation.Field(&d.Name, append(RulesNamingIdentifier(), validation.RuneLength(3, 55), validation.Required)...),
-		validation.Field(&d.Stage, validation.Required))
+		validation.Field(&d.Environment, validation.Required))
 }
 
 type DeploymentDocker struct {

@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/riser-platform/riser-server/pkg/deployment"
+	"github.com/riser-platform/riser-server/pkg/environment"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 
@@ -20,7 +20,7 @@ import (
 )
 
 // TODO: Refactor and add unit test coverage
-func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, deploymentService deployment.Service, stageService stage.Service) error {
+func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, deploymentService deployment.Service, environmentService environment.Service) error {
 	deploymentRequest := &model.DeploymentRequest{}
 	err := c.Bind(deploymentRequest)
 	if err != nil {
@@ -29,7 +29,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 
 	isDryRun := c.QueryParam("dryRun") == "true"
 
-	err = stageService.ValidateDeployable(deploymentRequest.Stage)
+	err = environmentService.ValidateDeployable(deploymentRequest.Environment)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 }
 
 func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService deployment.Service) error {
-	err := deploymentService.Delete(core.NewNamespacedName(c.Param("deploymentName"), c.Param("namespace")), c.Param("stageName"), state.NewGitCommitter(stateRepo))
+	err := deploymentService.Delete(core.NewNamespacedName(c.Param("deploymentName"), c.Param("namespace")), c.Param("envName"), state.NewGitCommitter(stateRepo))
 	if err != nil {
 		if err == git.ErrNoChanges {
 			return c.JSON(http.StatusNotFound, model.APIResponse{Message: "Deployment not found"})
@@ -93,9 +93,9 @@ func PutDeploymentStatus(c echo.Context, deployments core.DeploymentRepository) 
 
 	deploymentName := c.Param("deploymentName")
 	namespace := c.Param("namespace")
-	stageName := c.Param("stageName")
+	envName := c.Param("envName")
 
-	return deployments.UpdateStatus(core.NewNamespacedName(deploymentName, namespace), stageName, mapDeploymentStatusFromModel(deploymentStatus))
+	return deployments.UpdateStatus(core.NewNamespacedName(deploymentName, namespace), envName, mapDeploymentStatusFromModel(deploymentStatus))
 }
 
 func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunCommit {
@@ -114,14 +114,14 @@ func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunComm
 }
 
 func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*core.DeploymentConfig, error) {
-	app, err := deploymentRequest.App.ApplyOverrides(deploymentRequest.Stage)
+	app, err := deploymentRequest.App.ApplyOverrides(deploymentRequest.Environment)
 	if err != nil {
 		return nil, err
 	}
 	return &core.DeploymentConfig{
-		Name:      deploymentRequest.Name,
-		Namespace: string(app.Namespace),
-		Stage:     deploymentRequest.Stage,
+		Name:            deploymentRequest.Name,
+		Namespace:       string(app.Namespace),
+		EnvironmentName: deploymentRequest.Environment,
 		Docker: core.DeploymentDocker{
 			Tag: deploymentRequest.Docker.Tag,
 		},

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/riser-platform/riser-server/pkg/deploymentreservation"
+	"github.com/riser-platform/riser-server/pkg/environment"
 
 	"github.com/riser-platform/riser-server/pkg/namespace"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/riser-platform/riser-server/pkg/login"
 	"github.com/riser-platform/riser-server/pkg/postgres"
 	"github.com/riser-platform/riser-server/pkg/secret"
-	"github.com/riser-platform/riser-server/pkg/stage"
 
 	"github.com/labstack/echo/v4"
 )
@@ -27,19 +27,19 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	v1 := e.Group("/api/v1")
 
 	// TODO: Refactor dependency management
-	stageRepository := postgres.NewStageRepository(db)
-	stageService := stage.NewService(stageRepository)
+	environmentRepository := postgres.NewEnvironmentRepository(db)
+	environmentService := environment.NewService(environmentRepository)
 	namespaceRepository := postgres.NewNamespaceRepository(db)
-	namespaceService := namespace.NewService(namespaceRepository, stageRepository)
+	namespaceService := namespace.NewService(namespaceRepository, environmentRepository)
 	deploymentReservationRepository := postgres.NewDeploymentReservationRepository(db)
 	appRepository := postgres.NewAppRepository(db)
 	appService := app.NewService(appRepository, namespaceService)
 	secretMetaRepository := postgres.NewSecretMetaRepository(db)
-	secretService := secret.NewService(secretMetaRepository, stageRepository)
+	secretService := secret.NewService(secretMetaRepository, environmentRepository)
 	deploymentReservationService := deploymentreservation.NewService(deploymentReservationRepository)
 	deploymentRepository := postgres.NewDeploymentRepository(db)
-	deploymentService := deployment.NewService(appRepository, namespaceService, secretMetaRepository, stageRepository, deploymentRepository, deploymentReservationService)
-	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, stageService)
+	deploymentService := deployment.NewService(appRepository, namespaceService, secretMetaRepository, environmentRepository, deploymentRepository, deploymentReservationService)
+	deploymentStatusService := deploymentstatus.NewService(deploymentRepository, environmentService)
 	rolloutService := rollout.NewService(appRepository, deploymentRepository)
 	userRepository := postgres.NewUserRepository(db)
 	apiKeyRepository := postgres.NewApiKeyRepository(db)
@@ -70,30 +70,30 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	})
 
 	v1.POST("/deployments", func(c echo.Context) error {
-		return PostDeployment(c, repo, appService, deploymentService, stageService)
+		return PostDeployment(c, repo, appService, deploymentService, environmentService)
 	})
 	v1.PUT("/deployments", func(c echo.Context) error {
-		return PostDeployment(c, repo, appService, deploymentService, stageService)
+		return PostDeployment(c, repo, appService, deploymentService, environmentService)
 	})
 
-	v1.DELETE("/deployments/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
+	v1.DELETE("/deployments/:envName/:namespace/:deploymentName", func(c echo.Context) error {
 		return DeleteDeployment(c, repo, deploymentService)
 	})
 
-	v1.PUT("/deployments/:stageName/:namespace/:deploymentName/status", func(c echo.Context) error {
+	v1.PUT("/deployments/:envName/:namespace/:deploymentName/status", func(c echo.Context) error {
 		return PutDeploymentStatus(c, deploymentRepository)
 	})
 
-	v1.PUT("/rollout/:stageName/:namespace/:deploymentName", func(c echo.Context) error {
-		return PutRollout(c, rolloutService, stageService, repo)
+	v1.PUT("/rollout/:envName/:namespace/:deploymentName", func(c echo.Context) error {
+		return PutRollout(c, rolloutService, environmentService, repo)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {
-		return PutSecret(c, repo, secretService, stageService)
+		return PutSecret(c, repo, secretService, environmentService)
 	})
 
-	v1.GET("/secrets/:stageName/:namespace/:appName", func(c echo.Context) error {
-		return GetSecrets(c, secretMetaRepository, stageService)
+	v1.GET("/secrets/:envName/:namespace/:appName", func(c echo.Context) error {
+		return GetSecrets(c, secretMetaRepository, environmentService)
 	})
 
 	v1.GET("/namespaces", func(c echo.Context) error {
@@ -104,16 +104,16 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return PostNamespace(c, namespaceService, repo)
 	})
 
-	v1.PUT("/stages/:stageName/config", func(c echo.Context) error {
-		return PutStageConfig(c, stageService)
+	v1.PUT("/environments/:envName/config", func(c echo.Context) error {
+		return PutEnvironmentConfig(c, environmentService)
 	})
 
-	v1.POST("/stages/:stageName/ping", func(c echo.Context) error {
-		return PostStagePing(c, stageService)
+	v1.POST("/environments/:envName/ping", func(c echo.Context) error {
+		return PostEnvironmentPing(c, environmentService)
 	})
 
-	v1.GET("/stages", func(c echo.Context) error {
-		return ListStages(c, stageRepository)
+	v1.GET("/environments", func(c echo.Context) error {
+		return ListEnvironments(c, environmentRepository)
 	})
 
 	v1.POST("/validate/appconfig", func(c echo.Context) error {

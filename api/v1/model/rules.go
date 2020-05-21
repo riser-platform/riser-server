@@ -18,7 +18,7 @@ func RulesAppName() []validation.Rule {
 	return append(rules, RulesNamingIdentifier()...)
 }
 
-// RulesNamingIdentifier returns rules for naming things (e.g. an app, stage) that are RFC 1035 subdomain compatible.
+// RulesNamingIdentifier returns rules for naming things (e.g. an app, environment) that are RFC 1035 subdomain compatible.
 func RulesNamingIdentifier() []validation.Rule {
 	return []validation.Rule{
 		validation.RuneLength(1, 63),

@@ -11,9 +11,9 @@ import (
 
 func Test_createRevisionMeta(t *testing.T) {
 	ctx := &core.DeploymentContext{
-		Deployment: &core.DeploymentConfig{
-			Name:  "myapp",
-			Stage: "mystage",
+		DeploymentConfig: &core.DeploymentConfig{
+			Name:            "myapp",
+			EnvironmentName: "myenv",
 			App: &model.AppConfig{
 				Name: "myapp",
 			},
@@ -30,9 +30,9 @@ func Test_createRevisionMeta(t *testing.T) {
 
 func Test_createRevisionMeta_Autoscale(t *testing.T) {
 	ctx := &core.DeploymentContext{
-		Deployment: &core.DeploymentConfig{
-			Name:  "myapp",
-			Stage: "mystage",
+		DeploymentConfig: &core.DeploymentConfig{
+			Name:            "myapp",
+			EnvironmentName: "myenv",
 			App: &model.AppConfig{
 				Name: "myapp",
 				Autoscale: &model.AppConfigAutoscale{

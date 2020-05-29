@@ -10,7 +10,7 @@ if [ -z $ISTIO_VERSION ] || [ -z $ISTIO_REPO_PATH ]; then
   exit 1
 fi
 
-helm template $ISTIO_REPO_PATH/manifests/istio-operator/ \
+helm template $ISTIO_REPO_PATH/manifests/charts/istio-operator/ \
   --set hub=docker.io/istio \
   --set tag=$ISTIO_VERSION \
   --set operatorNamespace=istio-operator \

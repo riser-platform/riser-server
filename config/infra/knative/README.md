@@ -1,8 +1,9 @@
 We do not recommend using Gitops to install Knative as the official KNative yamls contain configuration which can overwrite any custom configuration which you may have. Hopefully this will change in the future. A quick way to get up and running is to run the following:
 
 ```
-kubectl apply -l knative.dev/crd-install=true -f https://github.com/knative/serving/releases/download/v0.14.0/serving.yaml
-kubectl apply -f https://github.com/knative/serving/releases/download/v0.14.0/serving.yaml
+kubectl apply -l knative.dev/crd-install=true -f https://github.com/knative/serving/releases/download/v0.15.1/serving-core.yaml
+kubectl apply -f https://github.com/knative/serving/releases/download/v0.15.1/serving-core.yaml
+kubectl apply -f https://github.com/knative/net-istio/releases/download/v0.15.1/net-istio.yaml
 ```
 
 

@@ -15,53 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_formatUrlWithAuth(t *testing.T) {
-	settings := RepoSettings{
-		Username: "user",
-		Password: "pw",
-		URL:      "https://tempuri.org",
-	}
-
-	result, err := formatUrlWithAuth(settings)
-
-	assert.NoError(t, err)
-	assert.Equal(t, "https://user:pw@tempuri.org", result)
-}
-
-func Test_formatUrlWithUsername(t *testing.T) {
-	settings := RepoSettings{
-		Username: "oauthtoken",
-		URL:      "https://tempuri.org",
-	}
-
-	result, err := formatUrlWithAuth(settings)
-
-	assert.NoError(t, err)
-	assert.Equal(t, "https://oauthtoken@tempuri.org", result)
-}
-
-func Test_formatUrlWithAuth_noAuth(t *testing.T) {
-	settings := RepoSettings{
-		URL: "https://tempuri.org",
-	}
-
-	result, err := formatUrlWithAuth(settings)
-
-	assert.NoError(t, err)
-	assert.Equal(t, "https://tempuri.org", result)
-}
-
-func Test_formatUrlWithAuth_badURL(t *testing.T) {
-	settings := RepoSettings{
-		URL: "\n",
-	}
-
-	result, err := formatUrlWithAuth(settings)
-
-	assert.Empty(t, result)
-	assert.Contains(t, err.Error(), "net/url: invalid control character in URL")
-}
-
 func Test_processFiles(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "riser-test")
 	if err != nil {

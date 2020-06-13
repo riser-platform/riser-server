@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,23 +19,6 @@ import (
 const (
 	workspaceFilePerm = 0755
 )
-
-// formatUrlWithAuth returns URL with auth info if specified
-func formatUrlWithAuth(settings RepoSettings) (string, error) {
-	parsedUrl, err := url.Parse(settings.URL)
-	if err != nil {
-		return "", err
-	}
-
-	if settings.Username != "" && settings.Password != "" {
-		parsedUrl.User = url.UserPassword(settings.Username, settings.Password)
-	} else if settings.Username != "" {
-		// Support username only (e.g. https://<token>@domain) style auth
-		parsedUrl.User = url.User(settings.Username)
-	}
-
-	return parsedUrl.String(), nil
-}
 
 func processFiles(baseDir string, files []core.ResourceFile) error {
 	for _, file := range files {

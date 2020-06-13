@@ -8,8 +8,6 @@ type RuntimeConfig struct {
 	GitUrl                   string `split_words:"true" required:"true"`
 	GitDir                   string `split_words:"true" default:"/tmp/riser/git/"`
 	GitBranch                string `split_words:"true" default:"main"`
-	GitUsername              string `split_words:"true"`
-	GitPassword              string `split_words:"true"`
 	PostgresUrl              string `split_words:"true" default:"postgres://postgres.riser-system.svc.cluster.local/riserdb?sslmode=disable&connect_timeout=3"`
 	PostgresUsername         string `split_words:"true" required:"true"`
 	PostgresPassword         string `split_words:"true" required:"true"`

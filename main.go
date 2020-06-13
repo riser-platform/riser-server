@@ -58,8 +58,6 @@ func main() {
 	repoSettings := git.RepoSettings{
 		URL:         rc.GitUrl,
 		Branch:      rc.GitBranch,
-		Username:    rc.GitUsername,
-		Password:    rc.GitPassword,
 		LocalGitDir: rc.GitDir,
 	}
 

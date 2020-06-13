@@ -31,11 +31,7 @@ const (
 type RepoSettings struct {
 	URL         string
 	Branch      string
-	Username    string
-	Password    string
 	LocalGitDir string
-	// Note: We may need to change our auth strategy to support SSH keys
-	urlWithAuth string
 }
 
 type Repo interface {
@@ -61,14 +57,7 @@ func NewRepo(repoSettings RepoSettings) (Repo, error) {
 		Mutex:    sync.Mutex{},
 	}
 
-	urlWithAuth, err := formatUrlWithAuth(repoSettings)
-	if err != nil {
-		return nil, err
-	}
-
-	repo.settings.urlWithAuth = urlWithAuth
-
-	err = repo.init()
+	err := repo.init()
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +126,7 @@ func (repo *repo) clone() error {
 	args = append(args, "--single-branch")
 	args = append(args, "--depth=1")
 
-	args = append(args, repo.settings.urlWithAuth, repo.settings.LocalGitDir)
+	args = append(args, repo.settings.URL, repo.settings.LocalGitDir)
 	return repo.execGitCmd(args)
 }
 

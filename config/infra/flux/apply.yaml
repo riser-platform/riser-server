@@ -170,7 +170,7 @@ spec:
               name: flux-git
           args:
           - --log-format=fmt
-          
+
           - --ssh-keygen-dir=/var/fluxd/keygen
           - --ssh-keygen-format=RFC4716
           - --k8s-secret-name=flux-git-deploy
@@ -178,7 +178,7 @@ spec:
           - --sync-state=git
           - --memcached-service=
           - --git-url=$(GIT_URL)
-          - --git-branch=master
+          - --git-branch=main
           - --git-path=$(GIT_PATH)
           - --git-readonly=true
           - --git-user=Weave Flux
@@ -199,5 +199,5 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
-      nodeSelector: 
+      nodeSelector:
         beta.kubernetes.io/os: linux

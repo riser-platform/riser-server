@@ -154,7 +154,7 @@ func Test_execWithContext_cancel(t *testing.T) {
 }
 
 func Test_isNoChangesErr_cleanTreeErr(t *testing.T) {
-	result := isNoChangesErr(errors.New("Your branch is up to date with 'origin/master'.\n\nnothing to commit, working tree clean\n"))
+	result := isNoChangesErr(errors.New("Your branch is up to date with 'origin/main'.\n\nnothing to commit, working tree clean\n"))
 
 	assert.True(t, result)
 }

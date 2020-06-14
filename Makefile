@@ -40,7 +40,7 @@ watch:
 	fswatch -l 1 -o . | xargs -n1 -I{} gotestsum
 
 docker-build:
-	docker build . -t riser-server
+	docker build . -t riser-server -f docker/Dockerfile
 	docker tag riser-server ${IMG}:${TAG}
 
 docker-push:

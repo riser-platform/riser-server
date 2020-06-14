@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -15,7 +16,10 @@ import (
 
 var (
 	// ErrNoChanges indicates that there were no changes to commit
-	ErrNoChanges = errors.New("no changes to commit")
+	ErrNoChanges       = errors.New("no changes to commit")
+	KubeSSHMountPath   = "/etc/riser/kube/ssh/identity"
+	KubeSSHTargetPath  = "/etc/riser/ssh/identity"
+	KubeSSHKeyFileMode = os.FileMode(0400)
 )
 
 const (
@@ -57,7 +61,22 @@ func NewRepo(repoSettings RepoSettings) (Repo, error) {
 		Mutex:    sync.Mutex{},
 	}
 
-	err := repo.init()
+	// Terrible hack due to https://github.com/kubernetes/kubernetes/issues/57923
+	// Essentially Kubernetes mounts secrets with too open permissions for SSH, regardless of permission settings, if the container is
+	// running as a lower privalaged user.
+	_, err := os.Stat(KubeSSHMountPath)
+	if err == nil {
+		_, err = execWithContext(context.Background(), exec.Command("sh", "-c", fmt.Sprintf("cp %s %s", KubeSSHMountPath, KubeSSHTargetPath)))
+		if err != nil {
+			return nil, errors.Wrap(err, "Error copying SSH key")
+		}
+		err := os.Chmod(KubeSSHTargetPath, KubeSSHKeyFileMode)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error setting permissions on SSH key")
+		}
+	}
+
+	err = repo.init()
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +93,7 @@ func (repo *repo) Commit(message string, files []core.ResourceFile) error {
 	if err != nil {
 		return err
 	}
-	args := []string{"commit", "-m", message, "--author", fmt.Sprintf("%s <%s>", commitName, commitEmail)}
-	err = repo.execGitCmd(args)
+	err = repo.execGitCmd("commit", "-m", message, "--author", fmt.Sprintf("%s <%s>", commitName, commitEmail))
 	if err != nil && isNoChangesErr(err) {
 		return ErrNoChanges
 	}
@@ -83,13 +101,11 @@ func (repo *repo) Commit(message string, files []core.ResourceFile) error {
 }
 
 func (repo *repo) addAll() error {
-	args := []string{"add", "--all"}
-	return repo.execGitCmd(args)
+	return repo.execGitCmd("add", "--all")
 }
 
 func (repo *repo) Push() error {
-	args := []string{"push"}
-	return repo.execGitCmd(args)
+	return repo.execGitCmd("push")
 }
 
 func (repo *repo) init() error {
@@ -120,26 +136,16 @@ func (repo *repo) init() error {
 }
 
 func (repo *repo) clone() error {
-	args := []string{"clone"}
-	// Only clone what we need to improve perf
-	args = append(args, "--branch", repo.settings.Branch)
-	args = append(args, "--single-branch")
-	args = append(args, "--depth=1")
-
-	args = append(args, repo.settings.URL, repo.settings.LocalGitDir)
-	return repo.execGitCmd(args)
+	return repo.execGitCmd("clone", "--branch", repo.settings.Branch, "--single-branch", "--depth=1", repo.settings.URL, repo.settings.LocalGitDir)
 }
 
 func (repo *repo) fetch() error {
-	args := []string{"fetch", "-f", remoteName, repo.settings.Branch}
-
-	return repo.execGitCmd(args)
+	return repo.execGitCmd("fetch", "-f", remoteName, repo.settings.Branch)
 }
 
 func (repo *repo) clean() error {
-	args := []string{"clean", "-xdf"}
 
-	return repo.execGitCmd(args)
+	return repo.execGitCmd("clean", "-xdf")
 }
 
 // ResetHardRemote ensures that the remote is up-to-date. Pending commits will be lost.
@@ -149,21 +155,24 @@ func (repo *repo) ResetHardRemote() error {
 	if err != nil {
 		return err
 	}
-	args := []string{"reset", "--hard", fmt.Sprintf("%s/%s", remoteName, repo.settings.Branch)}
 
-	return repo.execGitCmd(args)
+	return repo.execGitCmd("reset", "--hard", fmt.Sprintf("%s/%s", remoteName, repo.settings.Branch))
 }
 
-func (repo *repo) execGitCmd(args []string) error {
+func (repo *repo) execGitCmd(args ...string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), gitExecTimeoutSeconds)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "git", args...)
-	cmd.Dir = repo.settings.LocalGitDir
-
+	cmd := repo.buildGitCmd(ctx, args...)
 	_, err := execWithContext(ctx, cmd)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("git %s", args))
 	}
 
 	return nil
+}
+
+func (repo *repo) buildGitCmd(ctx context.Context, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Dir = repo.settings.LocalGitDir
+	return cmd
 }

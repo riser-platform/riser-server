@@ -11,6 +11,8 @@ metadata:
   name: riser-dev-controlplane
   namespace: istio-system
 spec:
+  meshConfig:
+    enableAutoMtls: true
   addonComponents:
     kiali:
       enabled: false
@@ -25,16 +27,6 @@ spec:
             cpu: 50m
             memory: 128Mi
       name: istio-ingressgateway
-    - enabled: true
-      k8s:
-        resources:
-          requests:
-            cpu: 50m
-            memory: 128Mi
-      name: cluster-local-gateway
-      namespace: istio-system
-      label:
-        istio: cluster-local-gateway
     pilot:
       k8s:
         resources:
@@ -48,15 +40,9 @@ spec:
       istio-ingressgateway:
         sds:
           enabled: true
-          resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
     global:
-      controlPlaneSecurityEnabled: false
+      controlPlaneSecurityEnabled: true
       defaultPodDisruptionBudget:
-        enabled: false
-      mtls:
         enabled: false
       proxy:
         resources:

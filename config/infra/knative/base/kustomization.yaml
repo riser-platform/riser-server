@@ -1,0 +1,12 @@
+resources:
+- net-istio.yaml
+- serving-cert-manager.yaml
+- serving-core.yaml
+
+patches:
+- config-certmanager.yaml
+- config-istio.yaml
+- config-network.yaml
+- patch-ingress-gateway.yaml
+- patch-webhooks.yaml
+

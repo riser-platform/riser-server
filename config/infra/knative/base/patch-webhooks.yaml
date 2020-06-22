@@ -1,0 +1,33 @@
+# Remove the istio sidecar from webhooks (See: https://github.com/knative/net-istio/issues/150)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: istio-webhook
+  namespace: knative-serving
+spec:
+  template:
+    metadata:
+      annotations:
+        "sidecar.istio.io/inject": "false"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook
+  namespace: knative-serving
+spec:
+  template:
+    metadata:
+      annotations:
+        "sidecar.istio.io/inject": "false"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: net-certmanager-webhook
+  namespace: knative-serving
+spec:
+  template:
+    metadata:
+      annotations:
+        "sidecar.istio.io/inject": "false"

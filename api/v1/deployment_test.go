@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/riser-platform/riser-server/pkg/git"
+	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/pkg/deployment"
 
@@ -132,9 +133,11 @@ func Test_mapDeploymentRequestToDomain_Overrides(t *testing.T) {
 		},
 		App: &model.AppConfigWithOverrides{
 			AppConfig: model.AppConfig{},
-			Overrides: map[string]model.AppConfig{
+			Overrides: map[string]model.OverrideableAppConfig{
 				"myenv": {
-					Expose: &model.AppConfigExpose{ContainerPort: 1337},
+					Autoscale: &model.AppConfigAutoscale{
+						Min: util.PtrInt(1),
+					},
 				},
 			},
 		},
@@ -143,6 +146,6 @@ func Test_mapDeploymentRequestToDomain_Overrides(t *testing.T) {
 	result, err := mapDeploymentRequestToDomain(request)
 
 	assert.NoError(t, err)
-	assert.Equal(t, int32(1337), result.App.Expose.ContainerPort)
+	assert.Equal(t, 1, *result.App.Autoscale.Min)
 
 }

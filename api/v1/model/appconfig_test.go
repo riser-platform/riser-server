@@ -224,11 +224,13 @@ func Test_ApplyOverrides_NoOverridesForEnvironment(t *testing.T) {
 	appConfig := &AppConfigWithOverrides{
 		AppConfig: AppConfig{
 			Name: "myapp",
-			Resources: &AppConfigResources{
-				CpuCores: &cpuCores,
+			OverrideableAppConfig: OverrideableAppConfig{
+				Resources: &AppConfigResources{
+					CpuCores: &cpuCores,
+				},
 			},
 		},
-		Overrides: map[string]AppConfig{
+		Overrides: map[string]OverrideableAppConfig{
 			"dev": {
 				Resources: &AppConfigResources{
 					CpuCores: &cpuCoresDev,
@@ -245,27 +247,31 @@ func Test_ApplyOverrides_NoOverridesForEnvironment(t *testing.T) {
 }
 
 func Test_ApplyOverrides_WithOverrides(t *testing.T) {
+	appId := uuid.MustParse("AEEA1A7A-70FE-4B3A-8436-3F8A197279DC")
 	cpuCores := float32(2)
 	cpuCoresDev := float32(0.1)
 	appConfig := &AppConfigWithOverrides{
 		AppConfig: AppConfig{
+			Id:    appId,
 			Name:  "myapp",
 			Image: "hashicorp/http-echo",
-			Resources: &AppConfigResources{
-				CpuCores: &cpuCores,
-			},
 			HealthCheck: &AppConfigHealthCheck{
 				Path: "/health",
-			},
-			Environment: map[string]intstr.IntOrString{
-				"envKey":     intstr.Parse("envVal"),
-				"envKeyBase": intstr.Parse("envValBase"),
 			},
 			Expose: &AppConfigExpose{
 				ContainerPort: 1337,
 			},
+			OverrideableAppConfig: OverrideableAppConfig{
+				Resources: &AppConfigResources{
+					CpuCores: &cpuCores,
+				},
+				Environment: map[string]intstr.IntOrString{
+					"envKey":     intstr.Parse("envVal"),
+					"envKeyBase": intstr.Parse("envValBase"),
+				},
+			},
 		},
-		Overrides: map[string]AppConfig{
+		Overrides: map[string]OverrideableAppConfig{
 			"dev": {
 				Resources: &AppConfigResources{
 					CpuCores: &cpuCoresDev,
@@ -273,9 +279,6 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 				Environment: map[string]intstr.IntOrString{
 					"envKey":    intstr.Parse("envValDevOverride"),
 					"envKeyDev": intstr.Parse("envValDev"),
-				},
-				Expose: &AppConfigExpose{
-					ContainerPort: 8080,
 				},
 			},
 		},
@@ -285,14 +288,16 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
+	assert.Equal(t, appId, result.Id)
 	assert.EqualValues(t, "myapp", result.Name)
 	assert.Len(t, result.Environment, 3)
 	assert.Equal(t, "envValDevOverride", result.Environment["envKey"].StrVal)
 	assert.Equal(t, "envValDev", result.Environment["envKeyDev"].StrVal)
 	assert.Equal(t, "envValBase", result.Environment["envKeyBase"].StrVal)
-	assert.EqualValues(t, 8080, result.Expose.ContainerPort)
 	assert.EqualValues(t, cpuCoresDev, *result.Resources.CpuCores)
 	assert.Equal(t, "/health", result.HealthCheck.Path)
+	// Ensure that we don't mutate the original config
+	assert.Equal(t, appConfig.Resources.CpuCores, &cpuCores)
 }
 
 func createMinAppConfig() *AppConfig {

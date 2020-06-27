@@ -25,34 +25,39 @@ var (
 // AppConfigWithOverrides contains an app with environment level overrides
 type AppConfigWithOverrides struct {
 	AppConfig
-	Overrides map[string]AppConfig `json:"environmentOverrides,omitempty"`
+	Overrides map[string]OverrideableAppConfig `json:"environmentOverrides,omitempty"`
 }
 
 func (cfg *AppConfigWithOverrides) ApplyOverrides(envName string) (*AppConfig, error) {
-	app := &cfg.AppConfig
+	app := cfg.AppConfig
 	if overrideApp, ok := cfg.Overrides[envName]; ok {
-		err := mergo.Merge(&overrideApp, app)
+		err := mergo.Merge(&overrideApp, app.OverrideableAppConfig)
 		if err != nil {
 			return nil, err
 		}
 
-		app = &overrideApp
+		app.OverrideableAppConfig = overrideApp
 	}
 
-	return app, nil
+	return &app, nil
 
 }
 
 // AppConfig is the root of the application config object graph without environment overrides
 type AppConfig struct {
-	Id          uuid.UUID                     `json:"id"`
-	Name        AppName                       `json:"name"`
-	Namespace   NamespaceName                 `json:"namespace"`
+	Id                    uuid.UUID             `json:"id"`
+	Name                  AppName               `json:"name"`
+	Namespace             NamespaceName         `json:"namespace"`
+	Expose                *AppConfigExpose      `json:"expose,omitempty"`
+	HealthCheck           *AppConfigHealthCheck `json:"healthcheck,omitempty"`
+	Image                 string                `json:"image"`
+	OverrideableAppConfig `json:",inline"`
+}
+
+// OverrideableAppConfig contains properties that are overrideable
+type OverrideableAppConfig struct {
 	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
 	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
-	Expose      *AppConfigExpose              `json:"expose,omitempty"`
-	HealthCheck *AppConfigHealthCheck         `json:"healthcheck,omitempty"`
-	Image       string                        `json:"image"`
 	Resources   *AppConfigResources           `json:"resources,omitempty"`
 }
 

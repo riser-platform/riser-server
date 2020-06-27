@@ -17,9 +17,11 @@ func Test_k8sEnvVars(t *testing.T) {
 	deployment := &core.DeploymentConfig{
 		App: &model.AppConfig{
 			Name: "myapp",
-			Environment: map[string]intstr.IntOrString{
-				"env1": intstr.Parse("env1Val"),
-				"env2": intstr.Parse("env2Val"),
+			OverrideableAppConfig: model.OverrideableAppConfig{
+				Environment: map[string]intstr.IntOrString{
+					"env1": intstr.Parse("env1Val"),
+					"env2": intstr.Parse("env2Val"),
+				},
 			},
 		},
 	}

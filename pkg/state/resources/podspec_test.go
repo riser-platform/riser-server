@@ -46,9 +46,11 @@ func Test_readinessProbe_httpGet(t *testing.T) {
 
 func Test_resources(t *testing.T) {
 	app := &model.AppConfig{
-		Resources: &model.AppConfigResources{
-			CpuCores: util.PtrFloat32(1.5),
-			MemoryMB: util.PtrInt32(4096),
+		OverrideableAppConfig: model.OverrideableAppConfig{
+			Resources: &model.AppConfigResources{
+				CpuCores: util.PtrFloat32(1.5),
+				MemoryMB: util.PtrInt32(4096),
+			},
 		},
 	}
 

@@ -36,13 +36,15 @@ func Test_update_snapshot_simple(t *testing.T) {
 			Name:      "myapp",
 			Namespace: "apps",
 			Id:        uuid.MustParse("2516D5E4-1EC3-46B8-B3CD-C3D72AE38DC0"),
-			Autoscale: &model.AppConfigAutoscale{
-				Min: util.PtrInt(0),
-				Max: util.PtrInt(1),
-			},
 			Expose: &model.AppConfigExpose{
 				ContainerPort: 8080,
 				Protocol:      "http",
+			},
+			OverrideableAppConfig: model.OverrideableAppConfig{
+				Autoscale: &model.AppConfigAutoscale{
+					Min: util.PtrInt(0),
+					Max: util.PtrInt(1),
+				},
 			},
 		},
 		Traffic: core.TrafficConfig{

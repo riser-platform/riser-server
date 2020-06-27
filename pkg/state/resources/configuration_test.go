@@ -35,9 +35,11 @@ func Test_createRevisionMeta_Autoscale(t *testing.T) {
 			EnvironmentName: "myenv",
 			App: &model.AppConfig{
 				Name: "myapp",
-				Autoscale: &model.AppConfigAutoscale{
-					Min: util.PtrInt(1),
-					Max: util.PtrInt(2),
+				OverrideableAppConfig: model.OverrideableAppConfig{
+					Autoscale: &model.AppConfigAutoscale{
+						Min: util.PtrInt(1),
+						Max: util.PtrInt(2),
+					},
 				},
 			},
 		},

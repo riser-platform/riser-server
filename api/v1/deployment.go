@@ -62,15 +62,14 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 
 	if isDryRun {
 		dryRunCommitter := committer.(*state.DryRunComitter)
-
 		return c.JSON(http.StatusAccepted, model.DeploymentResponse{
-			RiserRevision: riserRevision,
+
 			Message:       "Dry run: changes not applied",
 			DryRunCommits: mapDryRunCommitsFromDomain(dryRunCommitter.Commits),
 		})
 	}
 
-	return c.JSON(http.StatusAccepted, model.APIResponse{Message: "Deployment requested"})
+	return c.JSON(http.StatusAccepted, model.DeploymentResponse{RiserRevision: riserRevision, Message: "Deployment requested"})
 }
 
 func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService deployment.Service) error {

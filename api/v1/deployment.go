@@ -52,7 +52,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		committer = state.NewGitCommitter(stateRepo)
 	}
 
-	err = deploymentService.Update(newDeployment, committer, isDryRun)
+	riserRevision, err := deploymentService.Update(newDeployment, committer, isDryRun)
 	if err != nil {
 		if err == git.ErrNoChanges {
 			return c.JSON(http.StatusOK, model.DeploymentResponse{Message: "No changes to deploy"})
@@ -64,6 +64,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		dryRunCommitter := committer.(*state.DryRunComitter)
 
 		return c.JSON(http.StatusAccepted, model.DeploymentResponse{
+			RiserRevision: riserRevision,
 			Message:       "Dry run: changes not applied",
 			DryRunCommits: mapDryRunCommitsFromDomain(dryRunCommitter.Commits),
 		})

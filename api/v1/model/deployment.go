@@ -21,6 +21,7 @@ func (d DeploymentRequest) Validate() error {
 }
 
 type DeploymentResponse struct {
+	RiserRevision int64          `json:"riserRevision"`
 	Message       string         `json:"message"`
 	DryRunCommits []DryRunCommit `json:"dryRunCommits,omitempty"`
 }

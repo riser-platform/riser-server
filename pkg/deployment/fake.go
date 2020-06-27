@@ -10,7 +10,7 @@ type FakeService struct {
 	DeleteCallCount int
 }
 
-func (f *FakeService) Update(deployment *core.DeploymentConfig, committer state.Committer, dryRun bool) error {
+func (f *FakeService) Update(deployment *core.DeploymentConfig, committer state.Committer, dryRun bool) (int64, error) {
 	panic("NI!")
 }
 

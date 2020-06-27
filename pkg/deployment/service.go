@@ -20,7 +20,7 @@ import (
 )
 
 type Service interface {
-	Update(deployment *core.DeploymentConfig, committer state.Committer, dryRun bool) error
+	Update(deployment *core.DeploymentConfig, committer state.Committer, dryRun bool) (riserRevision int64, err error)
 	Delete(name *core.NamespacedName, envName string, committer state.Committer) error
 }
 
@@ -56,24 +56,24 @@ func (s *service) Delete(name *core.NamespacedName, envName string, committer st
 	return committer.Commit(fmt.Sprintf("Deleting deployment %q", name), files)
 }
 
-func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) error {
-	err := s.namespaceService.EnsureNamespaceInEnvironment(deploymentConfig.Namespace, deploymentConfig.EnvironmentName, committer)
+func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) (riserRevision int64, err error) {
+	err = s.namespaceService.EnsureNamespaceInEnvironment(deploymentConfig.Namespace, deploymentConfig.EnvironmentName, committer)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	riserRevision, err := s.prepareForDeployment(deploymentConfig, dryRun)
+	riserRevision, err = s.prepareForDeployment(deploymentConfig, dryRun)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	environment, err := s.environments.Get(deploymentConfig.EnvironmentName)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	secrets, err := s.secrets.ListByAppInEnvironment(core.NewNamespacedName(deploymentConfig.Name, deploymentConfig.Namespace), deploymentConfig.EnvironmentName)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	ctx := &core.DeploymentContext{
 		DeploymentConfig:  deploymentConfig,
@@ -86,10 +86,10 @@ func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer stat
 		// TODO: Log rollback error but don't return since we want the original deployment error to flow to caller
 		_, _ = s.deployments.RollbackRevision(
 			core.NewNamespacedName(deploymentConfig.Name, deploymentConfig.Namespace), deploymentConfig.EnvironmentName, riserRevision)
-		return err
+		return 0, err
 	}
 
-	return nil
+	return riserRevision, nil
 }
 
 func (s *service) prepareForDeployment(deploymentConfig *core.DeploymentConfig, dryRun bool) (riserRevision int64, err error) {

@@ -24,7 +24,7 @@ var (
 
 // AppConfigWithOverrides contains an app with environment level overrides
 type AppConfigWithOverrides struct {
-	AppConfig
+	AppConfig `json:",inline"`
 	Overrides map[string]OverrideableAppConfig `json:"environmentOverrides,omitempty"`
 }
 

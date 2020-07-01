@@ -25,6 +25,13 @@ func ErrorHandler(err error, c echo.Context) {
 	)
 
 	if httpError, ok := err.(*echo.HTTPError); ok {
+		// Hack for echo's hard coded KeyAuth error. If an internal error exists we do not want to return a 500, not a 401
+		// Sadly there appears to be no way to customize this in the middleware
+		if httpError.Message == "invalid key" && httpError.Code == http.StatusUnauthorized && httpError.Internal != nil {
+			httpError.Code = http.StatusInternalServerError
+			httpError.Message = "An error occurred while validating credentials. Please retry your request at a later time."
+		}
+
 		internalError = httpError.Internal
 		code = httpError.Code
 		jsonResponse = echo.Map{"message": httpError.Message}

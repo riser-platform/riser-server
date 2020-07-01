@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/login"
 )
 
@@ -12,9 +13,7 @@ func loginWithApiKey(c echo.Context, loginService login.Service, apikey string) 
 			return false, nil
 		}
 
-		// Echo does not seem to log the returned error so log it here
-		c.Logger().Errorf("Error logging in with API key: %s", err)
-		return false, err
+		return false, errors.Wrap(err, "Error logging in with API key")
 	}
 	c.Set("username", username)
 	return true, nil

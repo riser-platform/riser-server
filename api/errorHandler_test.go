@@ -71,6 +71,25 @@ func Test_ErrorHandler_WhenHttpErrorInternal_AlwaysLogsInternal(t *testing.T) {
 	assert.Equal(t, "{\"message\":\"test\"}\n", rec.Body.String())
 }
 
+func Test_ErrorHandler_WhenKeyAuthInternalError_Returns500(t *testing.T) {
+	logBuf := &bytes.Buffer{}
+	ctx, rec := errorHandlerTestSetup(logBuf)
+
+	err := echo.NewHTTPError(http.StatusUnauthorized, "invalid key")
+	err = err.SetInternal(errors.New("auth failed"))
+
+	ErrorHandler(err, ctx)
+
+	splitLogLines := strings.Split(logBuf.String(), "\n")
+	// There's an extra \n that creates an extra line
+	assert.Len(t, splitLogLines, 2)
+	jsonLog := unmarshalErrorLogLine(t, splitLogLines[0])
+	assert.Equal(t, "ERROR", jsonLog["level"])
+	assert.Contains(t, jsonLog["message"], "auth failed")
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.Equal(t, "{\"message\":\"An error occurred while validating credentials. Please retry your request at a later time.\"}\n", rec.Body.String())
+}
+
 func Test_ErrorHandler_WhenValidationErrorWithFields_FormatsResponse(t *testing.T) {
 	logBuf := &bytes.Buffer{}
 	ctx, rec := errorHandlerTestSetup(logBuf)

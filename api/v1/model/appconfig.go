@@ -57,7 +57,7 @@ type AppConfig struct {
 // OverrideableAppConfig contains properties that are overrideable
 type OverrideableAppConfig struct {
 	Autoscale   *AppConfigAutoscale           `json:"autoscale,omitempty"`
-	Environment map[string]intstr.IntOrString `json:"environment,omitempty"`
+	Environment map[string]intstr.IntOrString `json:"env,omitempty"`
 	Resources   *AppConfigResources           `json:"resources,omitempty"`
 }
 

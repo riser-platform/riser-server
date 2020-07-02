@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/util"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/riser-platform/riser-server/pkg/core"
 
@@ -44,6 +45,9 @@ func Test_update_snapshot_simple(t *testing.T) {
 				Autoscale: &model.AppConfigAutoscale{
 					Min: util.PtrInt(0),
 					Max: util.PtrInt(1),
+				},
+				Environment: map[string]intstr.IntOrString{
+					"myenv": intstr.FromString("myval"),
 				},
 			},
 		},

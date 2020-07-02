@@ -2,6 +2,8 @@
 autoscale:
   max: 1
   min: 0
+env:
+  myenv: myval
 expose:
   containerPort: 8080
   protocol: http

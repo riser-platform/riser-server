@@ -1,10 +1,11 @@
 resources:
+- net-certmanager.yaml
 - net-istio.yaml
-- serving-cert-manager.yaml
 - serving-core.yaml
 
 patches:
 - config-certmanager.yaml
+- config-defaults.yaml
 - config-istio.yaml
 - config-network.yaml
 - patch-ingress-gateway.yaml

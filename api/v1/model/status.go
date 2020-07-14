@@ -42,7 +42,7 @@ type DeploymentRevisionStatus struct {
 	AvailableReplicas    int32  `json:"availableReplicas"`
 	DockerImage          string `json:"dockerImage"`
 	RiserRevision        int64  `json:"riserRevision"`
-	RevisionStatus       string `json:"rolloutStatus"`
+	RevisionStatus       string `json:"revisionStatus"`
 	RevisionStatusReason string `json:"revisionStatusReason,omitempty"`
 }
 

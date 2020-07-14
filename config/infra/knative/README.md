@@ -1,7 +1,7 @@
 A base [Kustomization](https://kustomize.io/) is provided for generation of Knative Serving manifests that work with Riser. The base manifests are:
-- net-istio
-- service-cert-manager
-- serving-core
+- [serving-core](https://github.com/knative/serving/releases)
+- [net-istio](https://github.com/knative/net-istio/releases)
+- [net-cert-manager](https://github.com/knative/net-certmanager/releases)
 
 To build run `kustomize build base >/path/to/gitops/repo/kustomization.yaml`
 

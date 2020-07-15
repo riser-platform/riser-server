@@ -31,16 +31,13 @@ type AppConfigWithOverrides struct {
 func (cfg *AppConfigWithOverrides) ApplyOverrides(envName string) (*AppConfig, error) {
 	app := cfg.AppConfig
 	if overrideApp, ok := cfg.Overrides[envName]; ok {
-		err := mergo.Merge(&overrideApp, app.OverrideableAppConfig)
+		err := mergo.Merge(&app.OverrideableAppConfig, overrideApp, mergo.WithOverride, mergo.WithOverwriteWithEmptyValue)
 		if err != nil {
 			return nil, err
 		}
-
-		app.OverrideableAppConfig = overrideApp
 	}
 
 	return &app, nil
-
 }
 
 // AppConfig is the root of the application config object graph without environment overrides

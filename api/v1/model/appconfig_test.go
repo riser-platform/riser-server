@@ -250,6 +250,9 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 	appId := uuid.MustParse("AEEA1A7A-70FE-4B3A-8436-3F8A197279DC")
 	cpuCores := float32(2)
 	cpuCoresDev := float32(0.1)
+	autoscaleMin := int(1)
+	// Setting the override to zero covers an important case where mergo does not override 0 by default even for an *int
+	autoscaleMinOverride := int(0)
 	appConfig := &AppConfigWithOverrides{
 		AppConfig: AppConfig{
 			Id:    appId,
@@ -262,6 +265,9 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 				ContainerPort: 1337,
 			},
 			OverrideableAppConfig: OverrideableAppConfig{
+				Autoscale: &AppConfigAutoscale{
+					Min: &autoscaleMin,
+				},
 				Resources: &AppConfigResources{
 					CpuCores: &cpuCores,
 				},
@@ -273,6 +279,9 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 		},
 		Overrides: map[string]OverrideableAppConfig{
 			"dev": {
+				Autoscale: &AppConfigAutoscale{
+					Min: &autoscaleMinOverride,
+				},
 				Resources: &AppConfigResources{
 					CpuCores: &cpuCoresDev,
 				},
@@ -296,6 +305,7 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 	assert.Equal(t, "envValBase", result.Environment["envKeyBase"].StrVal)
 	assert.EqualValues(t, cpuCoresDev, *result.Resources.CpuCores)
 	assert.Equal(t, "/health", result.HealthCheck.Path)
+	assert.Equal(t, 0, *result.Autoscale.Min)
 	// Ensure that we don't mutate the original config
 	assert.Equal(t, appConfig.Resources.CpuCores, &cpuCores)
 }

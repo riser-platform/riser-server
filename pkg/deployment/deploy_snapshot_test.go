@@ -86,7 +86,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 	assert.NoError(t, err)
 	if !util.ShouldUpdateSnapshot() {
 		require.Len(t, dryRunCommitter.Commits, 1)
-		assert.Equal(t, "Updating resources for \"myapp\" in environment \"dev\"", dryRunCommitter.Commits[0].Message)
+		assert.Equal(t, "Updating resources for \"myapp.apps\" in environment \"dev\"", dryRunCommitter.Commits[0].Message)
 		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }

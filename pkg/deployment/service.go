@@ -201,5 +201,5 @@ func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
 		return err
 	}
 
-	return committer.Commit(fmt.Sprintf("Updating resources for %q in environment %q", ctx.DeploymentConfig.Name, ctx.DeploymentConfig.EnvironmentName), resourceFiles)
+	return committer.Commit(fmt.Sprintf("Updating resources for \"%s.%s\" in environment %q", ctx.DeploymentConfig.Name, ctx.DeploymentConfig.Namespace, ctx.DeploymentConfig.EnvironmentName), resourceFiles)
 }

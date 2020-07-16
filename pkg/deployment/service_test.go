@@ -42,7 +42,7 @@ func Test_Delete(t *testing.T) {
 	assert.Len(t, committer.Commits[0].Files, 2)
 	assert.Equal(t, "state/myenv/riser-managed/apps/deployments/mydep", committer.Commits[0].Files[0].Name)
 	assert.True(t, committer.Commits[0].Files[0].Delete)
-	assert.Equal(t, "config/myenv/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
+	assert.Equal(t, "riser-config/myenv/apps/mydep.yaml", committer.Commits[0].Files[1].Name)
 	assert.True(t, committer.Commits[0].Files[1].Delete)
 }
 

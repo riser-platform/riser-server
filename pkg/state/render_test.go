@@ -22,7 +22,7 @@ func Test_RenderDeleteDeployment(t *testing.T) {
 	require.Len(t, result, 2)
 	assert.Equal(t, "state/dev/riser-managed/apps/deployments/mydep", result[0].Name)
 	assert.True(t, result[0].Delete)
-	assert.Equal(t, "config/dev/apps/mydep.yaml", result[1].Name)
+	assert.Equal(t, "riser-config/dev/apps/mydep.yaml", result[1].Name)
 	assert.True(t, result[1].Delete)
 }
 
@@ -45,7 +45,7 @@ func Test_getDeploymentScmPath(t *testing.T) {
 func Test_getAppConfigScmPath(t *testing.T) {
 	result := getAppConfigScmPath("myapp01-test", "apps", "dev")
 
-	assert.Equal(t, "config/dev/apps/myapp01-test.yaml", result)
+	assert.Equal(t, "riser-config/dev/apps/myapp01-test.yaml", result)
 }
 
 func Test_getSecretScmPath(t *testing.T) {
@@ -89,7 +89,7 @@ func Test_renderDeploymentResources(t *testing.T) {
 	assert.Len(t, result, 2)
 	assert.Equal(t, "state/dev/riser-managed/apps/deployments/mydeployment/service.mydeployment.yaml", result[0].Name)
 	assert.Contains(t, string(result[0].Contents), "name: mydeployment")
-	assert.Equal(t, "config/dev/apps/mydeployment.yaml", result[1].Name)
+	assert.Equal(t, "riser-config/dev/apps/mydeployment.yaml", result[1].Name)
 	assert.Contains(t, string(result[1].Contents), "name: myapp01")
 }
 

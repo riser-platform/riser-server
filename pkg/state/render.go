@@ -122,7 +122,7 @@ func getSecretScmPath(app string, environmentName string, sealedSecret KubeResou
 
 func getAppConfigScmPath(deploymentName, namespace, environmentName string) string {
 	return strings.ToLower(filepath.Join(
-		"config",
+		"riser-config",
 		environmentName,
 		namespace,
 		fmt.Sprintf("%s.yaml", deploymentName)))

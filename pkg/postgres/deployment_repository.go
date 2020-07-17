@@ -214,10 +214,21 @@ func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, envName s
 	if err != nil {
 		return err
 	}
+	return r.handleUpdateStatusResult(result)
+}
 
-	rows, _ := result.RowsAffected()
+func (deploymentRepository) handleUpdateStatusResult(r sql.Result) error {
+	rows, err := r.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	/*
+		Assume that no updates = a version conflict.
+		While this assumption is not strictly true, this is the most common reason that the update predicate fails to match
+	*/
 	if rows == 0 {
-		return errors.New("Deployment not found or status is outdated")
+		return core.ErrConflictNewerVersion
 	}
 
 	return nil

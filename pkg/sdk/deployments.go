@@ -10,7 +10,7 @@ import (
 type DeploymentsClient interface {
 	Delete(deploymentName, namespace, envName string) (*model.DeploymentResponse, error)
 	Save(deployment *model.DeploymentRequest, dryRun bool) (*model.DeploymentResponse, error)
-	SaveStatus(deploymentName, namespace, envName string, status *model.DeploymentStatusMutable) error
+	SaveStatus(deploymentName, namespace, envName string, status *model.DeploymentStatusMutable) (statusCode int, err error)
 }
 
 type deploymentsClient struct {
@@ -53,11 +53,14 @@ func (c *deploymentsClient) Save(deployment *model.DeploymentRequest, dryRun boo
 	return responseModel, nil
 }
 
-func (c *deploymentsClient) SaveStatus(deploymentName, namespace, envName string, status *model.DeploymentStatusMutable) error {
+func (c *deploymentsClient) SaveStatus(deploymentName, namespace, envName string, status *model.DeploymentStatusMutable) (statusCode int, err error) {
 	request, err := c.client.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/deployments/%s/%s/%s/status", envName, namespace, deploymentName), status)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = c.client.Do(request, nil)
-	return err
+	response, err := c.client.Do(request, nil)
+	if err != nil {
+		return 0, err
+	}
+	return response.StatusCode, nil
 }

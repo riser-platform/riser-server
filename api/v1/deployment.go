@@ -95,7 +95,12 @@ func PutDeploymentStatus(c echo.Context, deployments core.DeploymentRepository) 
 	namespace := c.Param("namespace")
 	envName := c.Param("envName")
 
-	return deployments.UpdateStatus(core.NewNamespacedName(deploymentName, namespace), envName, mapDeploymentStatusFromModel(deploymentStatus))
+	err = deployments.UpdateStatus(core.NewNamespacedName(deploymentName, namespace), envName, mapDeploymentStatusFromModel(deploymentStatus))
+	if err == core.ErrConflictNewerVersion {
+		return echo.NewHTTPError(http.StatusConflict, "A newer revision of the deployment has been observed or the deployment does not exist in this environment")
+	}
+
+	return err
 }
 
 func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunCommit {

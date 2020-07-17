@@ -92,9 +92,10 @@ func Test_Deployments_SaveStatus(t *testing.T) {
 		fmt.Fprint(w, response)
 	})
 
-	err := client.Deployments.SaveStatus("myapp", "myns", "myenv", requestModel)
+	statusCode, err := client.Deployments.SaveStatus("myapp", "myns", "myenv", requestModel)
 
 	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, statusCode)
 }
 
 func Test_Deployments_SaveStatus_Error(t *testing.T) {
@@ -109,9 +110,10 @@ func Test_Deployments_SaveStatus_Error(t *testing.T) {
 		fmt.Fprint(w, response)
 	})
 
-	err := client.Deployments.SaveStatus("myapp", "myns", "myenv", requestModel)
+	statusCode, err := client.Deployments.SaveStatus("myapp", "myns", "myenv", requestModel)
 
 	assert.IsType(t, &ClientError{}, err)
 	ce := err.(*ClientError)
 	assert.Equal(t, "err", ce.Message)
+	assert.Equal(t, 0, statusCode)
 }

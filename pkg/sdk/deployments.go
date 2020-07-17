@@ -60,7 +60,7 @@ func (c *deploymentsClient) SaveStatus(deploymentName, namespace, envName string
 	}
 	response, err := c.client.Do(request, nil)
 	if err != nil {
-		return 0, err
+		return response.StatusCode, err
 	}
 	return response.StatusCode, nil
 }

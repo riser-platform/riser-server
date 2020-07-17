@@ -115,5 +115,5 @@ func Test_Deployments_SaveStatus_Error(t *testing.T) {
 	assert.IsType(t, &ClientError{}, err)
 	ce := err.(*ClientError)
 	assert.Equal(t, "err", ce.Message)
-	assert.Equal(t, 0, statusCode)
+	assert.Equal(t, http.StatusInternalServerError, statusCode)
 }

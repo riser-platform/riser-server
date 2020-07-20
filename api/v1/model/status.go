@@ -39,7 +39,6 @@ type DeploymentTrafficStatus struct {
 
 type DeploymentRevisionStatus struct {
 	Name                 string `json:"name"`
-	AvailableReplicas    int32  `json:"availableReplicas"`
 	DockerImage          string `json:"dockerImage"`
 	RiserRevision        int64  `json:"riserRevision"`
 	RevisionStatus       string `json:"revisionStatus"`

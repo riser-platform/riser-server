@@ -66,7 +66,6 @@ func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus
 		for idx, revision := range domain.Doc.Status.Revisions {
 			status.Revisions[idx] = model.DeploymentRevisionStatus{
 				Name:                 revision.Name,
-				AvailableReplicas:    revision.AvailableReplicas,
 				DockerImage:          revision.DockerImage,
 				RiserRevision:        revision.RiserRevision,
 				RevisionStatus:       revision.RevisionStatus,
@@ -98,7 +97,6 @@ func mapDeploymentStatusFromModel(in *model.DeploymentStatusMutable) *core.Deplo
 	for idx, revision := range in.Revisions {
 		out.Revisions[idx] = core.DeploymentRevisionStatus{
 			Name:                 revision.Name,
-			AvailableReplicas:    revision.AvailableReplicas,
 			DockerImage:          revision.DockerImage,
 			RiserRevision:        revision.RiserRevision,
 			RevisionStatus:       revision.RevisionStatus,

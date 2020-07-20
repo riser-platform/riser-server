@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-deployment
+  namespace: knative-serving
+data:
+  # This is so that we can use Kind image caching. See also https://github.com/knative/serving/issues/6114
+  registriesSkippingTagResolving: index.docker.io

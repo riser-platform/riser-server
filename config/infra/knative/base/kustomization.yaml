@@ -6,6 +6,7 @@ resources:
 patches:
 - config-certmanager.yaml
 - config-defaults.yaml
+- config-deployment.yaml
 - config-istio.yaml
 - config-network.yaml
 - patch-ingress-gateway.yaml

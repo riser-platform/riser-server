@@ -21,9 +21,11 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.17.9
-	k8s.io/apimachinery v0.17.9
-	k8s.io/client-go v0.17.9
+	istio.io/api v0.0.0-20200722144311-7e311b6ce256
+	istio.io/client-go v0.0.0-20200717004237-1af75184beba
+	k8s.io/api v0.18.1
+	k8s.io/apimachinery v0.18.1
+	k8s.io/client-go v0.18.1
 	knative.dev/pkg v0.0.0-20191101194912-56c2594e4f11
 	sigs.k8s.io/yaml v1.2.0
 )

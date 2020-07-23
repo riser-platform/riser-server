@@ -41,6 +41,9 @@ func Test_update_snapshot_simple(t *testing.T) {
 				ContainerPort: 8080,
 				Protocol:      "http",
 			},
+			HealthCheck: &model.AppConfigHealthCheck{
+				Path: "/health",
+			},
 			OverrideableAppConfig: model.OverrideableAppConfig{
 				Autoscale: &model.AppConfigAutoscale{
 					Min: util.PtrInt(0),

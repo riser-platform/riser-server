@@ -3,6 +3,7 @@ package state
 import (
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/riser-platform/riser-server/pkg/state/resources"
@@ -44,7 +45,7 @@ func RenderSealedSecret(app, environmentName string, sealedSecret *resources.Sea
 func RenderDeployment(deployment *core.DeploymentConfig, deploymentResources ...KubeResource) ([]core.ResourceFile, error) {
 	files, err := renderKubeResources(func(resource KubeResource) string {
 		return getDeploymentScmPath(deployment.Name, deployment.Namespace, deployment.EnvironmentName, resource)
-	}, deploymentResources...)
+	}, filterNilResources(deploymentResources...)...)
 
 	if err != nil {
 		return nil, err
@@ -151,4 +152,17 @@ func getFileNameFromResource(resource KubeResource) string {
 	}
 
 	return strings.ToLower(fmt.Sprintf("%s.%s.%s.yaml", group, resource.GetObjectKind().GroupVersionKind().Kind, resource.GetName()))
+}
+
+// TODO: Consider refactoring the KubeResource interface or adding another type to determine if a resource should be rendered or not
+// instead of using nil
+func filterNilResources(in ...KubeResource) []KubeResource {
+	out := []KubeResource{}
+	for _, r := range in {
+		if r == nil || reflect.ValueOf(r).IsNil() {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out
 }

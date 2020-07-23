@@ -42,4 +42,8 @@ spec:
         ports:
         - containerPort: 8080
           protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 0
         resources: {}

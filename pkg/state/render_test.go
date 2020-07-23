@@ -64,7 +64,7 @@ func Test_getSecretScmPath(t *testing.T) {
 	assert.Equal(t, "state/dev/riser-managed/apps/secrets/myapp/sealedsecret.myapp-mysecret.yaml", result)
 }
 
-func Test_renderDeploymentResources(t *testing.T) {
+func Test_RenderDeployment(t *testing.T) {
 	deployment := &core.DeploymentConfig{
 		Name:            "mydeployment",
 		Namespace:       "apps",
@@ -82,7 +82,10 @@ func Test_renderDeploymentResources(t *testing.T) {
 		},
 	}
 
-	result, err := RenderDeployment(deployment, resource)
+	// Ignore nil resources
+	var nilResource *resources.Service
+
+	result, err := RenderDeployment(deployment, nilResource, resource)
 
 	require.NoError(t, err)
 	// Sanity check output - we'll use snapshot testing for exhaustive serialization and file system tests

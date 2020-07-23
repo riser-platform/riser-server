@@ -194,12 +194,18 @@ func validateDeploymentConfig(deployment *core.DeploymentConfig) error {
 }
 
 func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
-	resourceFiles, err := state.RenderDeployment(ctx.DeploymentConfig,
-		resources.CreateKNativeConfiguration(ctx),
-		resources.CreateKNativeRoute(ctx))
+	resourceFiles, err := state.RenderDeployment(ctx.DeploymentConfig, createDeployResources(ctx)...)
 	if err != nil {
 		return err
 	}
 
 	return committer.Commit(fmt.Sprintf("Updating resources for \"%s.%s\" in environment %q", ctx.DeploymentConfig.Name, ctx.DeploymentConfig.Namespace, ctx.DeploymentConfig.EnvironmentName), resourceFiles)
+}
+
+func createDeployResources(ctx *core.DeploymentContext) []state.KubeResource {
+	return []state.KubeResource{
+		resources.CreateHealthcheckDenyPolicy(ctx),
+		resources.CreateKNativeConfiguration(ctx),
+		resources.CreateKNativeRoute(ctx),
+	}
 }

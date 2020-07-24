@@ -61,14 +61,16 @@ func main() {
 		LocalGitDir: rc.GitDir,
 	}
 
+	logger.Info("Initializing git repo")
 	repo, err := git.NewRepo(repoSettings)
 	exitIfError(err, "Error initializing git")
 
+	logger.Info("Initializing postgres")
 	postgresConn, err := postgres.AddAuthToConnString(rc.PostgresUrl, rc.PostgresUsername, rc.PostgresPassword)
 	exitIfError(err, "Error creating postgres connection url")
 
 	postgresDb, err := postgres.NewDB(postgresConn)
-	exitIfError(err, "Unable to initialize postgres")
+	exitIfError(err, "Error initializing postgres")
 
 	if rc.PostgresMigrateOnStartup {
 		logger.Info("Applying Postgres migrations")

@@ -3,7 +3,6 @@ package git
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"sync"
@@ -109,30 +108,17 @@ func (repo *repo) Push() error {
 }
 
 func (repo *repo) init() error {
-	err := util.EnsureDir(util.EnsureTrailingSlash(repo.settings.LocalGitDir), workspaceFilePerm)
+	err := os.RemoveAll(repo.settings.LocalGitDir)
 	if err != nil {
-		return errors.Wrap(err, "error ensuring git dir")
-	}
-	files, err := ioutil.ReadDir(repo.settings.LocalGitDir)
-	if err != nil {
-		return errors.Wrap(err, "error reading git dir")
-	}
-	if len(files) == 0 {
-		return repo.clone()
+		return errors.Wrap(err, fmt.Sprintf("error cleaning git dir: %s", repo.settings.LocalGitDir))
 	}
 
-	err = repo.fetch()
+	err = util.EnsureDir(util.EnsureTrailingSlash(repo.settings.LocalGitDir), workspaceFilePerm)
 	if err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("error ensuring git dir: %s", repo.settings.LocalGitDir))
 	}
 
-	// Remote is always the source of truth. If a previous process aborted before pushing a commit, it is considered a failed transaction
-	err = repo.clean()
-	if err != nil {
-		return err
-	}
-
-	return repo.ResetHardRemote()
+	return repo.clone()
 }
 
 func (repo *repo) clone() error {
@@ -141,11 +127,6 @@ func (repo *repo) clone() error {
 
 func (repo *repo) fetch() error {
 	return repo.execGitCmd("fetch", "-f", remoteName, repo.settings.Branch)
-}
-
-func (repo *repo) clean() error {
-
-	return repo.execGitCmd("clean", "-xdf")
 }
 
 // ResetHardRemote ensures that the remote is up-to-date. Pending commits will be lost.

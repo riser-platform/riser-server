@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/docker/distribution/reference"
 	validation "github.com/go-ozzo/ozzo-validation/v3"
 	"github.com/google/uuid"
@@ -9,11 +11,18 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+const (
+	AppExposeScope_External = "external"
+	AppExposeScope_Cluster  = "cluster"
+)
+
 var (
+	// TODO: Make internal and create method that clones to prevent mutation
 	DefaultAppConfig = &AppConfig{
 		Namespace: "apps",
 		Expose: &AppConfigExpose{
 			Protocol: "http",
+			Scope:    AppExposeScope_External,
 		},
 	}
 )
@@ -64,8 +73,9 @@ type AppConfigAutoscale struct {
 }
 
 type AppConfigExpose struct {
-	Protocol      string `json:"protocol,omitempty"`
 	ContainerPort int32  `json:"containerPort"`
+	Protocol      string `json:"protocol,omitempty"`
+	Scope         string `json:"scope,omitempty"`
 }
 
 // Mode is not yet implemented (httpGet = default)
@@ -97,8 +107,11 @@ func (appConfig AppConfig) Validate() error {
 
 	if appConfig.Expose != nil {
 		exposeErr := validation.ValidateStruct(appConfig.Expose,
-			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "http2").Error("must be one of: http, http2")),
 			validation.Field(&appConfig.Expose.ContainerPort, validation.Required, validation.Min(1), validation.Max(65535)),
+			validation.Field(&appConfig.Expose.Protocol, validation.In("http", "http2").Error("must be one of: http, http2")),
+			validation.Field(&appConfig.Expose.Scope,
+				validation.In(AppExposeScope_External, AppExposeScope_Cluster).Error(
+					fmt.Sprintf("must be one of: %s, %s", AppExposeScope_External, AppExposeScope_Cluster))),
 		)
 		err = mergeValidationErrors(err, exposeErr, "expose")
 	}

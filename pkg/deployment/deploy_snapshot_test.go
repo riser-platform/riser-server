@@ -40,6 +40,7 @@ func Test_update_snapshot_simple(t *testing.T) {
 			Expose: &model.AppConfigExpose{
 				ContainerPort: 8080,
 				Protocol:      "http",
+				Scope:         model.AppExposeScope_External,
 			},
 			HealthCheck: &model.AppConfigHealthCheck{
 				Path: "/health",

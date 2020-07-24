@@ -38,15 +38,17 @@ func Test_AppConfig_ApplyDefaults(t *testing.T) {
 	assert.EqualValues(t, "apps", appConfig.Namespace)
 	assert.NotNil(t, appConfig.Expose)
 	assert.Equal(t, "http", appConfig.Expose.Protocol)
+	assert.Equal(t, "external", appConfig.Expose.Scope)
 }
 
-func Test_AppConfig_ApplyDefaults_NoDefaults(t *testing.T) {
+func Test_AppConfig_ApplyDefaults_AllowsNonDefaultValues(t *testing.T) {
 	appConfig := &AppConfig{
 		Name:      "myapp",
 		Namespace: "myns",
 		Expose: &AppConfigExpose{
 			ContainerPort: 8000,
 			Protocol:      "http2",
+			Scope:         AppExposeScope_Cluster,
 		},
 	}
 
@@ -56,6 +58,7 @@ func Test_AppConfig_ApplyDefaults_NoDefaults(t *testing.T) {
 	assert.EqualValues(t, "myapp", appConfig.Name)
 	assert.EqualValues(t, "myns", appConfig.Namespace)
 	assert.Equal(t, "http2", appConfig.Expose.Protocol)
+	assert.Equal(t, AppExposeScope_Cluster, appConfig.Expose.Scope)
 	assert.EqualValues(t, 8000, appConfig.Expose.ContainerPort)
 }
 
@@ -308,6 +311,34 @@ func Test_ApplyOverrides_WithOverrides(t *testing.T) {
 	assert.Equal(t, 0, *result.Autoscale.Min)
 	// Ensure that we don't mutate the original config
 	assert.Equal(t, appConfig.Resources.CpuCores, &cpuCores)
+}
+
+func Test_AppConfig_ValidateExposeScope(t *testing.T) {
+	var tests = []struct {
+		scope string
+		valid bool
+	}{
+		{AppExposeScope_External, true},
+		{AppExposeScope_Cluster, true},
+		{"", true},
+		{"nope", false},
+	}
+
+	for _, tt := range tests {
+		appConfig := createMinAppConfig()
+		appConfig.Expose.Scope = tt.scope
+		err := appConfig.Validate()
+
+		if tt.valid {
+			assert.NoError(t, err, tt.scope)
+		} else {
+			require.IsType(t, validation.Errors{}, err, tt.scope)
+			validationErrors := err.(validation.Errors)
+			assert.Len(t, validationErrors, 1, tt.scope)
+			require.Contains(t, validationErrors, "expose.scope", tt.scope)
+			assert.Equal(t, "must be one of: external, cluster", validationErrors["expose.scope"].Error(), tt.scope)
+		}
+	}
 }
 
 func createMinAppConfig() *AppConfig {

@@ -17,8 +17,8 @@ const (
 )
 
 var (
-	// TODO: Make internal and create method that clones to prevent mutation
-	DefaultAppConfig = &AppConfig{
+	// Put all static app config defaults here
+	appConfigDefaults = &AppConfig{
 		Namespace: "apps",
 		Expose: &AppConfigExpose{
 			Protocol: "http",
@@ -90,7 +90,7 @@ type AppConfigResources struct {
 
 // ApplyDefaults sets any unset values with their defaults
 func (appConfig *AppConfig) ApplyDefaults() error {
-	return mergo.Merge(appConfig, DefaultAppConfig)
+	return mergo.Merge(appConfig, appConfigDefaults)
 }
 
 func (appConfig AppConfig) Validate() error {

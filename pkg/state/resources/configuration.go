@@ -3,7 +3,6 @@ package resources
 import (
 	"fmt"
 
-	"github.com/riser-platform/riser-server/api/v1/model"
 	"github.com/riser-platform/riser-server/pkg/core"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -52,10 +51,6 @@ func createRevisionMeta(ctx *core.DeploymentContext) metav1.ObjectMeta {
 		if ctx.DeploymentConfig.App.Autoscale.Max != nil {
 			revisionMeta.Annotations["autoscaling.knative.dev/maxScale"] = fmt.Sprintf("%d", *ctx.DeploymentConfig.App.Autoscale.Max)
 		}
-	}
-
-	if ctx.DeploymentConfig.App.Expose != nil && ctx.DeploymentConfig.App.Expose.Scope != model.AppExposeScope_External {
-		revisionMeta.Labels["serving.knative.dev/visibility"] = "cluster-local"
 	}
 
 	return revisionMeta

@@ -37,6 +37,14 @@ spec:
               key: data
               name: myapp-mysecret-1
               optional: false
+        - name: RISER_APP
+          value: myapp
+        - name: RISER_DEPLOYMENT
+          value: myapp
+        - name: RISER_ENVIRONMENT
+          value: dev
+        - name: RISER_NAMESPACE
+          value: apps
         image: :0.0.1
         name: myapp
         ports:

@@ -13,6 +13,7 @@ import (
 
 func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 	envVars := []corev1.EnvVar{}
+	// User defined  vars
 	for key, val := range ctx.DeploymentConfig.App.Environment {
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  strings.ToUpper(key),
@@ -20,6 +21,7 @@ func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 		})
 	}
 
+	// Secret vars
 	for _, secret := range ctx.Secrets {
 		secretEnv := corev1.EnvVar{
 			Name: strings.ToUpper(secret.Name),
@@ -37,6 +39,12 @@ func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 		envVars = append(envVars, secretEnv)
 	}
 
+	// Platform vars
+	envVars = append(envVars,
+		corev1.EnvVar{Name: "RISER_APP", Value: string(ctx.DeploymentConfig.App.Name)},
+		corev1.EnvVar{Name: "RISER_DEPLOYMENT", Value: string(ctx.DeploymentConfig.Name)},
+		corev1.EnvVar{Name: "RISER_ENVIRONMENT", Value: string(ctx.DeploymentConfig.EnvironmentName)},
+		corev1.EnvVar{Name: "RISER_NAMESPACE", Value: string(ctx.DeploymentConfig.Namespace)})
 	sort.Sort(&envVarSorter{items: envVars})
 	return envVars
 }

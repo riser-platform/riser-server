@@ -6,14 +6,14 @@ import (
 )
 
 type FakeService struct {
-	CheckAppNameFn func(id uuid.UUID, name *core.NamespacedName) error
+	CheckIDFn func(id uuid.UUID, name *core.NamespacedName) error
 }
 
-func (f *FakeService) CheckAppName(id uuid.UUID, name *core.NamespacedName) error {
-	return f.CheckAppNameFn(id, name)
+func (f *FakeService) CheckID(id uuid.UUID, name *core.NamespacedName) error {
+	return f.CheckIDFn(id, name)
 }
 
-func (f *FakeService) CreateApp(name *core.NamespacedName) (*core.App, error) {
+func (f *FakeService) Create(name *core.NamespacedName) (*core.App, error) {
 	panic("NI!")
 }
 

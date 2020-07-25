@@ -15,9 +15,9 @@ var (
 )
 
 type Service interface {
-	CreateApp(name *core.NamespacedName) (*core.App, error)
-	// CheckAppName ensures that the app name and namespace belongs to the app ID. This prevents an accidental or otherwise name change in the app config.
-	CheckAppName(id uuid.UUID, name *core.NamespacedName) error
+	Create(name *core.NamespacedName) (*core.App, error)
+	// CheckID ensures that the app name and namespace belongs to the app ID. This prevents an accidental or otherwise name change in the app config.
+	CheckID(id uuid.UUID, name *core.NamespacedName) error
 	GetByName(name *core.NamespacedName) (*core.App, error)
 }
 
@@ -30,7 +30,7 @@ func NewService(apps core.AppRepository, namespaceService namespace.Service) Ser
 	return &service{apps, namespaceService}
 }
 
-func (s *service) CreateApp(name *core.NamespacedName) (*core.App, error) {
+func (s *service) Create(name *core.NamespacedName) (*core.App, error) {
 	_, err := s.apps.GetByName(name)
 
 	if err == nil {
@@ -58,7 +58,7 @@ func (s *service) CreateApp(name *core.NamespacedName) (*core.App, error) {
 	return app, nil
 }
 
-func (s *service) CheckAppName(id uuid.UUID, name *core.NamespacedName) error {
+func (s *service) CheckID(id uuid.UUID, name *core.NamespacedName) error {
 	app, err := s.apps.Get(id)
 	if err != nil {
 		return handleGetAppErr(err)

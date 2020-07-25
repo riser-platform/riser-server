@@ -15,7 +15,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/core"
 )
 
-func Test_CreateApp(t *testing.T) {
+func Test_Create(t *testing.T) {
 	var newApp *core.App
 	appRepository := &core.FakeAppRepository{
 		GetByNameFn: func(nameArg *core.NamespacedName) (*core.App, error) {
@@ -38,7 +38,7 @@ func Test_CreateApp(t *testing.T) {
 
 	appService := service{appRepository, namespaceService}
 
-	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
+	result, err := appService.Create(core.NewNamespacedName("foo", "myns"))
 
 	assert.NoError(t, err)
 	require.NotNil(t, result)
@@ -48,7 +48,7 @@ func Test_CreateApp(t *testing.T) {
 	assert.Equal(t, newApp.Id, result.Id)
 }
 
-func Test_CreateApp_InvalidNamespace(t *testing.T) {
+func Test_Create_InvalidNamespace(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
 		GetByNameFn: func(nameArg *core.NamespacedName) (*core.App, error) {
 			return nil, core.ErrNotFound
@@ -64,13 +64,13 @@ func Test_CreateApp_InvalidNamespace(t *testing.T) {
 
 	appService := service{appRepository, namespaceService}
 
-	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
+	result, err := appService.Create(core.NewNamespacedName("foo", "myns"))
 
 	assert.Nil(t, result)
 	assert.Equal(t, "test", err.Error())
 }
 
-func Test_CreateApp_WhenAppExists_ReturnsErr(t *testing.T) {
+func Test_Create_WhenAppExists_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
 		GetByNameFn: func(*core.NamespacedName) (*core.App, error) {
 			return &core.App{}, nil
@@ -81,13 +81,13 @@ func Test_CreateApp_WhenAppExists_ReturnsErr(t *testing.T) {
 		apps: appRepository,
 	}
 
-	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
+	result, err := appService.Create(core.NewNamespacedName("foo", "myns"))
 
 	assert.Nil(t, result)
 	assert.Equal(t, err, ErrAlreadyExists)
 }
 
-func Test_CreateApp_WhenErrorCheckingApp_ReturnsErr(t *testing.T) {
+func Test_Create_WhenErrorCheckingApp_ReturnsErr(t *testing.T) {
 	expectedErr := errors.New("error")
 	appRepository := &core.FakeAppRepository{
 		GetByNameFn: func(*core.NamespacedName) (*core.App, error) {
@@ -99,13 +99,13 @@ func Test_CreateApp_WhenErrorCheckingApp_ReturnsErr(t *testing.T) {
 		apps: appRepository,
 	}
 
-	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
+	result, err := appService.Create(core.NewNamespacedName("foo", "myns"))
 
 	assert.Nil(t, result)
 	assert.Equal(t, err.Error(), "unable to validate app: error")
 }
 
-func Test_CreateApp_WhenCreateFails_ReturnsErr(t *testing.T) {
+func Test_Create_WhenCreateFails_ReturnsErr(t *testing.T) {
 	expectedErr := errors.New("error")
 	appRepository := &core.FakeAppRepository{
 		GetByNameFn: func(*core.NamespacedName) (*core.App, error) {
@@ -124,13 +124,13 @@ func Test_CreateApp_WhenCreateFails_ReturnsErr(t *testing.T) {
 
 	appService := service{appRepository, namespaceService}
 
-	result, err := appService.CreateApp(core.NewNamespacedName("foo", "myns"))
+	result, err := appService.Create(core.NewNamespacedName("foo", "myns"))
 
 	assert.Equal(t, err, expectedErr)
 	require.Nil(t, result)
 }
 
-func Test_CheckAppName(t *testing.T) {
+func Test_CheckID(t *testing.T) {
 	appId := uuid.New()
 	var receivedId uuid.UUID
 	appRepository := &core.FakeAppRepository{
@@ -144,13 +144,13 @@ func Test_CheckAppName(t *testing.T) {
 		apps: appRepository,
 	}
 
-	err := appService.CheckAppName(appId, core.NewNamespacedName("myapp", "myns"))
+	err := appService.CheckID(appId, core.NewNamespacedName("myapp", "myns"))
 
 	assert.NoError(t, err)
 	assert.Equal(t, appId, receivedId)
 }
 
-func Test_CheckAppName_WhenAppHasDifferentName_ReturnsErr(t *testing.T) {
+func Test_CheckID_WhenAppHasDifferentName_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
 		GetFn: func(id uuid.UUID) (*core.App, error) {
 			return &core.App{Id: uuid.New(), Name: "another-name", Namespace: "myns"}, nil
@@ -161,12 +161,12 @@ func Test_CheckAppName_WhenAppHasDifferentName_ReturnsErr(t *testing.T) {
 		apps: appRepository,
 	}
 
-	err := appService.CheckAppName(uuid.New(), core.NewNamespacedName("myapp", "myns"))
+	err := appService.CheckID(uuid.New(), core.NewNamespacedName("myapp", "myns"))
 
 	assert.Equal(t, ErrInvalidAppName, err)
 }
 
-func Test_CheckAppName_WhenAppHasDifferentNamespace_ReturnsErr(t *testing.T) {
+func Test_CheckID_WhenAppHasDifferentNamespace_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
 		GetFn: func(id uuid.UUID) (*core.App, error) {
 			return &core.App{Id: uuid.New(), Name: "myapp", Namespace: "another-ns"}, nil
@@ -177,12 +177,12 @@ func Test_CheckAppName_WhenAppHasDifferentNamespace_ReturnsErr(t *testing.T) {
 		apps: appRepository,
 	}
 
-	err := appService.CheckAppName(uuid.New(), core.NewNamespacedName("myapp", "myns"))
+	err := appService.CheckID(uuid.New(), core.NewNamespacedName("myapp", "myns"))
 
 	assert.Equal(t, ErrInvalidAppNamespace, err)
 }
 
-func Test_CheckAppName_WhenAppDoesNotExist_ReturnsErr(t *testing.T) {
+func Test_CheckID_WhenAppDoesNotExist_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
 		GetFn: func(uuid.UUID) (*core.App, error) {
 			return nil, core.ErrNotFound
@@ -193,12 +193,12 @@ func Test_CheckAppName_WhenAppDoesNotExist_ReturnsErr(t *testing.T) {
 		apps: appRepository,
 	}
 
-	err := appService.CheckAppName(uuid.New(), core.NewNamespacedName("myapp", "myns"))
+	err := appService.CheckID(uuid.New(), core.NewNamespacedName("myapp", "myns"))
 
 	assert.Equal(t, ErrAppNotFound, err)
 }
 
-func Test_CheckAppName_WhenRepositoryError_ReturnsErr(t *testing.T) {
+func Test_CheckID_WhenRepositoryError_ReturnsErr(t *testing.T) {
 	appRepository := &core.FakeAppRepository{
 		GetFn: func(uuid.UUID) (*core.App, error) {
 			return nil, errors.New("error")
@@ -209,7 +209,7 @@ func Test_CheckAppName_WhenRepositoryError_ReturnsErr(t *testing.T) {
 		apps: appRepository,
 	}
 
-	err := appService.CheckAppName(uuid.New(), core.NewNamespacedName("myapp", "myns"))
+	err := appService.CheckID(uuid.New(), core.NewNamespacedName("myapp", "myns"))
 
 	assert.Equal(t, "Error getting app: error", err.Error())
 }

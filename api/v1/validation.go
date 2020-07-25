@@ -35,7 +35,7 @@ func PostValidateAppConfig(c echo.Context, appService app.Service, environmentSe
 // such as checking the database if the name is valid
 // This should move into its own package once we move AppConfig outside of v1/model
 func validateAppConfig(appConfig *model.AppConfigWithOverrides, appService app.Service, environmentService environment.Service) error {
-	err := appService.CheckAppName(appConfig.Id, core.NewNamespacedName(string(appConfig.Name), string(appConfig.Namespace)))
+	err := appService.CheckID(appConfig.Id, core.NewNamespacedName(string(appConfig.Name), string(appConfig.Namespace)))
 	if err != nil {
 		return err
 	}

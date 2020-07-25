@@ -34,7 +34,7 @@ func Test_PostValidateAppConfig(t *testing.T) {
 	ctx, _ := newContextWithRecorder(req)
 
 	appService := &app.FakeService{
-		CheckAppNameFn: func(id uuid.UUID, name *core.NamespacedName) error {
+		CheckIDFn: func(id uuid.UUID, name *core.NamespacedName) error {
 			assert.Equal(t, validAppConfig.Id, id)
 			assert.EqualValues(t, validAppConfig.Name, name.Name)
 			assert.EqualValues(t, validAppConfig.Namespace, name.Namespace)
@@ -53,7 +53,7 @@ func Test_PostValidateAppConfig_InvalidAppName(t *testing.T) {
 	ctx, _ := newContextWithRecorder(req)
 
 	appService := &app.FakeService{
-		CheckAppNameFn: func(id uuid.UUID, name *core.NamespacedName) error {
+		CheckIDFn: func(id uuid.UUID, name *core.NamespacedName) error {
 			return app.ErrInvalidAppName
 		},
 	}
@@ -66,7 +66,7 @@ func Test_PostValidateAppConfig_InvalidAppName(t *testing.T) {
 // Mostly a dupe of Post test. In the future this should be factored out into its own service and stubbed from above tests
 func Test_validateAppConfig(t *testing.T) {
 	appService := &app.FakeService{
-		CheckAppNameFn: func(id uuid.UUID, name *core.NamespacedName) error {
+		CheckIDFn: func(id uuid.UUID, name *core.NamespacedName) error {
 			assert.Equal(t, validAppConfig.Id, id)
 			assert.EqualValues(t, validAppConfig.Name, name.Name)
 			assert.EqualValues(t, validAppConfig.Namespace, name.Namespace)
@@ -81,7 +81,7 @@ func Test_validateAppConfig(t *testing.T) {
 
 func Test_validateAppConfig_InvalidAppName(t *testing.T) {
 	appService := &app.FakeService{
-		CheckAppNameFn: func(id uuid.UUID, name *core.NamespacedName) error {
+		CheckIDFn: func(id uuid.UUID, name *core.NamespacedName) error {
 			return app.ErrInvalidAppName
 		},
 	}
@@ -98,7 +98,7 @@ func Test_validateAppConfig_InvalidEnvOverride(t *testing.T) {
 	appConfig.Overrides["foo"] = model.OverrideableAppConfig{}
 
 	appService := &app.FakeService{
-		CheckAppNameFn: func(id uuid.UUID, name *core.NamespacedName) error {
+		CheckIDFn: func(id uuid.UUID, name *core.NamespacedName) error {
 			assert.Equal(t, validAppConfig.Id, id)
 			assert.EqualValues(t, validAppConfig.Name, name.Name)
 			assert.EqualValues(t, validAppConfig.Namespace, name.Namespace)

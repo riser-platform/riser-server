@@ -18,7 +18,7 @@ func PostApp(c echo.Context, appService app.Service) error {
 		return err
 	}
 
-	createdApp, err := appService.CreateApp(core.NewNamespacedName(string(newAppRequest.Name), string(newAppRequest.Namespace)))
+	createdApp, err := appService.Create(core.NewNamespacedName(string(newAppRequest.Name), string(newAppRequest.Namespace)))
 	if err != nil {
 		return err
 

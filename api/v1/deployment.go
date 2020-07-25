@@ -39,7 +39,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 		return err
 	}
 
-	err = appService.CheckAppName(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(string(deploymentRequest.App.Name), string(deploymentRequest.App.Namespace)))
+	err = appService.CheckID(deploymentRequest.App.AppConfig.Id, core.NewNamespacedName(string(deploymentRequest.App.Name), string(deploymentRequest.App.Namespace)))
 	if err != nil {
 		return err
 	}

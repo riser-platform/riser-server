@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -339,6 +340,53 @@ func Test_AppConfig_ValidateExposeScope(t *testing.T) {
 			assert.Equal(t, "must be one of: external, cluster", validationErrors["expose.scope"].Error(), tt.scope)
 		}
 	}
+}
+
+func Test_AppConfig_ValidateEnvironment(t *testing.T) {
+	var tests = []struct {
+		env   string
+		valid bool
+	}{
+		// good
+		{"MYENV", true},
+		{"MY_ENV", true},
+		// bad
+		{"myenv", false},
+		{"MY-ENV", false},
+		{"RISER_ENV", false},
+		{"9MYENV", false},
+	}
+	for _, tt := range tests {
+		appConfig := createMinAppConfig()
+		appConfig.Environment = map[string]intstr.IntOrString{}
+		appConfig.Environment[tt.env] = intstr.FromString("val")
+		err := appConfig.Validate()
+
+		if tt.valid {
+			assert.NoError(t, err, tt.env)
+		} else {
+			errKey := fmt.Sprintf("env.%s", tt.env)
+			require.IsType(t, validation.Errors{}, err, tt.env)
+			validationErrors := err.(validation.Errors)
+			assert.Len(t, validationErrors, 1, tt.env)
+			assert.Contains(t, validationErrors[errKey].Error(), tt.env)
+		}
+	}
+}
+
+func Test_AppConfig_ValidateEnvironment_MultipleErrors(t *testing.T) {
+	appConfig := createMinAppConfig()
+	appConfig.Environment = map[string]intstr.IntOrString{
+		"RISER_ENV": intstr.FromString("val"),
+		"9MYENV":    intstr.FromString("val"),
+	}
+
+	err := appConfig.Validate()
+	require.IsType(t, validation.Errors{}, err)
+	validationErrors := err.(validation.Errors)
+	require.Len(t, validationErrors, 2)
+	assert.Equal(t, `The env var "RISER_ENV" is not valid: Must not start with the reserved word "RISER_"`, validationErrors["env.RISER_ENV"].Error())
+	assert.Equal(t, `The env var "9MYENV" is not valid: Must start with A-Z and only contain A-Z, 0-9, and underscores (_)`, validationErrors["env.9MYENV"].Error())
 }
 
 func createMinAppConfig() *AppConfig {

@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/docker/distribution/reference"
 	validation "github.com/go-ozzo/ozzo-validation/v3"
@@ -25,6 +26,9 @@ var (
 			Scope:    AppExposeScope_External,
 		},
 	}
+
+	envVarKeyPattern      = regexp.MustCompile("^[A-Z][A-Z0-9_]*$")
+	envVarKeyRiserPattern = regexp.MustCompile("^RISER_")
 )
 
 // TODO: Move outside the API and into a separate module. The AppConfig should version independently of the API via a Version field on the root AppConfig object
@@ -94,7 +98,7 @@ func (appConfig *AppConfig) ApplyDefaults() error {
 }
 
 func (appConfig AppConfig) Validate() error {
-	err := validation.ValidateStruct(&appConfig,
+	validationErrors := validation.ValidateStruct(&appConfig,
 		validation.Field(&appConfig.Name),
 		validation.Field(&appConfig.Namespace),
 		validation.Field(&appConfig.Id, validation.By(validId)),
@@ -105,6 +109,10 @@ func (appConfig AppConfig) Validate() error {
 	// Break out each struct so that we can have better error messages than the default
 	// This has the downside of not allowing nested structs to implement their own Validate.
 
+	// Env is treated similar to a struct so that we can map each env var key as a field with its own error (e.g. env.BAD-VAR)
+	envErr := validation.Validate(appConfig.Environment, validation.By(validEnvMap))
+	validationErrors = mergeValidationErrors(validationErrors, envErr, "env")
+
 	if appConfig.Expose != nil {
 		exposeErr := validation.ValidateStruct(appConfig.Expose,
 			validation.Field(&appConfig.Expose.ContainerPort, validation.Required, validation.Min(1), validation.Max(65535)),
@@ -113,7 +121,7 @@ func (appConfig AppConfig) Validate() error {
 				validation.In(AppExposeScope_External, AppExposeScope_Cluster).Error(
 					fmt.Sprintf("must be one of: %s, %s", AppExposeScope_External, AppExposeScope_Cluster))),
 		)
-		err = mergeValidationErrors(err, exposeErr, "expose")
+		validationErrors = mergeValidationErrors(validationErrors, exposeErr, "expose")
 	}
 
 	if appConfig.Autoscale != nil {
@@ -127,10 +135,10 @@ func (appConfig AppConfig) Validate() error {
 			validation.Field(&appConfig.Autoscale.Max, validation.NilOrNotEmpty.Error("must be no less than 1"), maxMinRule),
 		)
 
-		err = mergeValidationErrors(err, autoscaleErr, "autoscale")
+		validationErrors = mergeValidationErrors(validationErrors, autoscaleErr, "autoscale")
 	}
 
-	return err
+	return validationErrors
 }
 
 func validDockerImageWithoutTagOrDigest(value interface{}) error {
@@ -144,6 +152,33 @@ func validDockerImageWithoutTagOrDigest(value interface{}) error {
 		return errors.New("must not contain a tag or digest")
 	}
 
+	return nil
+}
+
+func validEnvMap(value interface{}) error {
+	validationErrors := validation.Errors{}
+	envMap, _ := value.(map[string]intstr.IntOrString)
+	for k := range envMap {
+		err := validation.Validate(k,
+			validation.Match(envVarKeyPattern).Error(fmt.Sprintf(`The env var %q is not valid: Must start with A-Z and only contain A-Z, 0-9, and underscores (_)`, k)),
+			validation.By(validateEnvKeyNoRiserPrefix),
+		)
+		if err != nil {
+			validationErrors[k] = err
+		}
+	}
+	if len(validationErrors) > 0 {
+		return validationErrors
+	}
+	return nil
+}
+
+// We have to do this until ozzo supports validation.NotMatch
+func validateEnvKeyNoRiserPrefix(v interface{}) error {
+	strVal, _ := v.(string)
+	if envVarKeyRiserPattern.MatchString(strVal) {
+		return errors.New(fmt.Sprintf(`The env var %q is not valid: Must not start with the reserved word "RISER_"`, strVal))
+	}
 	return nil
 }
 

@@ -43,6 +43,7 @@ func k8sEnvVars(ctx *core.DeploymentContext) []corev1.EnvVar {
 	envVars = append(envVars,
 		corev1.EnvVar{Name: "RISER_APP", Value: string(ctx.DeploymentConfig.App.Name)},
 		corev1.EnvVar{Name: "RISER_DEPLOYMENT", Value: string(ctx.DeploymentConfig.Name)},
+		corev1.EnvVar{Name: "RISER_DEPLOYMENT_REVISION", Value: fmt.Sprintf("%d", ctx.RiserRevision)},
 		corev1.EnvVar{Name: "RISER_ENVIRONMENT", Value: string(ctx.DeploymentConfig.EnvironmentName)},
 		corev1.EnvVar{Name: "RISER_NAMESPACE", Value: string(ctx.DeploymentConfig.Namespace)})
 	sort.Sort(&envVarSorter{items: envVars})

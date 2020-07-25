@@ -28,10 +28,14 @@ func Test_k8sEnvVars(t *testing.T) {
 			},
 		},
 	}
+	deploymentCtx := &core.DeploymentContext{
+		DeploymentConfig: deployment,
+		RiserRevision:    2,
+		Secrets:          secrets}
 
-	result := k8sEnvVars(&core.DeploymentContext{DeploymentConfig: deployment, Secrets: secrets})
+	result := k8sEnvVars(deploymentCtx)
 
-	assert.Len(t, result, 8)
+	assert.Len(t, result, 9)
 	// User defined env
 	assert.Equal(t, "ENV1", result[0].Name)
 	assert.Equal(t, "env1Val", result[0].Value)
@@ -42,13 +46,16 @@ func Test_k8sEnvVars(t *testing.T) {
 	assert.Equal(t, "myapp", result[2].Value)
 	assert.Equal(t, "RISER_DEPLOYMENT", result[3].Name)
 	assert.Equal(t, "myapp-mydep", result[3].Value)
-	assert.Equal(t, "RISER_ENVIRONMENT", result[4].Name)
-	assert.Equal(t, "myenv", result[4].Value)
-	assert.Equal(t, "RISER_NAMESPACE", result[5].Name)
-	assert.Equal(t, "myns", result[5].Value)
+	assert.Equal(t, "RISER_DEPLOYMENT_REVISION", result[4].Name)
+	assert.Equal(t, "2", result[4].Value)
+	assert.Equal(t, "RISER_ENVIRONMENT", result[5].Name)
+	assert.Equal(t, "myenv", result[5].Value)
+	assert.Equal(t, "RISER_NAMESPACE", result[6].Name)
+	assert.Equal(t, "myns", result[6].Value)
+
 	// Secrets
-	assert.Equal(t, "SECRET1", result[6].Name)
-	assert.Equal(t, "myapp-secret1-5", result[6].ValueFrom.SecretKeyRef.LocalObjectReference.Name)
-	assert.Equal(t, "SECRET2", result[7].Name)
-	assert.Equal(t, "myapp-secret2-1", result[7].ValueFrom.SecretKeyRef.LocalObjectReference.Name)
+	assert.Equal(t, "SECRET1", result[7].Name)
+	assert.Equal(t, "myapp-secret1-5", result[7].ValueFrom.SecretKeyRef.LocalObjectReference.Name)
+	assert.Equal(t, "SECRET2", result[8].Name)
+	assert.Equal(t, "myapp-secret2-1", result[8].ValueFrom.SecretKeyRef.LocalObjectReference.Name)
 }

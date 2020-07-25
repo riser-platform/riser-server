@@ -41,6 +41,8 @@ spec:
           value: myapp
         - name: RISER_DEPLOYMENT
           value: myapp
+        - name: RISER_DEPLOYMENT_REVISION
+          value: "3"
         - name: RISER_ENVIRONMENT
           value: dev
         - name: RISER_NAMESPACE

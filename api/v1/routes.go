@@ -62,7 +62,7 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	})
 
 	v1.GET("/apps/:namespace/:appName/status", func(c echo.Context) error {
-		return GetAppStatus(c, appRepository, deploymentStatusService)
+		return GetAppStatus(c, appService, deploymentStatusService)
 	})
 
 	v1.POST("/apps", func(c echo.Context) error {

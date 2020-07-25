@@ -16,3 +16,7 @@ func (f *FakeService) CheckAppName(id uuid.UUID, name *core.NamespacedName) erro
 func (f *FakeService) CreateApp(name *core.NamespacedName) (*core.App, error) {
 	panic("NI!")
 }
+
+func (f *FakeService) GetByName(name *core.NamespacedName) (*core.App, error) {
+	panic("NI!")
+}

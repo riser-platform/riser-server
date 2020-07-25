@@ -11,14 +11,14 @@ var (
 	ErrAlreadyExists       = core.NewValidationErrorMessage("an app already exists with the provided name")
 	ErrInvalidAppName      = core.NewValidationErrorMessage("the app name does not match the app ID: you may not change the app's name after creation")
 	ErrInvalidAppNamespace = core.NewValidationErrorMessage("the app namespace does not match app ID: you may not change the app's namespace after creation")
-	// TODO: Consider removing and coming up with a better client error for non-fatal not founds (core.ErrorNotFound is considered fatal by default)
-	ErrAppNotFound = errors.New("app not found")
+	ErrAppNotFound         = core.NewValidationErrorMessage("the app could not be found")
 )
 
 type Service interface {
 	CreateApp(name *core.NamespacedName) (*core.App, error)
 	// CheckAppName ensures that the app name and namespace belongs to the app ID. This prevents an accidental or otherwise name change in the app config.
 	CheckAppName(id uuid.UUID, name *core.NamespacedName) error
+	GetByName(name *core.NamespacedName) (*core.App, error)
 }
 
 type service struct {
@@ -73,6 +73,14 @@ func (s *service) CheckAppName(id uuid.UUID, name *core.NamespacedName) error {
 	}
 
 	return nil
+}
+
+func (s *service) GetByName(name *core.NamespacedName) (*core.App, error) {
+	app, err := s.apps.GetByName(name)
+	if err != nil {
+		return nil, handleGetAppErr(err)
+	}
+	return app, err
 }
 
 func handleGetAppErr(err error) error {

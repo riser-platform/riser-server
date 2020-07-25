@@ -213,3 +213,40 @@ func Test_CheckAppName_WhenRepositoryError_ReturnsErr(t *testing.T) {
 
 	assert.Equal(t, "Error getting app: error", err.Error())
 }
+
+func Test_GetAppByName(t *testing.T) {
+	app := &core.App{}
+	appRepository := &core.FakeAppRepository{
+		GetByNameFn: func(name *core.NamespacedName) (*core.App, error) {
+			assert.Equal(t, "myapp", name.Name)
+			assert.Equal(t, "myns", name.Namespace)
+			return app, nil
+		},
+	}
+
+	appService := service{
+		apps: appRepository,
+	}
+
+	result, err := appService.GetByName(core.NewNamespacedName("myapp", "myns"))
+
+	assert.NoError(t, err)
+	assert.Equal(t, app, result)
+}
+
+func Test_GetAppByName_NotFound(t *testing.T) {
+	appRepository := &core.FakeAppRepository{
+		GetByNameFn: func(name *core.NamespacedName) (*core.App, error) {
+			return nil, core.ErrNotFound
+		},
+	}
+
+	appService := service{
+		apps: appRepository,
+	}
+
+	result, err := appService.GetByName(core.NewNamespacedName("myapp", "myns"))
+
+	assert.Equal(t, ErrAppNotFound, err)
+	assert.Nil(t, result)
+}

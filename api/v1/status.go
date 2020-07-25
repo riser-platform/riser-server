@@ -24,25 +24,33 @@ func GetAppStatus(c echo.Context, apps core.AppRepository, statusService deploym
 		return err
 	}
 
-	statusModel := model.AppStatus{
-		Environments: []model.EnvironmentStatus{},
+	return c.JSON(http.StatusOK, mapAppStatusFromDomain(appStatus))
+}
+
+func mapAppStatusFromDomain(domain *core.AppStatus) *model.AppStatus {
+	out := &model.AppStatus{
+		Environments: mapEnvironmentStatusesFromDomain(domain.EnvironmentStatus),
 		Deployments:  []model.DeploymentStatus{},
 	}
 
-	// TODO: Move and test model conversion.
-	for _, envStatus := range appStatus.EnvironmentStatus {
-		statusModel.Environments = append(statusModel.Environments, model.EnvironmentStatus{
+	for _, deployment := range domain.Deployments {
+		out.Deployments = append(out.Deployments, *mapDeploymentToStatusModel(&deployment))
+	}
+
+	return out
+}
+
+func mapEnvironmentStatusesFromDomain(domain []core.EnvironmentStatus) []model.EnvironmentStatus {
+	out := []model.EnvironmentStatus{}
+	for _, envStatus := range domain {
+		out = append(out, model.EnvironmentStatus{
 			EnvironmentName: envStatus.EnvironmentName,
 			Healthy:         envStatus.Healthy,
 			Reason:          envStatus.Reason,
 		})
 	}
 
-	for _, deployment := range appStatus.Deployments {
-		statusModel.Deployments = append(statusModel.Deployments, *mapDeploymentToStatusModel(&deployment))
-	}
-
-	return c.JSON(http.StatusOK, statusModel)
+	return out
 }
 
 func mapDeploymentToStatusModel(domain *core.Deployment) *model.DeploymentStatus {

@@ -182,3 +182,40 @@ func Test_mapDeploymentStatusFromModel(t *testing.T) {
 	assert.Equal(t, int64(10), *result.Traffic[1].Percent)
 	assert.Equal(t, "r2", result.Traffic[1].Tag)
 }
+
+func Test_mapEnvironmentStatusFromDomain(t *testing.T) {
+	domain := []core.EnvironmentStatus{
+		{
+			EnvironmentName: "env1",
+			Healthy:         true,
+		},
+		{
+			EnvironmentName: "env2",
+			Healthy:         false,
+			Reason:          "no bueno",
+		},
+	}
+
+	model := mapEnvironmentStatusesFromDomain(domain)
+
+	assert.Len(t, model, 2)
+	assert.Equal(t, "env1", model[0].EnvironmentName)
+	assert.True(t, model[0].Healthy)
+	assert.Empty(t, model[0].Reason)
+	assert.Equal(t, "env2", model[1].EnvironmentName)
+	assert.False(t, model[1].Healthy)
+	assert.Equal(t, "no bueno", model[1].Reason)
+}
+
+// Detailed field assertions are covered in underlying specific map tests
+func Test_mapAppStatusFromDomain(t *testing.T) {
+	domain := &core.AppStatus{
+		EnvironmentStatus: []core.EnvironmentStatus{{}},
+		Deployments:       []core.Deployment{{}},
+	}
+
+	model := mapAppStatusFromDomain(domain)
+
+	assert.Len(t, model.Environments, 1)
+	assert.Len(t, model.Deployments, 1)
+}

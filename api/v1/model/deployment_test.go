@@ -34,6 +34,7 @@ func Test_DeploymentRequest_Validates(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// This is just a sanity check that validation is happening. See Test_RulesNamingIdentifier for better coverage.
 func Test_DeploymentRequest_ValidateName(t *testing.T) {
 	model := createMinDeploymentRequest()
 	model.Name = "5name"

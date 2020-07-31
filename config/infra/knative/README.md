@@ -5,10 +5,10 @@ A base [Kustomization](https://kustomize.io/) is provided for generation of Knat
 
 To build run `kustomize build base >/path/to/gitops/repo/kustomization.yaml`
 
-> :information_source: _This is not a production ready Knative Serving configuration. See the [KNative install documentation](https://knative.dev/docs/install/) which contains detailed installation guides depending on your Kubernetes environment._
+> :information_source: _This is not a production ready Knative Serving configuration. See the [Knative install documentation](https://knative.dev/docs/install/) which contains detailed installation guides depending on your Kubernetes environment._
 
-## Configuring KNative
-KNative configuration is vast and is dependant largely on your needs. The following is meant to help get you started with a basic demo of Riser and is not intended as being exhaustive.
+## Configuring Knative
+Knative configuration is vast and is dependant largely on your needs. The following is meant to help get you started with a basic demo of Riser and is not intended as being exhaustive.
 
 ### Domain Name
 You should configure a wildcard domain for each environment and namespace using a pattern like `<environment>.riser.<your-domain>` (e.g. for the `dev` environment `dev.riser.your-domain.org`. To do this, create a ConfigMap like the following example:

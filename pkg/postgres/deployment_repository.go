@@ -194,15 +194,15 @@ func (r *deploymentRepository) RollbackRevision(name *core.NamespacedName, envNa
 func (r *deploymentRepository) UpdateStatus(name *core.NamespacedName, envName string, status *core.DeploymentStatus) error {
 	result, err := r.db.Exec(`
 	  UPDATE deployment
-		SET doc = jsonb_set(doc, '{status}', $4),
-		-- If we receive a status update, we "undelete" the deployment
-		deleted_at = null
+		SET doc = jsonb_set(doc, '{status}', $4)
 		FROM deployment_reservation
 		WHERE
 		deployment.deployment_reservation_id = deployment_reservation.id
 		AND deployment_reservation.name = $1
 		AND deployment_reservation.namespace = $2
 		AND deployment.environment_name = $3
+		-- Ignore status updates from deleted deployments. To redeploy, IncrementRevision is called which sets deleted_at=NULL
+		AND deployment.deleted_at IS NULL
 		-- Don't update status from an older observed revision
 		AND (
 			(deployment.doc->'status'->>'observedRiserRevision')::int <= $5

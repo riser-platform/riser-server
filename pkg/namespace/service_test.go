@@ -75,40 +75,6 @@ func Test_Create_WhenGetEnvironmentsErr(t *testing.T) {
 	assert.Equal(t, "test", err.Error())
 }
 
-func Test_EnsureNamespaceInEnvironment(t *testing.T) {
-	committer := state.NewDryRunCommitter()
-	namespaces := &core.FakeNamespaceRepository{
-		GetFn: func(namespaceName string) (*core.Namespace, error) {
-			assert.Equal(t, "myns", namespaceName)
-			return &core.Namespace{}, nil
-		},
-	}
-
-	svc := &service{namespaces: namespaces}
-
-	err := svc.EnsureNamespaceInEnvironment("myns", "myenv", committer)
-
-	assert.NoError(t, err)
-	assert.Len(t, committer.Commits, 1)
-	assert.Len(t, committer.Commits[0].Files, 1)
-	assert.Equal(t, `Updating namespace "myns" in environment "myenv"`, committer.Commits[0].Message)
-}
-
-func Test_EnsureNamespaceInEnvironment_WhenNamespaceDoesNotExist(t *testing.T) {
-	committer := state.NewDryRunCommitter()
-	namespaces := &core.FakeNamespaceRepository{
-		GetFn: func(namespaceName string) (*core.Namespace, error) {
-			return nil, core.ErrNotFound
-		},
-	}
-
-	svc := &service{namespaces: namespaces}
-
-	err := svc.EnsureNamespaceInEnvironment("myns", "myenv", committer)
-
-	assert.Equal(t, `the namespace "myns" does not exist`, err.Error())
-}
-
 func Test_EnsureDefaultNamespace_ReturnsErr(t *testing.T) {
 	namespaces := &core.FakeNamespaceRepository{
 		GetFn: func(string) (*core.Namespace, error) {

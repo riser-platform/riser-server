@@ -17,8 +17,6 @@ type Service interface {
 	ValidateDeployable(namespaceName string) error
 	// EnsureDefaultNamespace ensures that the default namespace has been provisioned. Designed to be used only at server startup.
 	EnsureDefaultNamespace(committer state.Committer) error
-	// EnsureNamespaceInEnvironment ensures that a namespace has been committed to a environment. Returns an error if the namespace has not been created
-	EnsureNamespaceInEnvironment(namespaceName string, envName string, committer state.Committer) error
 	Create(namespaceName string, committer state.Committer) error
 }
 
@@ -41,21 +39,6 @@ func (s *service) EnsureDefaultNamespace(committer state.Committer) error {
 	}
 
 	return nil
-}
-
-func (s *service) EnsureNamespaceInEnvironment(namespaceName string, envName string, committer state.Committer) error {
-	_, err := s.namespaces.Get(namespaceName)
-	if err != nil {
-		if err == core.ErrNotFound {
-			return core.NewValidationErrorMessage(fmt.Sprintf("the namespace %q does not exist", namespaceName))
-		}
-		return err
-	}
-	err = commitNamespace(namespaceName, envName, committer)
-	if err == git.ErrNoChanges {
-		return nil
-	}
-	return err
 }
 
 func (s *service) Create(namespaceName string, committer state.Committer) error {
@@ -103,10 +86,7 @@ func toNameList(namespaces []core.Namespace) []string {
 }
 
 func commitNamespace(namespaceName string, envName string, committer state.Committer) error {
-	nsResource, err := resources.CreateNamespace(namespaceName, envName)
-	if err != nil {
-		return err
-	}
+	nsResource := resources.CreateNamespace(namespaceName, envName)
 	resourceFiles, err := state.RenderGeneric(envName, nsResource)
 	if err != nil {
 		return err

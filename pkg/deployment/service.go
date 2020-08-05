@@ -57,11 +57,6 @@ func (s *service) Delete(name *core.NamespacedName, envName string, committer st
 }
 
 func (s *service) Update(deploymentConfig *core.DeploymentConfig, committer state.Committer, dryRun bool) (riserRevision int64, err error) {
-	err = s.namespaceService.EnsureNamespaceInEnvironment(deploymentConfig.Namespace, deploymentConfig.EnvironmentName, committer)
-	if err != nil {
-		return 0, err
-	}
-
 	riserRevision, err = s.prepareForDeployment(deploymentConfig, dryRun)
 	if err != nil {
 		return 0, err
@@ -198,6 +193,15 @@ func deploy(ctx *core.DeploymentContext, committer state.Committer) error {
 	if err != nil {
 		return err
 	}
+
+	// Create the namespace resource whether we need to or not to ensure that it exists and that it's up-to-date
+	clusterResourceFiles, err := state.RenderGeneric(ctx.DeploymentConfig.EnvironmentName,
+		resources.CreateNamespace(ctx.DeploymentConfig.Namespace, ctx.DeploymentConfig.EnvironmentName))
+	if err != nil {
+		return nil
+	}
+
+	resourceFiles = append(resourceFiles, clusterResourceFiles...)
 
 	return committer.Commit(fmt.Sprintf("Updating resources for \"%s.%s\" in environment %q", ctx.DeploymentConfig.Name, ctx.DeploymentConfig.Namespace, ctx.DeploymentConfig.EnvironmentName), resourceFiles)
 }

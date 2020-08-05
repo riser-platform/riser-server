@@ -1,6 +1,6 @@
 # https://github.com/fluxcd/flux/blob/master/chart/flux/values.yaml
 image:
-  tag: "1.20.0"
+  tag: "1.20.1"
 env:
   secretName: flux-git
 git:

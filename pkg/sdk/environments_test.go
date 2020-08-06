@@ -59,3 +59,19 @@ func Test_Environments_SetConfig(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func Test_Environments_GetConfig(t *testing.T) {
+	setup()
+	defer teardown()
+
+	mux.HandleFunc("/api/v1/environments/dev/config", func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method)
+		fmt.Fprint(w, `{"publicGatewayHost": "tempuri.org"}`)
+		w.WriteHeader(http.StatusAccepted)
+	})
+
+	result, err := client.Environments.GetConfig("dev")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "tempuri.org", result.PublicGatewayHost)
+}

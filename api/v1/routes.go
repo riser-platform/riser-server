@@ -104,6 +104,10 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 		return PostNamespace(c, namespaceService, repo)
 	})
 
+	v1.GET("/environments/:envName/config", func(c echo.Context) error {
+		return GetEnvironmentConfig(c, environmentService)
+	})
+
 	v1.PUT("/environments/:envName/config", func(c echo.Context) error {
 		return PutEnvironmentConfig(c, environmentService)
 	})

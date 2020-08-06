@@ -225,6 +225,46 @@ func Test_ValidateDeployable(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func Test_GetConfig(t *testing.T) {
+	cfg := core.EnvironmentConfig{}
+	environmentRepository := &core.FakeEnvironmentRepository{
+		ListFn: func() ([]core.Environment, error) {
+			return []core.Environment{{Name: "myenv1"}}, nil
+		},
+		GetFn: func(envName string) (*core.Environment, error) {
+			assert.Equal(t, "myenv1", envName)
+			return &core.Environment{
+				Doc: core.EnvironmentDoc{
+					Config: cfg,
+				},
+			}, nil
+		},
+	}
+
+	service := service{environmentRepository}
+
+	result, err := service.GetConfig("myenv1")
+
+	assert.Equal(t, &cfg, result)
+	assert.NoError(t, err)
+}
+
+func Test_GetConfig_WhenEnvironmentDoesNotExist(t *testing.T) {
+	environmentRepository := &core.FakeEnvironmentRepository{
+		ListFn: func() ([]core.Environment, error) {
+			return []core.Environment{{Name: "myenv1"}, {Name: "myenv2"}}, nil
+		},
+	}
+
+	service := service{environmentRepository}
+
+	result, err := service.GetConfig("myenv3")
+
+	assert.Nil(t, result)
+	assert.IsType(t, &core.ValidationError{}, err)
+	assert.Equal(t, "Invalid environment. Must be one of: myenv1, myenv2", err.Error())
+}
+
 func Test_ValidateDeployable_WhenEnvironmentDoesNotExist(t *testing.T) {
 	environmentRepository := &core.FakeEnvironmentRepository{
 		ListFn: func() ([]core.Environment, error) {

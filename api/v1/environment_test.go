@@ -44,6 +44,18 @@ func Test_mapEnvironmentConfigToDomain(t *testing.T) {
 	assert.Equal(t, "myhost", result.PublicGatewayHost)
 }
 
+func Test_mapEnvironmentConfigFromDomain(t *testing.T) {
+	domain := &core.EnvironmentConfig{
+		SealedSecretCert:  []byte{0x1},
+		PublicGatewayHost: "myhost",
+	}
+
+	result := mapEnvironmentConfigFromDomain(domain)
+
+	assert.Equal(t, []byte{0x1}, result.SealedSecretCert)
+	assert.Equal(t, "myhost", result.PublicGatewayHost)
+}
+
 func Test_validateEnvironmentName_Error(t *testing.T) {
 	result := validateEnvironmentName("")
 	assert.NotNil(t, result)

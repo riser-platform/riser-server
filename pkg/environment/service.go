@@ -20,6 +20,7 @@ type Service interface {
 	// This is used to help identify when a cluster is no longer reporting status to the server
 	// If the environment has not yet been provisioned this will automatically create the environment (this may change in the future)
 	Ping(envName string) error
+	GetConfig(envName string) (*core.EnvironmentConfig, error)
 	SetConfig(envName string, environment *core.EnvironmentConfig) error
 	GetStatus(envName string) (*core.EnvironmentStatus, error)
 	ValidateDeployable(envName string) error
@@ -31,6 +32,20 @@ type service struct {
 
 func NewService(environments core.EnvironmentRepository) Service {
 	return &service{environments}
+}
+
+func (s *service) GetConfig(envName string) (*core.EnvironmentConfig, error) {
+	err := s.ValidateDeployable(envName)
+	if err != nil {
+		return nil, err
+	}
+
+	env, err := s.environments.Get(envName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &env.Doc.Config, nil
 }
 
 // SetConfig merges any non zero value with the existing environment configuration

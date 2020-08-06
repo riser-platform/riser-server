@@ -22,6 +22,10 @@ func (fake *FakeService) GetStatus(envName string) (*core.EnvironmentStatus, err
 	return fake.GetStatusFn(envName)
 }
 
+func (fake *FakeService) GetConfig(string) (*core.EnvironmentConfig, error) {
+	panic("NI")
+}
+
 func (fake *FakeService) SetConfig(string, *core.EnvironmentConfig) error {
 	panic("NI")
 }

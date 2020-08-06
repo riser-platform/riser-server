@@ -22,6 +22,17 @@ func PostEnvironmentPing(c echo.Context, environmentService environment.Service)
 	return environmentService.Ping(envName)
 }
 
+func GetEnvironmentConfig(c echo.Context, environmentService environment.Service) error {
+	envName := c.Param("envName")
+
+	envConfig, err := environmentService.GetConfig(envName)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, mapEnvironmentConfigFromDomain(envConfig))
+}
+
 func PutEnvironmentConfig(c echo.Context, environmentService environment.Service) error {
 	environmentConfig := &model.EnvironmentConfig{}
 	err := c.Bind(environmentConfig)
@@ -79,6 +90,13 @@ func mapEnvironmentMetaArrayFromDomain(domainArray []core.Environment) []model.E
 
 func mapEnvironmentConfigToDomain(in *model.EnvironmentConfig) *core.EnvironmentConfig {
 	return &core.EnvironmentConfig{
+		SealedSecretCert:  in.SealedSecretCert,
+		PublicGatewayHost: in.PublicGatewayHost,
+	}
+}
+
+func mapEnvironmentConfigFromDomain(in *core.EnvironmentConfig) *model.EnvironmentConfig {
+	return &model.EnvironmentConfig{
 		SealedSecretCert:  in.SealedSecretCert,
 		PublicGatewayHost: in.PublicGatewayHost,
 	}

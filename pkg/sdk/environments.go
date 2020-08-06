@@ -10,6 +10,7 @@ import (
 type EnvironmentsClient interface {
 	Ping(envName string) error
 	List() ([]model.EnvironmentMeta, error)
+	GetConfig(envName string) (*model.EnvironmentConfig, error)
 	SetConfig(envName string, config *model.EnvironmentConfig) error
 }
 
@@ -40,6 +41,22 @@ func (c *environmentsClient) List() ([]model.EnvironmentMeta, error) {
 	}
 
 	return environments, nil
+}
+
+// GetConfig gets the configuration for a environment.
+func (c *environmentsClient) GetConfig(envName string) (*model.EnvironmentConfig, error) {
+	request, err := c.client.NewGetRequest(fmt.Sprintf("/api/v1/environments/%s/config", envName))
+	if err != nil {
+		return nil, err
+	}
+
+	responseModel := &model.EnvironmentConfig{}
+	_, err = c.client.Do(request, responseModel)
+	if err != nil {
+		return nil, err
+	}
+
+	return responseModel, nil
 }
 
 // SetConfig sets configuration for a environment. Empty values are ignored and merged with existing config values.

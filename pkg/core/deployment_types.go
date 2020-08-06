@@ -78,11 +78,6 @@ type DeploymentRevisionStatus struct {
 	RevisionStatusReason string `json:"revisionStatusReason"`
 }
 
-type StatusProblem struct {
-	Count   int    `json:"count"`
-	Message string `json:"message"`
-}
-
 type DeploymentContext struct {
 	DeploymentConfig  *DeploymentConfig
 	EnvironmentConfig *EnvironmentConfig

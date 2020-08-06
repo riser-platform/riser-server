@@ -59,6 +59,7 @@ func Test_GetByApp(t *testing.T) {
 	result, err := service.GetByApp(status.AppId)
 
 	assert.NoError(t, err)
+	assert.Equal(t, status.AppId, result.AppId)
 	assert.Len(t, result.EnvironmentStatus, 1)
 	assert.Equal(t, "myenv", result.EnvironmentStatus[0].EnvironmentName)
 	assert.Len(t, result.Deployments, 1)

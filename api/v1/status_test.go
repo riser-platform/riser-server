@@ -210,6 +210,7 @@ func Test_mapEnvironmentStatusFromDomain(t *testing.T) {
 // Detailed field assertions are covered in underlying specific map tests
 func Test_mapAppStatusFromDomain(t *testing.T) {
 	domain := &core.AppStatus{
+		AppId:             uuid.New(),
 		EnvironmentStatus: []core.EnvironmentStatus{{}},
 		Deployments:       []core.Deployment{{}},
 	}
@@ -218,4 +219,5 @@ func Test_mapAppStatusFromDomain(t *testing.T) {
 
 	assert.Len(t, model.Environments, 1)
 	assert.Len(t, model.Deployments, 1)
+	assert.Equal(t, domain.AppId, model.AppId)
 }

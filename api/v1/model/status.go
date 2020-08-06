@@ -10,6 +10,7 @@ const (
 )
 
 type AppStatus struct {
+	AppId        uuid.UUID           `json:"appId"`
 	Environments []EnvironmentStatus `json:"environments"`
 	Deployments  []DeploymentStatus  `json:"deployments"`
 }

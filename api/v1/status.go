@@ -31,6 +31,7 @@ func GetAppStatus(c echo.Context, appService app.Service, statusService deployme
 
 func mapAppStatusFromDomain(domain *core.AppStatus) *model.AppStatus {
 	out := &model.AppStatus{
+		AppId:        domain.AppId,
 		Environments: mapEnvironmentStatusesFromDomain(domain.EnvironmentStatus),
 		Deployments:  []model.DeploymentStatus{},
 	}

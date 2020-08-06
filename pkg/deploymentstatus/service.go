@@ -31,6 +31,7 @@ func (s *service) GetByApp(appId uuid.UUID) (*core.AppStatus, error) {
 	}
 
 	appStatus := &core.AppStatus{
+		AppId:             appId,
 		Deployments:       deployments,
 		EnvironmentStatus: []core.EnvironmentStatus{},
 	}

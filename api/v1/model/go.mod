@@ -1,6 +1,6 @@
 module github.com/riser-platform/riser-server/api/v1/model
 
-go 1.14
+go 1.15
 
 require (
 	github.com/docker/distribution v2.7.1+incompatible

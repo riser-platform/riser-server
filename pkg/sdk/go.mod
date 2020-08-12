@@ -2,7 +2,7 @@ module github.com/riser-platform/riser-server/pkg/sdk
 
 replace github.com/riser-platform/riser-server/api/v1/model => ../../api/v1/model
 
-go 1.14
+go 1.15
 
 require (
 	github.com/google/uuid v1.1.1

@@ -17,7 +17,7 @@ func NewSecretMetaRepository(db *sql.DB) core.SecretMetaRepository {
 func (r *secretMetaRepository) Save(secretMeta *core.SecretMeta) (int64, error) {
 	row := r.db.QueryRow(`
 		INSERT INTO secret_meta (app_id, environment_name, name, revision)
-		SELECT app.id, $3, $4, 0
+		SELECT app.id, $3, $4, 1
 		FROM app
 		WHERE
 			app.name = $1

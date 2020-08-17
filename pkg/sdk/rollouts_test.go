@@ -44,6 +44,33 @@ func Test_parseTrafficRules(t *testing.T) {
 			},
 		},
 		{
+			trafficRules: []string{"r1:10", "r2:10", "r3:80"},
+			expectedRules: []model.TrafficRule{
+				{RiserRevision: 1, Percent: 10},
+				{RiserRevision: 2, Percent: 10},
+				{RiserRevision: 3, Percent: 80},
+			},
+		},
+		{
+			trafficRules: []string{"r1:10", "r2:*"},
+			expectedRules: []model.TrafficRule{
+				{RiserRevision: 1, Percent: 10},
+				{RiserRevision: 2, Percent: 90},
+			},
+		},
+		{
+			trafficRules: []string{"r1:10", "r2:*", "r3:10"},
+			expectedRules: []model.TrafficRule{
+				{RiserRevision: 1, Percent: 10},
+				{RiserRevision: 2, Percent: 80},
+				{RiserRevision: 3, Percent: 10},
+			},
+		},
+		{
+			trafficRules: []string{"r1:10", "r2:*", "r3:*"},
+			expectedErr:  errors.New(`You may only specify one wildcard rule`),
+		},
+		{
 			trafficRules: []string{"r1:10", "bad:90"},
 			expectedErr:  errors.New(`Rules must be in the format of "r(rev):(percentage)" e.g. "r1:100" routes 100% of traffic to rev 1`),
 		},
@@ -52,7 +79,7 @@ func Test_parseTrafficRules(t *testing.T) {
 	for _, test := range tests {
 		parsedRules, err := parseTrafficRules(test.trafficRules...)
 
-		assert.ElementsMatch(t, test.expectedRules, parsedRules)
-		assert.Equal(t, test.expectedErr, err)
+		assert.ElementsMatch(t, test.expectedRules, parsedRules, test.trafficRules)
+		assert.Equal(t, test.expectedErr, err, test.trafficRules)
 	}
 }

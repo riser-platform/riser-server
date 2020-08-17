@@ -42,6 +42,9 @@ watch:
 watch-model:
 	cd api/v1/model && fswatch -l 1 -o . | xargs -n1 -I{} gotestsum
 
+watch-sdk:
+	cd pkg/sdk && fswatch -l 1 -o . | xargs -n1 -I{} gotestsum
+
 docker-build:
 	docker build . -t ${IMG}:local -f docker/Dockerfile
 	docker tag ${IMG}:local ${IMG}:${TAG}

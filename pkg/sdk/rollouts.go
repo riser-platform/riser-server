@@ -20,19 +20,16 @@ type rolloutsClient struct {
 	client *Client
 }
 
-func (c *rolloutsClient) Save(deploymentName, namespace, envName string, trafficRule ...string) error {
-	rolloutRequest := model.RolloutRequest{}
-	for _, rule := range trafficRule {
-		if !trafficRuleExp.MatchString(rule) {
-			return errors.New("Rules must be in the format of \"r(rev):(percentage)\" e.g. \"r1:100\" routes 100% of traffic to rev 1")
-		}
-		ruleSplit := trafficRuleExp.FindStringSubmatch(rule)
-		rolloutRequest.Traffic = append(rolloutRequest.Traffic,
-			model.TrafficRule{
-				RiserRevision: mustParseInt(ruleSplit[1]),
-				Percent:       int(mustParseInt(ruleSplit[2])),
-			})
+func (c *rolloutsClient) Save(deploymentName, namespace, envName string, trafficRules ...string) error {
+	parsedRules, err := parseTrafficRules(trafficRules...)
+	if err != nil {
+		return err
 	}
+
+	rolloutRequest := model.RolloutRequest{
+		Traffic: parsedRules,
+	}
+
 	request, err := c.client.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/rollout/%s/%s/%s", envName, namespace, deploymentName), rolloutRequest)
 	if err != nil {
 		return err
@@ -40,6 +37,23 @@ func (c *rolloutsClient) Save(deploymentName, namespace, envName string, traffic
 
 	_, err = c.client.Do(request, nil)
 	return err
+}
+
+func parseTrafficRules(trafficRules ...string) ([]model.TrafficRule, error) {
+	parsedRules := []model.TrafficRule{}
+	for _, rule := range trafficRules {
+		if !trafficRuleExp.MatchString(rule) {
+			return nil, errors.New("Rules must be in the format of \"r(rev):(percentage)\" e.g. \"r1:100\" routes 100% of traffic to rev 1")
+		}
+		ruleSplit := trafficRuleExp.FindStringSubmatch(rule)
+		parsedRules = append(parsedRules,
+			model.TrafficRule{
+				RiserRevision: mustParseInt(ruleSplit[1]),
+				Percent:       int(mustParseInt(ruleSplit[2])),
+			})
+	}
+
+	return parsedRules, nil
 }
 
 // mustParseInt panics which should never happen - validate input before using!

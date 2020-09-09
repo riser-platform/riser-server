@@ -21,7 +21,7 @@ import (
 
 // TODO: Refactor and add unit test coverage
 func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, deploymentService deployment.Service, environmentService environment.Service) error {
-	deploymentRequest := &model.DeploymentRequest{}
+	deploymentRequest := &model.SaveDeploymentRequest{}
 	err := c.Bind(deploymentRequest)
 	if err != nil {
 		return err
@@ -118,7 +118,7 @@ func mapDryRunCommitsFromDomain(commits []state.DryRunCommit) []model.DryRunComm
 	return out
 }
 
-func mapDeploymentRequestToDomain(deploymentRequest *model.DeploymentRequest) (*core.DeploymentConfig, error) {
+func mapDeploymentRequestToDomain(deploymentRequest *model.SaveDeploymentRequest) (*core.DeploymentConfig, error) {
 	app, err := deploymentRequest.App.ApplyOverrides(deploymentRequest.Environment)
 	if err != nil {
 		return nil, err

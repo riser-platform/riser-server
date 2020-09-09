@@ -163,7 +163,7 @@ func Test_mapDryRunCommitsFromDomain(t *testing.T) {
 }
 
 func Test_mapDeploymentRequestToDomain(t *testing.T) {
-	request := &model.DeploymentRequest{
+	request := &model.SaveDeploymentRequest{
 		DeploymentMeta: model.DeploymentMeta{
 			Name:        "mydeployment",
 			Environment: "myenv",
@@ -192,7 +192,7 @@ func Test_mapDeploymentRequestToDomain(t *testing.T) {
 }
 
 func Test_mapDeploymentRequestToDomain_Overrides(t *testing.T) {
-	request := &model.DeploymentRequest{
+	request := &model.SaveDeploymentRequest{
 		DeploymentMeta: model.DeploymentMeta{
 			Name:        "mydeployment",
 			Environment: "myenv",

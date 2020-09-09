@@ -2,19 +2,19 @@ package model
 
 import validation "github.com/go-ozzo/ozzo-validation/v3"
 
-type DeploymentRequest struct {
+type SaveDeploymentRequest struct {
 	DeploymentMeta `json:",inline"`
 	App            *AppConfigWithOverrides `json:"app"`
 }
 
-func (d *DeploymentRequest) ApplyDefaults() error {
+func (d *SaveDeploymentRequest) ApplyDefaults() error {
 	if d.App == nil {
 		d.App = &AppConfigWithOverrides{}
 	}
 	return d.App.ApplyDefaults()
 }
 
-func (d DeploymentRequest) Validate() error {
+func (d SaveDeploymentRequest) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.DeploymentMeta),
 		validation.Field(&d.App, validation.Required))

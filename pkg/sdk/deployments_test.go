@@ -28,7 +28,7 @@ func Test_Deployments_Save(t *testing.T) {
 	setup()
 	defer teardown()
 
-	requestModel := &model.DeploymentRequest{
+	requestModel := &model.SaveDeploymentRequest{
 		DeploymentMeta: model.DeploymentMeta{
 			Name: "mydeployment",
 		},
@@ -36,7 +36,7 @@ func Test_Deployments_Save(t *testing.T) {
 
 	mux.HandleFunc("/api/v1/deployments", func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPut, r.Method)
-		actualModel := &model.DeploymentRequest{}
+		actualModel := &model.SaveDeploymentRequest{}
 		mustUnmarshalR(r.Body, actualModel)
 		assert.Equal(t, requestModel, actualModel)
 		fmt.Fprint(w, `{"message": "saved"}`)
@@ -52,7 +52,7 @@ func Test_Deployments_Save_DryRun(t *testing.T) {
 	setup()
 	defer teardown()
 
-	requestModel := &model.DeploymentRequest{
+	requestModel := &model.SaveDeploymentRequest{
 		DeploymentMeta: model.DeploymentMeta{
 			Name: "mydeployment",
 		},
@@ -61,7 +61,7 @@ func Test_Deployments_Save_DryRun(t *testing.T) {
 	mux.HandleFunc("/api/v1/deployments", func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPut, r.Method)
 		assert.Equal(t, "true", r.URL.Query().Get("dryRun"))
-		actualModel := &model.DeploymentRequest{}
+		actualModel := &model.SaveDeploymentRequest{}
 		mustUnmarshalR(r.Body, actualModel)
 		assert.Equal(t, requestModel, actualModel)
 		fmt.Fprint(w, `{"message": "dryRun", "dryRunCommits": [{ "message": "test"}]}`)

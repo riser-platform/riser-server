@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var minimumValidDeploymentRequest = &DeploymentRequest{
+var minimumValidDeploymentRequest = &SaveDeploymentRequest{
 	DeploymentMeta: DeploymentMeta{
 		Name:        "mydep",
 		Environment: "test",
@@ -19,7 +19,7 @@ var minimumValidDeploymentRequest = &DeploymentRequest{
 }
 
 func Test_DeploymentRequest_ApplyDefaults(t *testing.T) {
-	model := &DeploymentRequest{}
+	model := &SaveDeploymentRequest{}
 
 	err := model.ApplyDefaults()
 
@@ -47,7 +47,7 @@ func Test_DeploymentRequest_ValidateName(t *testing.T) {
 }
 
 func Test_DeploymentRequest_ValidateRequired(t *testing.T) {
-	model := &DeploymentRequest{}
+	model := &SaveDeploymentRequest{}
 	err := model.Validate()
 
 	assert.IsType(t, validation.Errors{}, err)
@@ -57,7 +57,7 @@ func Test_DeploymentRequest_ValidateRequired(t *testing.T) {
 }
 
 func Test_DeploymentRequest_ValidateEmptyApp(t *testing.T) {
-	model := &DeploymentRequest{
+	model := &SaveDeploymentRequest{
 		App: &AppConfigWithOverrides{},
 	}
 
@@ -67,8 +67,8 @@ func Test_DeploymentRequest_ValidateEmptyApp(t *testing.T) {
 	assert.IsType(t, validation.Errors{}, err)
 }
 
-func createMinDeploymentRequest() *DeploymentRequest {
-	model := &DeploymentRequest{}
+func createMinDeploymentRequest() *SaveDeploymentRequest {
+	model := &SaveDeploymentRequest{}
 	_ = copier.Copy(model, minimumValidDeploymentRequest)
 	return model
 }

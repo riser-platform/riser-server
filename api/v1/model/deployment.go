@@ -20,7 +20,7 @@ func (d SaveDeploymentRequest) Validate() error {
 		validation.Field(&d.App, validation.Required))
 }
 
-type DeploymentResponse struct {
+type SaveDeploymentResponse struct {
 	RiserRevision int64          `json:"riserRevision"`
 	Message       string         `json:"message"`
 	DryRunCommits []DryRunCommit `json:"dryRunCommits,omitempty"`

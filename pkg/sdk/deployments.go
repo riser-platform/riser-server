@@ -8,8 +8,8 @@ import (
 )
 
 type DeploymentsClient interface {
-	Delete(deploymentName, namespace, envName string) (*model.DeploymentResponse, error)
-	Save(deployment *model.SaveDeploymentRequest, dryRun bool) (*model.DeploymentResponse, error)
+	Delete(deploymentName, namespace, envName string) (*model.SaveDeploymentResponse, error)
+	Save(deployment *model.SaveDeploymentRequest, dryRun bool) (*model.SaveDeploymentResponse, error)
 	SaveStatus(deploymentName, namespace, envName string, status *model.DeploymentStatusMutable) (statusCode int, err error)
 }
 
@@ -17,13 +17,13 @@ type deploymentsClient struct {
 	client *Client
 }
 
-func (c *deploymentsClient) Delete(deploymentName, namespace, envName string) (*model.DeploymentResponse, error) {
+func (c *deploymentsClient) Delete(deploymentName, namespace, envName string) (*model.SaveDeploymentResponse, error) {
 	request, err := c.client.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/deployments/%s/%s/%s", envName, namespace, deploymentName), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	responseModel := &model.DeploymentResponse{}
+	responseModel := &model.SaveDeploymentResponse{}
 	_, err = c.client.Do(request, responseModel)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (c *deploymentsClient) Delete(deploymentName, namespace, envName string) (*
 	return responseModel, nil
 }
 
-func (c *deploymentsClient) Save(deployment *model.SaveDeploymentRequest, dryRun bool) (*model.DeploymentResponse, error) {
+func (c *deploymentsClient) Save(deployment *model.SaveDeploymentRequest, dryRun bool) (*model.SaveDeploymentResponse, error) {
 	request, err := c.client.NewRequest(http.MethodPut, "/api/v1/deployments", deployment)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (c *deploymentsClient) Save(deployment *model.SaveDeploymentRequest, dryRun
 		request.URL.RawQuery = q.Encode()
 	}
 
-	responseModel := &model.DeploymentResponse{}
+	responseModel := &model.SaveDeploymentResponse{}
 	_, err = c.client.Do(request, responseModel)
 	if err != nil {
 		return nil, err

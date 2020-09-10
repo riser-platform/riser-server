@@ -1,12 +1,12 @@
 package deployment
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/riser-platform/riser-server/pkg/snapshot"
+	"github.com/riser-platform/riser-server/pkg/state"
 	"github.com/riser-platform/riser-server/pkg/util"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -15,8 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/riser-platform/riser-server/pkg/state"
 
 	"github.com/riser-platform/riser-server/api/v1/model"
 )
@@ -66,18 +64,11 @@ func Test_update_snapshot_simple(t *testing.T) {
 
 	secrets := []core.SecretMeta{{Name: "mysecret", Revision: 1}}
 
-	dryRunCommitter := state.NewDryRunCommitter()
-	var committer state.Committer
-	snapshotDir, err := filepath.Abs("testdata/snapshots/simple")
+	snapshotPath, err := filepath.Abs("testdata/snapshots/simple")
 	require.NoError(t, err)
-	if util.ShouldUpdateSnapshot() {
-		fmt.Printf("Updating snapshot for %q", snapshotDir)
-		err = os.RemoveAll(snapshotDir)
-		require.NoError(t, err)
-		committer = state.NewFileCommitter(snapshotDir)
-	} else {
-		committer = dryRunCommitter
-	}
+
+	committer, err := snapshot.CreateCommitter(snapshotPath)
+	require.NoError(t, err)
 
 	ctx := &core.DeploymentContext{
 		DeploymentConfig:  newDeployment,
@@ -85,12 +76,13 @@ func Test_update_snapshot_simple(t *testing.T) {
 		RiserRevision:     3,
 		Secrets:           secrets,
 	}
-	err = deploy(ctx, committer)
 
+	err = deploy(ctx, committer)
 	assert.NoError(t, err)
-	if !util.ShouldUpdateSnapshot() {
-		require.Len(t, dryRunCommitter.Commits, 1)
+
+	if !snapshot.ShouldUpdate() {
+		dryRunCommitter := committer.(*state.DryRunCommitter)
+		snapshot.AssertCommitter(t, snapshotPath, dryRunCommitter)
 		assert.Equal(t, "Updating resources for \"myapp.apps\" in environment \"dev\"", dryRunCommitter.Commits[0].Message)
-		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }

@@ -2,14 +2,12 @@ package secret
 
 import (
 	"encoding/base64"
-	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/snapshot"
 	"github.com/riser-platform/riser-server/pkg/state"
-	"github.com/riser-platform/riser-server/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,28 +47,21 @@ func Test_update_snapshot_sealedsecret(t *testing.T) {
 		},
 	}
 
-	dryRunCommitter := state.NewDryRunCommitter()
-	var committer state.Committer
-	snapshotDir, err := filepath.Abs("testdata/snapshots/sealedsecret")
+	snapshotPath, err := filepath.Abs("testdata/snapshots/sealedsecret")
 	require.NoError(t, err)
-	if util.ShouldUpdateSnapshot() {
-		fmt.Printf("Updating snapshot for %q", snapshotDir)
-		err = os.RemoveAll(snapshotDir)
-		require.NoError(t, err)
-		committer = state.NewFileCommitter(snapshotDir)
-	} else {
-		committer = dryRunCommitter
-	}
+
+	committer, err := snapshot.CreateCommitter(snapshotPath)
+	require.NoError(t, err)
 
 	secretService := service{secretMetaRepository, environmentRepository, staticReader{}}
 
 	err = secretService.SealAndSave("mysecretval", secretMeta, committer)
 
 	assert.NoError(t, err)
-	if !util.ShouldUpdateSnapshot() {
-		require.Len(t, dryRunCommitter.Commits, 1)
+	if !snapshot.ShouldUpdate() {
+		dryRunCommitter := committer.(*state.DryRunCommitter)
+		snapshot.AssertCommitter(t, snapshotPath, dryRunCommitter)
 		assert.Equal(t, "Updating secret \"myapp-mysecret-2\" in environment \"dev\"", dryRunCommitter.Commits[0].Message)
-		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }
 

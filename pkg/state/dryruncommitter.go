@@ -7,17 +7,17 @@ type DryRunCommit struct {
 	Files   []core.ResourceFile
 }
 
-type DryRunComitter struct {
+type DryRunCommitter struct {
 	Commits []DryRunCommit
 }
 
-func NewDryRunCommitter() *DryRunComitter {
-	return &DryRunComitter{
+func NewDryRunCommitter() *DryRunCommitter {
+	return &DryRunCommitter{
 		Commits: []DryRunCommit{},
 	}
 }
 
-func (committer *DryRunComitter) Commit(message string, files []core.ResourceFile) error {
+func (committer *DryRunCommitter) Commit(message string, files []core.ResourceFile) error {
 	committer.Commits = append(committer.Commits, DryRunCommit{Message: message, Files: files})
 	return nil
 }

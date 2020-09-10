@@ -61,7 +61,7 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 	}
 
 	if isDryRun {
-		dryRunCommitter := committer.(*state.DryRunComitter)
+		dryRunCommitter := committer.(*state.DryRunCommitter)
 		return c.JSON(http.StatusAccepted, model.SaveDeploymentResponse{
 
 			Message:       "Dry run: changes not applied",

@@ -1,15 +1,13 @@
 package rollout
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/riser-platform/riser-server/pkg/core"
+	"github.com/riser-platform/riser-server/pkg/snapshot"
 	"github.com/riser-platform/riser-server/pkg/state"
-	"github.com/riser-platform/riser-server/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,26 +62,18 @@ func Test_update_snapshot_rollout(t *testing.T) {
 
 	svc := service{apps, deployments}
 
-	dryRunCommitter := state.NewDryRunCommitter()
-	var committer state.Committer
-	snapshotDir, err := filepath.Abs("testdata/snapshots/rollout")
+	snapshotPath, err := filepath.Abs("testdata/snapshots/rollout")
 	require.NoError(t, err)
 
-	if util.ShouldUpdateSnapshot() {
-		fmt.Printf("Updating snapshot for %q", snapshotDir)
-		err = os.RemoveAll(snapshotDir)
-		require.NoError(t, err)
-		committer = state.NewFileCommitter(snapshotDir)
-	} else {
-		committer = dryRunCommitter
-	}
+	committer, err := snapshot.CreateCommitter(snapshotPath)
+	require.NoError(t, err)
 
 	err = svc.UpdateTraffic(name, "dev", traffic, committer)
 
 	assert.NoError(t, err)
-	if !util.ShouldUpdateSnapshot() {
-		require.Len(t, dryRunCommitter.Commits, 1)
+	if !snapshot.ShouldUpdate() {
+		dryRunCommitter := committer.(*state.DryRunCommitter)
+		snapshot.AssertCommitter(t, snapshotPath, dryRunCommitter)
 		assert.Equal(t, `Updating resources for "myapp.myns" in environment "dev"`, dryRunCommitter.Commits[0].Message)
-		util.AssertSnapshot(t, snapshotDir, dryRunCommitter.Commits[0].Files)
 	}
 }

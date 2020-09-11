@@ -6,8 +6,6 @@ import (
 	"github.com/riser-platform/riser-server/pkg/git"
 
 	"github.com/pkg/errors"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Committer interface {
@@ -16,12 +14,6 @@ type Committer interface {
 
 type GitCommitter struct {
 	git git.Repo
-}
-
-type KubeResource interface {
-	GetName() string
-	GetNamespace() string
-	GetObjectKind() schema.ObjectKind
 }
 
 func NewGitCommitter(gitRepo git.Repo) *GitCommitter {

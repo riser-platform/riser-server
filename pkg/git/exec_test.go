@@ -43,7 +43,7 @@ func Test_execWithContext_timeout(t *testing.T) {
 	cmd := exec.Command("sleep", "1")
 	_, err := execWithContext(ctx, cmd)
 
-	assert.Equal(t, "command aborted: /bin/sleep [sleep 1]: context deadline exceeded", err.Error())
+	assert.Contains(t, err.Error(), "context deadline exceeded")
 }
 
 func Test_execWithContext_cancel(t *testing.T) {
@@ -52,5 +52,5 @@ func Test_execWithContext_cancel(t *testing.T) {
 	cmd := exec.Command("sleep", "1")
 	_, err := execWithContext(ctx, cmd)
 
-	assert.Equal(t, "command aborted: /bin/sleep [sleep 1]: context canceled", err.Error())
+	assert.Contains(t, err.Error(), "context canceled")
 }

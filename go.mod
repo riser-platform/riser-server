@@ -13,7 +13,7 @@ require (
 	github.com/imdario/mergo v0.3.10
 	github.com/joho/godotenv v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/labstack/echo/v4 v4.1.16
+	github.com/labstack/echo/v4 v4.2.1
 	github.com/lib/pq v1.7.0
 	github.com/onrik/logrus v0.7.0
 	github.com/pkg/errors v0.9.1

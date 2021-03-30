@@ -80,7 +80,7 @@ jobs:
           build-args: VERSION=${{ steps.get_version.outputs.VERSION }}
           tags: "ghcr.io/${{ env.DOCKER_REPOSITORY }}:${{ steps.get_version.outputs.VERSION }}"
           cache-from: type=registry,ref=ghcr.io/${{ env.DOCKER_REPOSITORY }}
-          cache-to: type=registry,ref=ghcr.io/${{ env.DOCKER_REPOSITORY }}
+          cache-to: type=registry,ref=ghcr.io/${{ env.DOCKER_REPOSITORY }},mode=max
       # TODO: Uncomment and update Docker image URL
       # - name: Create GitHub Release
       #   id: create_release

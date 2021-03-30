@@ -5,28 +5,42 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      GOLANGCI_VERSION: v1.39.0
     steps:
 
     - name: Set up Go
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v2
       with:
         go-version: 1.16.2
       id: go
 
     - name: Check out code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
 
-    - uses: actions/cache@v2
+    - name: Cache Go Modules
+      uses: actions/cache@v2
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
 
+    - name: Cache golangci-lint
+      id: cache-gloangci-lint
+      uses: actions/cache@v2
+      with:
+        path: ~/go/bin/golangci-lint
+        key: ${{ runner.os }}-golangci-lint-${{ env.GOLANGCI_VERSION }}
+        restore-keys: |
+          ${{ runner.os }}-golangci-lint-
+
+    - name: Install golangci-lint
+      if: steps.cache-gloangci-lint.outputs.cache-hit != 'true'
+      run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ~/go/bin ${{ env.GOLANGCI_VERSION }}
+
     - name: Lint
-      run: |
-        curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.18.0
-        $(go env GOPATH)/bin/golangci-lint run
+      run: golangci-lint run
 
     - name: Test
       run: go test ./...
@@ -43,9 +57,7 @@ jobs:
       - name: Get the version
         id: get_version
         run: |
-          GIT_TAG=${GITHUB_REF/refs\/tags\//}
-          echo ::set-output name=VERSION::${GIT_TAG}
-          echo ::set-output name=DOCKER_TAG::${GIT_TAG:1}
+          echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
       - name: Cache Docker layers
         uses: actions/cache@v2
         with:
@@ -61,7 +73,7 @@ jobs:
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Docker build
         uses: docker/build-push-action@v2
         with:
@@ -70,7 +82,7 @@ jobs:
           build-args: VERSION=${{ steps.get_version.outputs.VERSION }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          tags: "${{ steps.get_version.outputs.DOCKER_TAG }},latest"
+          tags: "${{ steps.get_version.outputs.VERSION }},latest"
 
       # https://github.com/docker/build-push-action/issues/252#issuecomment-744400434
       - name: Move cache

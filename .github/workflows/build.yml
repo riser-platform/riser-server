@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOLANGCI_VERSION: v1.39.0
-      DOCKER_REPOSITORY: riserplatform/riser-server
     steps:
 
     - name: Set up Go
@@ -52,6 +51,8 @@ jobs:
     if: contains(github.ref, 'refs/tags/v')
     name: Create Release
     runs-on: ubuntu-latest
+    env:
+      DOCKER_REPOSITORY: riserplatform/riser-server
     steps:
       - name: Check out code
         uses: actions/checkout@v1

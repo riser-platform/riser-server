@@ -1,8 +1,7 @@
 FROM golang:1.16-alpine as builder
 ARG VERSION=0.0.0-docker
 WORKDIR /app
-# Don't update the builder deps - this breaks Docker caching. We'll get updates by bumping the base image on occasion
-RUN apk add ca-certificates git
+RUN apk --no-cache add ca-certificates git
 
 # Better dep caching
 COPY go.mod .
@@ -10,14 +9,14 @@ COPY go.sum .
 COPY ./api/v1/model/go.mod api/v1/model/go.mod
 COPY ./api/v1/model/go.sum api/v1/model/go.sum
 
-RUN go mod download
+# In addition to download, run "go get" to create a build cache layer. This speeds up "go build" when go.mod has not changed
+RUN go mod download && go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get -v
 
 COPY . .
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s -X 'github.com/riser-platform/riser-server/pkg/util.VersionString=${VERSION}'" -o /go/bin/riser-server
 
 FROM alpine:3.13
-RUN apk update
 RUN apk --no-cache add ca-certificates git openssh-client
 # Add git hosts to known hosts file so we can use
 # StrickHostKeyChecking with git+ssh

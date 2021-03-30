@@ -9,8 +9,7 @@ COPY go.sum .
 COPY ./api/v1/model/go.mod api/v1/model/go.mod
 COPY ./api/v1/model/go.sum api/v1/model/go.sum
 
-# In addition to download, run "go get" to create a build cache layer. This speeds up "go build" when go.mod has not changed
-RUN go mod download && go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get -v
+RUN go mod download
 
 COPY . .
 

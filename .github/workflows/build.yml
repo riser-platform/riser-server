@@ -2,48 +2,49 @@ name: Build
 on: [push]
 jobs:
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    env:
-      GOLANGCI_VERSION: v1.39.0
-    steps:
+  # TODO: Uncomment
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     GOLANGCI_VERSION: v1.39.0
+  #   steps:
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16.2
-      id: go
+  #   - name: Set up Go
+  #     uses: actions/setup-go@v2
+  #     with:
+  #       go-version: 1.16.2
+  #     id: go
 
-    - name: Check out code
-      uses: actions/checkout@v2
+  #   - name: Check out code
+  #     uses: actions/checkout@v2
 
-    - name: Cache Go Modules
-      uses: actions/cache@v2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+  #   - name: Cache Go Modules
+  #     uses: actions/cache@v2
+  #     with:
+  #       path: ~/go/pkg/mod
+  #       key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+  #       restore-keys: |
+  #         ${{ runner.os }}-go-
 
-    - name: Cache golangci-lint
-      id: cache-gloangci-lint
-      uses: actions/cache@v2
-      with:
-        path: ~/go/bin/golangci-lint
-        key: ${{ runner.os }}-golangci-lint-${{ env.GOLANGCI_VERSION }}
-        restore-keys: |
-          ${{ runner.os }}-golangci-lint-
+  #   - name: Cache golangci-lint
+  #     id: cache-gloangci-lint
+  #     uses: actions/cache@v2
+  #     with:
+  #       path: ~/go/bin/golangci-lint
+  #       key: ${{ runner.os }}-golangci-lint-${{ env.GOLANGCI_VERSION }}
+  #       restore-keys: |
+  #         ${{ runner.os }}-golangci-lint-
 
-    - name: Install golangci-lint
-      if: steps.cache-gloangci-lint.outputs.cache-hit != 'true'
-      run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ~/go/bin ${{ env.GOLANGCI_VERSION }}
+  #   - name: Install golangci-lint
+  #     if: steps.cache-gloangci-lint.outputs.cache-hit != 'true'
+  #     run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ~/go/bin ${{ env.GOLANGCI_VERSION }}
 
-    - name: Lint
-      run: golangci-lint run
+  #   - name: Lint
+  #     run: golangci-lint run
 
-    - name: Test
-      run: go test ./...
+  #   - name: Test
+  #     run: go test ./...
 
   release:
     needs: build
@@ -64,17 +65,19 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Build and push Docker image
+      - name: Login to DockerHub
+        uses: docker/loginaction@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker build
         uses: docker/build-push-action@v2
         with:
           push: true
           file: docker/Dockerfile
           build-args: VERSION=${{ steps.get_version.outputs.VERSION }}
           tags: "ghcr.io/${{ env.DOCKER_REPOSITORY }}:${{ steps.get_version.outputs.VERSION }}"
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: ghcr.io
-          repository: ${{ env.DOCKER_REPOSITORY }}
       # TODO: Uncomment and update Docker image URL
       # - name: Create GitHub Release
       #   id: create_release

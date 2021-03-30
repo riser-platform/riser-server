@@ -47,7 +47,8 @@ jobs:
   #     run: go test ./...
 
   release:
-    needs: build
+    # TODO: Uncomment
+    # needs: build
     # TODO: Match version spec
     if: contains(github.ref, 'refs/tags/v')
     name: Create Release

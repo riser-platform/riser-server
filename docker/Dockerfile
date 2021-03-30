@@ -1,7 +1,8 @@
 FROM golang:1.16-alpine as builder
 ARG VERSION=0.0.0-docker
 WORKDIR /app
-RUN apk add --update ca-certificates git
+# Don't update the builder deps - this breaks Docker caching. We'll get updates by bumping the base image on occasion
+RUN apk add ca-certificates git
 
 # Better dep caching
 COPY go.mod .

@@ -28,7 +28,6 @@ jobs:
           ${{ runner.os }}-go-
 
     - name: Download Go Modules
-      if: steps.cache-go-modules.outputs.cache-hit != 'true'
       run: go mod download
 
     - name: Cache golangci-lint

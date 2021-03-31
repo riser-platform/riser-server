@@ -4,7 +4,7 @@
   <a href="https://github.com/riser-platform/riser-server"><img alt="GitHub Actions status" src="https://github.com/riser-platform/riser-server/workflows/Build/badge.svg"></a>
 </p>
 
-This is the server for the [Riser Platform](https://github.com/riser-platform/riser). Releases are pushed to [Docker Hub](https://hub.docker.com/r/riserplatform/riser-server)
+This is the server for the [Riser Platform](https://github.com/riser-platform/riser).
 
 ## Development
 

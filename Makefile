@@ -1,4 +1,4 @@
-IMG ?= riserplatform/riser-server
+IMG ?= ghcr.io/riser-platform/riser-server
 TAG ?= latest
 
 # Run tests.
@@ -48,9 +48,6 @@ watch-sdk:
 docker-build:
 	docker build . -t ${IMG}:local -f docker/Dockerfile
 	docker tag ${IMG}:local ${IMG}:${TAG}
-
-docker-push:
-	docker push ${IMG}:${TAG}
 
 docker-run: docker-build
 	docker run -it --rm -p 8000:8000 -v $(shell pwd)/.env:/.env ${IMG}:local

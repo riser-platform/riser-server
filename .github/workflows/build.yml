@@ -47,12 +47,11 @@ jobs:
 
   release:
     needs: build
-    # TODO: Match version spec
     if: contains(github.ref, 'refs/tags/v')
     name: Create Release
     runs-on: ubuntu-latest
     env:
-      DOCKER_REPOSITORY: riserplatform/riser-server
+      DOCKER_REPOSITORY: ${{ github.repository_owner }}/riser-server
     steps:
       - name: Check out code
         uses: actions/checkout@v1
@@ -60,13 +59,6 @@ jobs:
         id: get_version
         run: |
           echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-single-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-single-buildx
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -74,24 +66,18 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Docker build
         uses: docker/build-push-action@v2
         with:
           push: true
           file: docker/Dockerfile
           build-args: VERSION=${{ steps.get_version.outputs.VERSION }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
-          tags: "${{ env.DOCKER_REPOSITORY }}:${{ steps.get_version.outputs.VERSION }}"
-
-      # https://github.com/docker/build-push-action/issues/252#issuecomment-744400434
-      - name: Move cache
-        run:
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
+          tags: "ghcr.io/${{ env.DOCKER_REPOSITORY }}:${{ steps.get_version.outputs.VERSION }}"
+          cache-from: type=registry,ref=ghcr.io/${{ env.DOCKER_REPOSITORY }}
+          cache-to: type=registry,ref=ghcr.io/${{ env.DOCKER_REPOSITORY }}
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -103,5 +89,5 @@ jobs:
           draft: true
           prerelease: true
           body: |
-            Docker image available at https://hub.docker.com/r/riserplatform/riser-server
+            Docker: `docker pull ghcr.io/${{ env.DOCKER_REPOSITORY }}:${{ steps.get_version.outputs.VERSION }}`
 

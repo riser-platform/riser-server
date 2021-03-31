@@ -1,7 +1,7 @@
 FROM golang:1.16-alpine as builder
 ARG VERSION=0.0.0-docker
 WORKDIR /app
-RUN apk add --update --no-cache ca-certificates git
+RUN apk --no-cache add ca-certificates git
 
 # Better dep caching
 COPY go.mod .
@@ -15,9 +15,8 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s -X 'github.com/riser-platform/riser-server/pkg/util.VersionString=${VERSION}'" -o /go/bin/riser-server
 
-FROM alpine
-RUN apk update
-RUN apk add --no-cache ca-certificates git openssh-client
+FROM alpine:3.13
+RUN apk --no-cache add ca-certificates git openssh-client
 # Add git hosts to known hosts file so we can use
 # StrickHostKeyChecking with git+ssh
 ADD ./docker/known_hosts.sh /known_hosts.sh

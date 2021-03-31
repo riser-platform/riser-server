@@ -27,21 +27,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
-    - name: Cache golangci-lint
-      id: cache-gloangci-lint
-      uses: actions/cache@v2
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v2
       with:
-        path: ~/go/bin/golangci-lint
-        key: ${{ runner.os }}-golangci-lint-${{ env.GOLANGCI_VERSION }}
-        restore-keys: |
-          ${{ runner.os }}-golangci-lint-
-
-    - name: Install golangci-lint
-      if: steps.cache-gloangci-lint.outputs.cache-hit != 'true'
-      run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ~/go/bin ${{ env.GOLANGCI_VERSION }}
-
-    - name: Lint
-      run: golangci-lint run
+        version: v1.39.0
+        args: --timeout=5m
 
     - name: Test
       run: go test ./...

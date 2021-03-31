@@ -54,7 +54,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ github.repository_owner }}/riser-server
     steps:
       - name: Check out code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Get the version
         id: get_version
         run: |

@@ -10,14 +10,23 @@ import (
 type RepoCache struct {
 	settings RepoSettings
 	newFunc  func(git.RepoSettings) (git.Repo, error)
-	repos    map[string]git.Repo
+	cache    map[string]git.Repo
 	sync     sync.Mutex
 }
 
-func NewRepoCache(settings RepoSettings) *RepoCache {
+func NewBranchPerEnvRepoCache(settings RepoSettings) *RepoCache {
 	return &RepoCache{
 		newFunc: git.NewRepo,
-		repos:   map[string]git.Repo{},
+		cache:   map[string]git.Repo{},
+	}
+}
+
+func NewFakeRepoCache() *RepoCache {
+	return &RepoCache{
+		newFunc: func(git.RepoSettings) (git.Repo, error) {
+			return &git.FakeRepo{}, nil
+		},
+		cache: map[string]git.Repo{},
 	}
 }
 
@@ -25,30 +34,20 @@ func (cache *RepoCache) GetRepo(envName string) (git.Repo, error) {
 	return cache.getRepo(envName, newGitSettingsForEnv(envName, cache.settings))
 }
 
-func newFakeRepoCache() *RepoCache {
-	return &RepoCache{
-		newFunc: func(git.RepoSettings) (git.Repo, error) {
-			return &git.FakeRepo{}, nil
-		},
-		repos: map[string]git.Repo{},
-	}
-}
-
 func (cache *RepoCache) getRepo(envName string, settings git.RepoSettings) (git.Repo, error) {
 	cache.sync.Lock()
 	defer cache.sync.Unlock()
 
-	if repo, ok := cache.repos[envName]; ok {
+	if repo, ok := cache.cache[envName]; ok {
 		return repo, nil
 	}
 
 	repo, err := cache.newFunc(settings)
-	// TODO: test
 	if err != nil {
 		return nil, err
 	}
 
-	cache.repos[envName] = repo
+	cache.cache[envName] = repo
 	return repo, nil
 }
 

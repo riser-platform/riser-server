@@ -33,7 +33,7 @@ func Test_getRepo_NewErr(t *testing.T) {
 		newFunc: func(git.RepoSettings) (git.Repo, error) {
 			return nil, expectedErr
 		},
-		repos: map[string]git.Repo{},
+		cache: map[string]git.Repo{},
 	}
 
 	repo, err := cache.getRepo("env", git.RepoSettings{})

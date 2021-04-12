@@ -15,6 +15,11 @@ import (
 // UnhealthyAfter indicates the duration that is used to calculate if the environment is unhealthy due to not receiving any type of communication from the environment
 var UnhealthyAfter = time.Duration(30) * time.Second
 
+type RepoSettings struct {
+	URL         string
+	LocalGitDir string
+}
+
 type Service interface {
 	// Ping "pings" an environment, signaling that the environment has received some form of update
 	// This is used to help identify when a cluster is no longer reporting status to the server

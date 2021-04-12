@@ -3,10 +3,9 @@ package main
 import (
 	"database/sql"
 
+	"github.com/riser-platform/riser-server/pkg/namespace"
 	"github.com/riser-platform/riser-server/pkg/state"
 	"github.com/riser-platform/riser-server/pkg/util"
-
-	"github.com/riser-platform/riser-server/pkg/namespace"
 
 	"github.com/riser-platform/riser-server/api"
 

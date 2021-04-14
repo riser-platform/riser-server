@@ -13,16 +13,18 @@ import (
 	"github.com/riser-platform/riser-server/pkg/util"
 )
 
+const riserManagedStatePath = "state/riser-managed"
+
 type getResourcePathFunc func(resource KubeResource) string
 
-func RenderDeleteDeployment(deploymentName, namespace, environmentName string) []core.ResourceFile {
+func RenderDeleteDeployment(deploymentName, namespace string) []core.ResourceFile {
 	return []core.ResourceFile{
 		{
-			Name:   getDeploymentScmDir(deploymentName, namespace, environmentName),
+			Name:   getDeploymentScmDir(deploymentName, namespace),
 			Delete: true,
 		},
 		{
-			Name:   getAppConfigScmPath(deploymentName, namespace, environmentName),
+			Name:   getAppConfigScmPath(deploymentName, namespace),
 			Delete: true,
 		},
 	}
@@ -31,7 +33,7 @@ func RenderDeleteDeployment(deploymentName, namespace, environmentName string) [
 // RenderGeneric is used for generic resources (e.g. riser app namespaces). They will be placed in the root of the namespaced folder.
 func RenderGeneric(environmentName string, resources ...KubeResource) ([]core.ResourceFile, error) {
 	return renderKubeResources(func(resource KubeResource) string {
-		return getGenericStatePath(environmentName, resource)
+		return getGenericStatePath(resource)
 	}, resources...)
 }
 
@@ -79,7 +81,7 @@ func renderAppConfig(deployment *core.DeploymentConfig) (*core.ResourceFile, err
 		return nil, errors.Wrap(err, "Error serializing app config")
 	}
 	return &core.ResourceFile{
-		Name:     getAppConfigScmPath(deployment.Name, deployment.Namespace, deployment.EnvironmentName),
+		Name:     getAppConfigScmPath(deployment.Name, deployment.Namespace),
 		Contents: serialized,
 	}, nil
 }
@@ -99,8 +101,8 @@ func renderKubeResources(pathFunc getResourcePathFunc, resources ...KubeResource
 	return files, nil
 }
 
-func getDeploymentScmDir(deploymentName, namespace, environmentName string) string {
-	return strings.ToLower(filepath.Join(getRiserManagedStatePath(environmentName),
+func getDeploymentScmDir(deploymentName, namespace string) string {
+	return strings.ToLower(filepath.Join(riserManagedStatePath,
 		namespace,
 		"deployments",
 		deploymentName))
@@ -108,38 +110,29 @@ func getDeploymentScmDir(deploymentName, namespace, environmentName string) stri
 
 func getDeploymentScmPath(deploymentName, namespace, environmentName string, resource KubeResource) string {
 	return strings.ToLower(filepath.Join(
-		getDeploymentScmDir(deploymentName, namespace, environmentName),
+		getDeploymentScmDir(deploymentName, namespace),
 		getFileNameFromResource(resource)))
 }
 
 func getSecretScmPath(app string, environmentName string, sealedSecret KubeResource) string {
 	return strings.ToLower(filepath.Join(
-		getRiserManagedStatePath(environmentName),
+		riserManagedStatePath,
 		sealedSecret.GetNamespace(),
 		"secrets",
 		app,
 		getFileNameFromResource(sealedSecret)))
 }
 
-func getAppConfigScmPath(deploymentName, namespace, environmentName string) string {
+func getAppConfigScmPath(deploymentName, namespace string) string {
 	return strings.ToLower(filepath.Join(
 		"riser-config",
-		environmentName,
 		namespace,
 		fmt.Sprintf("%s.yaml", deploymentName)))
 }
 
-func getRiserManagedStatePath(envName string) string {
+func getGenericStatePath(resource KubeResource) string {
 	return strings.ToLower(filepath.Join(
-		"state",
-		envName,
-		"riser-managed",
-	))
-}
-
-func getGenericStatePath(envName string, resource KubeResource) string {
-	return strings.ToLower(filepath.Join(
-		getRiserManagedStatePath(envName),
+		riserManagedStatePath,
 		resource.GetNamespace(),
 		getFileNameFromResource(resource),
 	))

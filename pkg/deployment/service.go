@@ -52,7 +52,7 @@ func (s *service) Delete(name *core.NamespacedName, envName string, committer st
 		return errors.Wrap(err, "error deleting deployment")
 	}
 
-	files := state.RenderDeleteDeployment(name.Name, name.Namespace, envName)
+	files := state.RenderDeleteDeployment(name.Name, name.Namespace)
 	return committer.Commit(fmt.Sprintf("Deleting deployment %q", name), files)
 }
 

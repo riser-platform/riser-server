@@ -17,12 +17,12 @@ import (
 )
 
 func Test_RenderDeleteDeployment(t *testing.T) {
-	result := RenderDeleteDeployment("mydep", "apps", "dev")
+	result := RenderDeleteDeployment("mydep", "apps")
 
 	require.Len(t, result, 2)
-	assert.Equal(t, "state/dev/riser-managed/apps/deployments/mydep", result[0].Name)
+	assert.Equal(t, "state/riser-managed/apps/deployments/mydep", result[0].Name)
 	assert.True(t, result[0].Delete)
-	assert.Equal(t, "riser-config/dev/apps/mydep.yaml", result[1].Name)
+	assert.Equal(t, "riser-config/apps/mydep.yaml", result[1].Name)
 	assert.True(t, result[1].Delete)
 }
 
@@ -39,13 +39,13 @@ func Test_getDeploymentScmPath(t *testing.T) {
 
 	result := getDeploymentScmPath("myapp01", "apps", "dev", deployment)
 
-	assert.Equal(t, "state/dev/riser-managed/apps/deployments/myapp01/deployment.myapp01.yaml", result)
+	assert.Equal(t, "state/riser-managed/apps/deployments/myapp01/deployment.myapp01.yaml", result)
 }
 
 func Test_getAppConfigScmPath(t *testing.T) {
-	result := getAppConfigScmPath("myapp01-test", "apps", "dev")
+	result := getAppConfigScmPath("myapp01-test", "apps")
 
-	assert.Equal(t, "riser-config/dev/apps/myapp01-test.yaml", result)
+	assert.Equal(t, "riser-config/apps/myapp01-test.yaml", result)
 }
 
 func Test_getSecretScmPath(t *testing.T) {
@@ -61,7 +61,7 @@ func Test_getSecretScmPath(t *testing.T) {
 
 	result := getSecretScmPath("myapp", "dev", secret)
 
-	assert.Equal(t, "state/dev/riser-managed/apps/secrets/myapp/sealedsecret.myapp-mysecret.yaml", result)
+	assert.Equal(t, "state/riser-managed/apps/secrets/myapp/sealedsecret.myapp-mysecret.yaml", result)
 }
 
 func Test_RenderDeployment(t *testing.T) {
@@ -90,9 +90,9 @@ func Test_RenderDeployment(t *testing.T) {
 	require.NoError(t, err)
 	// Sanity check output - we'll use snapshot testing for exhaustive serialization and file system tests
 	assert.Len(t, result, 2)
-	assert.Equal(t, "state/dev/riser-managed/apps/deployments/mydeployment/service.mydeployment.yaml", result[0].Name)
+	assert.Equal(t, "state/riser-managed/apps/deployments/mydeployment/service.mydeployment.yaml", result[0].Name)
 	assert.Contains(t, string(result[0].Contents), "name: mydeployment")
-	assert.Equal(t, "riser-config/dev/apps/mydeployment.yaml", result[1].Name)
+	assert.Equal(t, "riser-config/apps/mydeployment.yaml", result[1].Name)
 	assert.Contains(t, string(result[1].Contents), "name: myapp01")
 }
 

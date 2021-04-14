@@ -9,12 +9,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/api/v1/model"
-	"github.com/riser-platform/riser-server/pkg/git"
 	"github.com/riser-platform/riser-server/pkg/secret"
 	"github.com/riser-platform/riser-server/pkg/state"
 )
 
-func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service, environmentService environment.Service) error {
+func PutSecret(c echo.Context, repoCache *environment.RepoCache, secretService secret.Service, environmentService environment.Service) error {
 	unsealedSecret := &model.UnsealedSecret{}
 	err := c.Bind(unsealedSecret)
 	if err != nil {
@@ -24,6 +23,11 @@ func PutSecret(c echo.Context, stateRepo git.Repo, secretService secret.Service,
 	err = environmentService.ValidateDeployable(unsealedSecret.Environment)
 	if err != nil {
 		return err
+	}
+
+	stateRepo, err := repoCache.GetRepo(unsealedSecret.Environment)
+	if err != nil {
+		return nil
 	}
 
 	err = secretService.SealAndSave(

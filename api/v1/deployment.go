@@ -20,7 +20,7 @@ import (
 )
 
 // TODO: Refactor and add unit test coverage
-func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, deploymentService deployment.Service, environmentService environment.Service) error {
+func PostDeployment(c echo.Context, repoCache *environment.RepoCache, appService app.Service, deploymentService deployment.Service, environmentService environment.Service) error {
 	deploymentRequest := &model.SaveDeploymentRequest{}
 	err := c.Bind(deploymentRequest)
 	if err != nil {
@@ -49,7 +49,11 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 	if isDryRun {
 		committer = state.NewDryRunCommitter()
 	} else {
-		committer = state.NewGitCommitter(stateRepo)
+		gitRepo, err := repoCache.GetRepo(newDeployment.EnvironmentName)
+		if err != nil {
+			return err
+		}
+		committer = state.NewGitCommitter(gitRepo)
 	}
 
 	riserRevision, err := deploymentService.Update(newDeployment, committer, isDryRun)
@@ -72,8 +76,18 @@ func PostDeployment(c echo.Context, stateRepo git.Repo, appService app.Service, 
 	return c.JSON(http.StatusAccepted, model.SaveDeploymentResponse{RiserRevision: riserRevision, Message: "Deployment requested"})
 }
 
-func DeleteDeployment(c echo.Context, stateRepo git.Repo, deploymentService deployment.Service) error {
-	err := deploymentService.Delete(core.NewNamespacedName(c.Param("deploymentName"), c.Param("namespace")), c.Param("envName"), state.NewGitCommitter(stateRepo))
+func DeleteDeployment(c echo.Context, repoCache *environment.RepoCache, deploymentService deployment.Service) error {
+	envName := c.Param("envName")
+	gitRepo, err := repoCache.GetRepo(envName)
+	if err != nil {
+		return err
+	}
+
+	err = deploymentService.Delete(
+		core.NewNamespacedName(c.Param("deploymentName"), c.Param("namespace")),
+		envName,
+		state.NewGitCommitter(gitRepo))
+
 	if err != nil {
 		if err == git.ErrNoChanges {
 			return c.JSON(http.StatusNotFound, model.APIResponse{Message: "Deployment not found"})

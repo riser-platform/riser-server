@@ -13,7 +13,7 @@ import (
 func Test_getRepo(t *testing.T) {
 	settings := git.RepoSettings{}
 
-	cache := newFakeRepoCache()
+	cache := NewFakeRepoCache()
 
 	repo1, err := cache.getRepo("env1", settings)
 	require.NoError(t, err)
@@ -25,6 +25,15 @@ func Test_getRepo(t *testing.T) {
 	assert.IsType(t, &git.FakeRepo{}, repo1)
 	assert.Same(t, repo1, repo2)
 	assert.NotSame(t, repo1, repo3)
+}
+
+func Test_getRepo_emptyName(t *testing.T) {
+	cache := NewFakeRepoCache()
+
+	repo, err := cache.getRepo("", git.RepoSettings{})
+
+	assert.Nil(t, repo)
+	assert.Equal(t, "Environment name cannot be empty", err.Error())
 }
 
 func Test_getRepo_NewErr(t *testing.T) {
@@ -44,8 +53,8 @@ func Test_getRepo_NewErr(t *testing.T) {
 
 func Test_newGitSettingsForEnv(t *testing.T) {
 	settings := RepoSettings{
-		URL:         "git@my.org/state",
-		LocalGitDir: "/tmp/riserstate",
+		URL:        "git@my.org/state",
+		BaseGitDir: "/tmp/riserstate",
 	}
 	result := newGitSettingsForEnv("env1", settings)
 

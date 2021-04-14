@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"errors"
 	"path/filepath"
 	"sync"
 
@@ -16,8 +17,9 @@ type RepoCache struct {
 
 func NewBranchPerEnvRepoCache(settings RepoSettings) *RepoCache {
 	return &RepoCache{
-		newFunc: git.NewRepo,
-		cache:   map[string]git.Repo{},
+		settings: settings,
+		newFunc:  git.InitRepoWorkspace,
+		cache:    map[string]git.Repo{},
 	}
 }
 
@@ -35,6 +37,10 @@ func (cache *RepoCache) GetRepo(envName string) (git.Repo, error) {
 }
 
 func (cache *RepoCache) getRepo(envName string, settings git.RepoSettings) (git.Repo, error) {
+	if envName == "" {
+		return nil, errors.New("Environment name cannot be empty")
+	}
+
 	cache.sync.Lock()
 	defer cache.sync.Unlock()
 
@@ -54,7 +60,7 @@ func (cache *RepoCache) getRepo(envName string, settings git.RepoSettings) (git.
 func newGitSettingsForEnv(envName string, settings RepoSettings) git.RepoSettings {
 	return git.RepoSettings{
 		URL:         settings.URL,
-		LocalGitDir: filepath.Join(settings.LocalGitDir, "/env/", envName),
+		LocalGitDir: filepath.Join(settings.BaseGitDir, "/env/", envName),
 		Branch:      envName,
 	}
 }

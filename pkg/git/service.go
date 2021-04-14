@@ -52,9 +52,9 @@ type repo struct {
 	sync.Mutex
 }
 
-// NewRepo creates a new reference to a repo. There should only be one instance running per git folder.
-// WARNING: any pending changes or local commits will be lost
-func NewRepo(repoSettings RepoSettings) (Repo, error) {
+// InitRepoWorkspace clones a repo reference into the specified folder and returns a new reference to the repo.
+// WARNING: Running this against the same git URL/path combo multiple times will result in losing unsynchronized changes
+func InitRepoWorkspace(repoSettings RepoSettings) (Repo, error) {
 	repo := &repo{
 		settings: &repoSettings,
 		Mutex:    sync.Mutex{},

@@ -3,8 +3,9 @@ package main
 import (
 	"database/sql"
 
+	"github.com/riser-platform/riser-server/pkg/environment"
+
 	"github.com/riser-platform/riser-server/pkg/namespace"
-	"github.com/riser-platform/riser-server/pkg/state"
 	"github.com/riser-platform/riser-server/pkg/util"
 
 	"github.com/riser-platform/riser-server/api"
@@ -18,7 +19,6 @@ import (
 	"os"
 
 	apiv1 "github.com/riser-platform/riser-server/api/v1"
-	"github.com/riser-platform/riser-server/pkg/git"
 
 	"github.com/joho/godotenv"
 
@@ -54,16 +54,6 @@ func main() {
 
 	logger.Infof("Server version %s", util.VersionString)
 
-	repoSettings := git.RepoSettings{
-		URL:         rc.GitUrl,
-		Branch:      rc.GitBranch,
-		LocalGitDir: rc.GitDir,
-	}
-
-	logger.Info("Initializing git repo")
-	repo, err := git.NewRepo(repoSettings)
-	exitIfError(err, "Error initializing git")
-
 	logger.Info("Initializing postgres")
 	postgresConn, err := postgres.AddAuthToConnString(rc.PostgresUrl, rc.PostgresUsername, rc.PostgresPassword)
 	exitIfError(err, "Error creating postgres connection url")
@@ -77,8 +67,14 @@ func main() {
 		exitIfError(err, "Error performing Postgres migrations")
 	}
 
+	repoSettings := environment.RepoSettings{
+		URL:        rc.GitUrl,
+		BaseGitDir: rc.GitDir,
+	}
+	repoCache := environment.NewBranchPerEnvRepoCache(repoSettings)
+
 	bootstrapApiKey(postgresDb, &rc)
-	bootstrapDefaultNamespace(postgresDb, repo)
+	bootstrapDefaultNamespace(postgresDb)
 
 	e := echo.New()
 	e.HideBanner = true
@@ -88,14 +84,14 @@ func main() {
 	e.HTTPErrorHandler = api.ErrorHandler
 	e.Binder = &api.DataBinder{}
 
-	apiv1.RegisterRoutes(e, repo, postgresDb)
+	apiv1.RegisterRoutes(e, repoCache, postgresDb)
 	err = e.Start(rc.BindAddress)
 	exitIfError(err, "Error starting server")
 }
 
-func bootstrapDefaultNamespace(db *sql.DB, repo git.Repo) {
+func bootstrapDefaultNamespace(db *sql.DB) {
 	namespaceService := namespace.NewService(postgres.NewNamespaceRepository(db), postgres.NewEnvironmentRepository(db))
-	err := namespaceService.EnsureDefaultNamespace(state.NewGitCommitter(repo))
+	err := namespaceService.EnsureDefaultNamespace()
 	exitIfError(err, "Error ensuring default namespace")
 }
 

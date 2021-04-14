@@ -49,7 +49,7 @@ func Test_PutSecret(t *testing.T) {
 		},
 	}
 
-	err := PutSecret(ctx, nil, secretService, environmentService)
+	err := PutSecret(ctx, environment.NewFakeRepoCache(), secretService, environmentService)
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Result().StatusCode)
@@ -84,7 +84,7 @@ func Test_PutSecret_WhenRevisionConflict(t *testing.T) {
 		},
 	}
 
-	err := PutSecret(ctx, nil, secretService, environmentService)
+	err := PutSecret(ctx, environment.NewFakeRepoCache(), secretService, environmentService)
 	require.IsType(t, &echo.HTTPError{}, err)
 	httpErr := err.(*echo.HTTPError)
 	assert.Equal(t, "A newer revision of the secret was saved while attempting to save this secret. This is usually caused by a race condition due to another user saving the secret at the same time.", httpErr.Message)

@@ -6,18 +6,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/riser-platform/riser-server/pkg/core"
-
-	"github.com/riser-platform/riser-server/pkg/git"
-	"github.com/riser-platform/riser-server/pkg/state"
-	"github.com/riser-platform/riser-server/pkg/state/resources"
 )
 
 type Service interface {
 	// ValidateDeployable validates that a namespace is deployable. Returns a ValidationError if it is not.
 	ValidateDeployable(namespaceName string) error
 	// EnsureDefaultNamespace ensures that the default namespace has been provisioned. Designed to be used only at server startup.
-	EnsureDefaultNamespace(committer state.Committer) error
-	Create(namespaceName string, committer state.Committer) error
+	EnsureDefaultNamespace() error
+	Create(namespaceName string) error
 }
 
 type service struct {
@@ -29,11 +25,11 @@ func NewService(namespaces core.NamespaceRepository, environments core.Environme
 	return &service{namespaces, environments}
 }
 
-func (s *service) EnsureDefaultNamespace(committer state.Committer) error {
+func (s *service) EnsureDefaultNamespace() error {
 	_, err := s.namespaces.Get(core.DefaultNamespace)
 	if err != nil {
 		if err == core.ErrNotFound {
-			return s.Create(core.DefaultNamespace, committer)
+			return s.Create(core.DefaultNamespace)
 		}
 		return err
 	}
@@ -41,21 +37,10 @@ func (s *service) EnsureDefaultNamespace(committer state.Committer) error {
 	return nil
 }
 
-func (s *service) Create(namespaceName string, committer state.Committer) error {
+func (s *service) Create(namespaceName string) error {
 	err := s.namespaces.Create(&core.Namespace{Name: namespaceName})
 	if err != nil {
 		return errors.Wrap(err, "error creating namespace")
-	}
-
-	environments, err := s.environments.List()
-	if err != nil {
-		return err
-	}
-	for _, environment := range environments {
-		err = commitNamespace(namespaceName, environment.Name, committer)
-		if err != nil && err != git.ErrNoChanges {
-			return err
-		}
 	}
 
 	return nil
@@ -83,14 +68,4 @@ func toNameList(namespaces []core.Namespace) []string {
 		names = append(names, namespace.Name)
 	}
 	return names
-}
-
-func commitNamespace(namespaceName string, envName string, committer state.Committer) error {
-	nsResource := resources.CreateNamespace(namespaceName, envName)
-	resourceFiles, err := state.RenderGeneric(envName, nsResource)
-	if err != nil {
-		return err
-	}
-
-	return committer.Commit(fmt.Sprintf("Updating namespace %q in environment %q", namespaceName, envName), resourceFiles)
 }

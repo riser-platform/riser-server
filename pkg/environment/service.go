@@ -16,8 +16,8 @@ import (
 var UnhealthyAfter = time.Duration(30) * time.Second
 
 type RepoSettings struct {
-	URL         string
-	LocalGitDir string
+	URL        string
+	BaseGitDir string
 }
 
 type Service interface {

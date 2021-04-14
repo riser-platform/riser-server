@@ -15,7 +15,6 @@ import (
 	"github.com/riser-platform/riser-server/pkg/app"
 	"github.com/riser-platform/riser-server/pkg/deployment"
 	"github.com/riser-platform/riser-server/pkg/deploymentstatus"
-	"github.com/riser-platform/riser-server/pkg/git"
 	"github.com/riser-platform/riser-server/pkg/login"
 	"github.com/riser-platform/riser-server/pkg/postgres"
 	"github.com/riser-platform/riser-server/pkg/secret"
@@ -23,7 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
+func RegisterRoutes(e *echo.Echo, repo *environment.RepoCache, db *sql.DB) {
 	v1 := e.Group("/api/v1")
 
 	// TODO: Refactor dependency management
@@ -101,7 +100,7 @@ func RegisterRoutes(e *echo.Echo, repo git.Repo, db *sql.DB) {
 	})
 
 	v1.POST("/namespaces", func(c echo.Context) error {
-		return PostNamespace(c, namespaceService, repo)
+		return PostNamespace(c, namespaceService)
 	})
 
 	v1.GET("/environments/:envName/config", func(c echo.Context) error {

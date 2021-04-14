@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/riser-platform/riser-server/pkg/environment"
 	"github.com/riser-platform/riser-server/pkg/git"
 	"github.com/riser-platform/riser-server/pkg/util"
 
@@ -26,6 +27,8 @@ func Test_DeleteDeployment(t *testing.T) {
 	req := httptest.NewRequest(http.MethodDelete, "/deployments/dev/myns/mydep", nil)
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, rec := newContextWithRecorder(req)
+	ctx.SetParamNames("envName")
+	ctx.SetParamValues("dev")
 
 	deploymentService := &deployment.FakeService{
 		DeleteFn: func(name *core.NamespacedName, envName string, committer state.Committer) error {
@@ -33,7 +36,7 @@ func Test_DeleteDeployment(t *testing.T) {
 		},
 	}
 
-	err := DeleteDeployment(ctx, nil, deploymentService)
+	err := DeleteDeployment(ctx, environment.NewFakeRepoCache(), deploymentService)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, deploymentService.DeleteCallCount)
@@ -47,6 +50,8 @@ func Test_DeleteDeployment_NothingToDelete(t *testing.T) {
 	req := httptest.NewRequest(http.MethodDelete, "/deployments/dev/myns/mydep", nil)
 	req.Header.Add("CONTENT-TYPE", "application/json")
 	ctx, rec := newContextWithRecorder(req)
+	ctx.SetParamNames("envName")
+	ctx.SetParamValues("dev")
 
 	deploymentService := &deployment.FakeService{
 		DeleteFn: func(name *core.NamespacedName, envName string, committer state.Committer) error {
@@ -54,7 +59,7 @@ func Test_DeleteDeployment_NothingToDelete(t *testing.T) {
 		},
 	}
 
-	err := DeleteDeployment(ctx, nil, deploymentService)
+	err := DeleteDeployment(ctx, environment.NewFakeRepoCache(), deploymentService)
 
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNotFound, rec.Result().StatusCode)

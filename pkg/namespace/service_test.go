@@ -5,13 +5,11 @@ import (
 	"testing"
 
 	"github.com/riser-platform/riser-server/pkg/core"
-	"github.com/riser-platform/riser-server/pkg/state"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_Create(t *testing.T) {
-	committer := state.NewDryRunCommitter()
 	namespaces := &core.FakeNamespaceRepository{
 		CreateFn: func(namespace *core.Namespace) error {
 			assert.Equal(t, "myns", namespace.Name)
@@ -30,14 +28,10 @@ func Test_Create(t *testing.T) {
 
 	svc := &service{namespaces, environments}
 
-	err := svc.Create("myns", committer)
+	err := svc.Create("myns")
 
 	assert.NoError(t, err)
-	assert.Len(t, committer.Commits, 2)
-	assert.Len(t, committer.Commits[0].Files, 1)
-	assert.Equal(t, `Updating namespace "myns" in environment "myenv1"`, committer.Commits[0].Message)
-	assert.Len(t, committer.Commits[1].Files, 1)
-	assert.Equal(t, `Updating namespace "myns" in environment "myenv2"`, committer.Commits[1].Message)
+	assert.Equal(t, 1, namespaces.CreateCallCount)
 }
 
 func Test_Create_WhenNamespaceCreateErr(t *testing.T) {
@@ -49,30 +43,9 @@ func Test_Create_WhenNamespaceCreateErr(t *testing.T) {
 
 	svc := &service{namespaces: namespaces}
 
-	err := svc.Create("myns", state.NewDryRunCommitter())
+	err := svc.Create("myns")
 
 	assert.Equal(t, "error creating namespace: test", err.Error())
-}
-
-func Test_Create_WhenGetEnvironmentsErr(t *testing.T) {
-	namespaces := &core.FakeNamespaceRepository{
-		CreateFn: func(namespace *core.Namespace) error {
-			assert.Equal(t, "myns", namespace.Name)
-			return nil
-		},
-	}
-
-	environments := &core.FakeEnvironmentRepository{
-		ListFn: func() ([]core.Environment, error) {
-			return nil, errors.New("test")
-		},
-	}
-
-	svc := &service{namespaces, environments}
-
-	err := svc.Create("myns", state.NewDryRunCommitter())
-
-	assert.Equal(t, "test", err.Error())
 }
 
 func Test_EnsureDefaultNamespace_ReturnsErr(t *testing.T) {
@@ -84,7 +57,7 @@ func Test_EnsureDefaultNamespace_ReturnsErr(t *testing.T) {
 
 	svc := &service{namespaces: namespaces}
 
-	err := svc.EnsureDefaultNamespace(state.NewDryRunCommitter())
+	err := svc.EnsureDefaultNamespace()
 
 	assert.Equal(t, "test", err.Error())
 }
@@ -98,7 +71,7 @@ func Test_EnsureDefaultNamespace_WhenExists_Noop(t *testing.T) {
 
 	svc := &service{namespaces: namespaces}
 
-	err := svc.EnsureDefaultNamespace(state.NewDryRunCommitter())
+	err := svc.EnsureDefaultNamespace()
 
 	assert.NoError(t, err)
 }

@@ -46,8 +46,8 @@ watch-sdk:
 	cd pkg/sdk && fswatch -l 1 -o . | xargs -n1 -I{} gotestsum
 
 docker-build:
-	docker build . -t ${IMG}:local -f docker/Dockerfile
-	docker tag ${IMG}:local ${IMG}:${TAG}
+	docker build . -t riser-server:local -f docker/Dockerfile
+	docker tag riser-server:local ${IMG}:${TAG}
 
 docker-run: docker-build
 	docker run -it --rm -p 8000:8000 -v $(shell pwd)/.env:/.env ${IMG}:local

@@ -16,7 +16,7 @@ import (
 	"github.com/riser-platform/riser-server/pkg/rollout"
 )
 
-func PutRollout(c echo.Context, rolloutService rollout.Service, environmentService environment.Service, stateRepo git.Repo) error {
+func PutRollout(c echo.Context, rolloutService rollout.Service, environmentService environment.Service, repoCache *environment.RepoCache) error {
 	rolloutRequest := &model.RolloutRequest{}
 
 	deploymentName := c.Param("deploymentName")
@@ -37,6 +37,11 @@ func PutRollout(c echo.Context, rolloutService rollout.Service, environmentServi
 	err = validation.Validate(&rolloutRequest)
 	if err != nil {
 		return core.NewValidationError("Invalid rollout request", err)
+	}
+
+	stateRepo, err := repoCache.GetRepo(envName)
+	if err != nil {
+		return err
 	}
 
 	err = rolloutService.UpdateTraffic(core.NewNamespacedName(deploymentName, namespace), envName,

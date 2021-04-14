@@ -7,13 +7,15 @@ type NamespaceRepository interface {
 }
 
 type FakeNamespaceRepository struct {
-	CreateFn     func(namespace *Namespace) error
-	GetFn        func(namespaceName string) (*Namespace, error)
-	GetCallCount int
-	ListFn       func() ([]Namespace, error)
+	CreateFn        func(namespace *Namespace) error
+	CreateCallCount int
+	GetFn           func(namespaceName string) (*Namespace, error)
+	GetCallCount    int
+	ListFn          func() ([]Namespace, error)
 }
 
 func (fake *FakeNamespaceRepository) Create(namespace *Namespace) error {
+	fake.CreateCallCount++
 	return fake.CreateFn(namespace)
 }
 

@@ -60,5 +60,5 @@ func Test_newGitSettingsForEnv(t *testing.T) {
 
 	assert.Equal(t, settings.URL, result.URL)
 	assert.Equal(t, "env1", result.Branch)
-	assert.Equal(t, "/tmp/riserstate/env/env1", result.LocalGitDir)
+	assert.Equal(t, "/tmp/riserstate/env/env1", result.BaseWorkspaceDir)
 }

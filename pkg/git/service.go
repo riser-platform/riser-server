@@ -1,10 +1,13 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -32,9 +35,10 @@ const (
 )
 
 type RepoSettings struct {
-	URL         string
-	Branch      string
-	LocalGitDir string
+	URL    string
+	Branch string
+	// BaseWorkspaceDir is the root folder for this repo's workspace. A random folder will be created here.
+	BaseWorkspaceDir string
 }
 
 type Repo interface {
@@ -48,12 +52,14 @@ type Repo interface {
 }
 
 type repo struct {
-	settings *RepoSettings
+	settings     *RepoSettings
+	workspaceDir string
 	sync.Mutex
 }
 
 // InitRepoWorkspace clones a repo reference into the specified folder and returns a new reference to the repo.
-// WARNING: Running this against the same git URL/path combo multiple times will result in losing unsynchronized changes
+// If the desired branch does not exist it will be created and pushed to the remote
+// WARNING: Running this against the same instance will result in losing unsynchronized changes
 func InitRepoWorkspace(repoSettings RepoSettings) (Repo, error) {
 	repo := &repo{
 		settings: &repoSettings,
@@ -84,7 +90,7 @@ func InitRepoWorkspace(repoSettings RepoSettings) (Repo, error) {
 }
 
 func (repo *repo) Commit(message string, files []core.ResourceFile) error {
-	err := processFiles(repo.settings.LocalGitDir, files)
+	err := processFiles(repo.workspaceDir, files)
 	if err != nil {
 		return err
 	}
@@ -92,41 +98,16 @@ func (repo *repo) Commit(message string, files []core.ResourceFile) error {
 	if err != nil {
 		return err
 	}
-	err = repo.execGitCmd("commit", "-m", message, "--author", fmt.Sprintf("%s <%s>", commitName, commitEmail))
+	_, err = repo.execGitCmd("commit", "-m", message, "--author", fmt.Sprintf("%s <%s>", commitName, commitEmail))
 	if err != nil && isNoChangesErr(err) {
 		return ErrNoChanges
 	}
 	return err
 }
 
-func (repo *repo) addAll() error {
-	return repo.execGitCmd("add", "--all")
-}
-
 func (repo *repo) Push() error {
-	return repo.execGitCmd("push")
-}
-
-func (repo *repo) init() error {
-	err := os.RemoveAll(repo.settings.LocalGitDir)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error cleaning git dir: %s", repo.settings.LocalGitDir))
-	}
-
-	err = util.EnsureDir(util.EnsureTrailingSlash(repo.settings.LocalGitDir), workspaceFilePerm)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error ensuring git dir: %s", repo.settings.LocalGitDir))
-	}
-
-	return repo.clone()
-}
-
-func (repo *repo) clone() error {
-	return repo.execGitCmd("clone", "--branch", repo.settings.Branch, "--single-branch", "--depth=1", repo.settings.URL, repo.settings.LocalGitDir)
-}
-
-func (repo *repo) fetch() error {
-	return repo.execGitCmd("fetch", "-f", remoteName, repo.settings.Branch)
+	_, err := repo.execGitCmd("push")
+	return err
 }
 
 // ResetHardRemote ensures that the remote is up-to-date. Pending commits will be lost.
@@ -137,23 +118,110 @@ func (repo *repo) ResetHardRemote() error {
 		return err
 	}
 
-	return repo.execGitCmd("reset", "--hard", fmt.Sprintf("%s/%s", remoteName, repo.settings.Branch))
+	_, err = repo.execGitCmd("reset", "--hard", fmt.Sprintf("%s/%s", remoteName, repo.settings.Branch))
+	return err
 }
 
-func (repo *repo) execGitCmd(args ...string) error {
+func (repo *repo) addAll() error {
+
+	_, err := repo.execGitCmd("add", "--all")
+	return err
+}
+
+func (r *repo) init() error {
+	err := util.EnsureDir(util.EnsureTrailingSlash(r.settings.BaseWorkspaceDir), workspaceFilePerm)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("error ensuring git dir: %s", r.workspaceDir))
+	}
+
+	workspaceDir, err := ioutil.TempDir(r.settings.BaseWorkspaceDir, "repo-*")
+	if err != nil {
+		return errors.Wrap(err, "Error creating workspace dir")
+	}
+	r.workspaceDir = workspaceDir
+
+	// Create the branch on demand if needed.
+	branchExists, err := r.branchExists()
+	if err != nil {
+		return err
+	}
+
+	if branchExists {
+		return r.shallowClone()
+	} else {
+		err = r.shallowCloneDefaultBranch()
+		if err != nil {
+			return err
+		}
+		err = r.createEmptyOrphanedBranch()
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("error creating branch %q", r.settings.Branch))
+		}
+
+		_, err = r.execGitCmd("push", "--set-upstream", remoteName, r.settings.Branch)
+		if err != nil {
+			return err
+		}
+
+		// re-init with the new branch so that we're in the same state as an existing branch. Probably a smarter way to achieve this.
+		return r.init()
+	}
+}
+
+func (repo *repo) shallowClone() error {
+	_, err := repo.execGitCmd("clone", "--branch", repo.settings.Branch, "--single-branch", "--depth=1", repo.settings.URL, repo.workspaceDir)
+	return err
+}
+
+func (repo *repo) shallowCloneDefaultBranch() error {
+	_, err := repo.execGitCmd("clone", "--single-branch", "--depth=1", repo.settings.URL, repo.workspaceDir)
+	return err
+}
+
+// createEmptyOrphanedBranch creates an empty orphaned branch
+func (repo *repo) createEmptyOrphanedBranch() error {
+	_, err := repo.execGitCmd("checkout", "--orphan", repo.settings.Branch)
+	if err != nil {
+		return err
+	}
+	_, err = repo.execGitCmd("rm", "--ignore-unmatch", "-rf", ".")
+	if err != nil {
+		return err
+	}
+	_, err = repo.execGitCmd("commit", "--allow-empty", "-m", "Initial commit for Riser state branch")
+	return err
+}
+
+// branchExists determines if the branch exists on the remote. Returns an error if the remote is invalid
+func (repo *repo) branchExists() (exists bool, err error) {
+	buffer, err := repo.execGitCmd("ls-remote", "--heads", repo.settings.URL, repo.settings.Branch)
+	if err != nil {
+		return false, err
+	}
+
+	exists = strings.Contains(buffer.String(), fmt.Sprintf("refs/heads/%s", repo.settings.Branch))
+	return exists, nil
+}
+
+func (repo *repo) fetch() error {
+	_, err := repo.execGitCmd("fetch", "-f", remoteName, repo.settings.Branch)
+	return err
+}
+
+func (repo *repo) execGitCmd(args ...string) (stdOutAndStdErr *bytes.Buffer, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), gitExecTimeoutSeconds)
 	defer cancel()
 	cmd := repo.buildGitCmd(ctx, args...)
-	_, err := execWithContext(ctx, cmd)
+	stdOutAndStdErr, err = execWithContext(ctx, cmd)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("git %s", args))
+		return nil, errors.Wrap(err, fmt.Sprintf("git %s", args))
 	}
 
-	return nil
+	return stdOutAndStdErr, nil
 }
 
 func (repo *repo) buildGitCmd(ctx context.Context, args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, "git", args...)
-	cmd.Dir = repo.settings.LocalGitDir
+	cmd.Dir = repo.workspaceDir
 	return cmd
 }

@@ -8,10 +8,7 @@ import (
 )
 
 func Test_buildGitCmd(t *testing.T) {
-	repoSettings := &RepoSettings{
-		LocalGitDir: "/tmp/git",
-	}
-	r := repo{settings: repoSettings}
+	r := repo{workspaceDir: "/tmp/git"}
 	ctx := context.Background()
 	cmd := r.buildGitCmd(ctx, "status")
 

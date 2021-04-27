@@ -22,7 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func RegisterRoutes(e *echo.Echo, repo *environment.RepoCache, db *sql.DB) {
+func RegisterRoutes(e *echo.Echo, repoCache *environment.RepoCache, db *sql.DB) {
 	v1 := e.Group("/api/v1")
 
 	// TODO: Refactor dependency management
@@ -69,14 +69,14 @@ func RegisterRoutes(e *echo.Echo, repo *environment.RepoCache, db *sql.DB) {
 	})
 
 	v1.POST("/deployments", func(c echo.Context) error {
-		return PostDeployment(c, repo, appService, deploymentService, environmentService)
+		return PostDeployment(c, repoCache, appService, deploymentService, environmentService)
 	})
 	v1.PUT("/deployments", func(c echo.Context) error {
-		return PostDeployment(c, repo, appService, deploymentService, environmentService)
+		return PostDeployment(c, repoCache, appService, deploymentService, environmentService)
 	})
 
 	v1.DELETE("/deployments/:envName/:namespace/:deploymentName", func(c echo.Context) error {
-		return DeleteDeployment(c, repo, deploymentService)
+		return DeleteDeployment(c, repoCache, deploymentService)
 	})
 
 	v1.PUT("/deployments/:envName/:namespace/:deploymentName/status", func(c echo.Context) error {
@@ -84,11 +84,11 @@ func RegisterRoutes(e *echo.Echo, repo *environment.RepoCache, db *sql.DB) {
 	})
 
 	v1.PUT("/rollout/:envName/:namespace/:deploymentName", func(c echo.Context) error {
-		return PutRollout(c, rolloutService, environmentService, repo)
+		return PutRollout(c, rolloutService, environmentService, repoCache)
 	})
 
 	v1.PUT("/secrets", func(c echo.Context) error {
-		return PutSecret(c, repo, secretService, environmentService)
+		return PutSecret(c, repoCache, secretService, environmentService)
 	})
 
 	v1.GET("/secrets/:envName/:namespace/:appName", func(c echo.Context) error {

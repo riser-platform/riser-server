@@ -59,8 +59,8 @@ func (cache *RepoCache) getRepo(envName string, settings git.RepoSettings) (git.
 
 func newGitSettingsForEnv(envName string, settings RepoSettings) git.RepoSettings {
 	return git.RepoSettings{
-		URL:         settings.URL,
-		LocalGitDir: filepath.Join(settings.BaseGitDir, "/env/", envName),
-		Branch:      envName,
+		URL:              settings.URL,
+		BaseWorkspaceDir: filepath.Join(settings.BaseGitDir, "/env/", envName),
+		Branch:           envName,
 	}
 }

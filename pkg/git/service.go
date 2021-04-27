@@ -153,7 +153,7 @@ func (r *repo) init() error {
 		if err != nil {
 			return err
 		}
-		err = r.createEmptyOrphanedBranch()
+		err = r.createEmptyBranch()
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("error creating branch %q", r.settings.Branch))
 		}
@@ -178,9 +178,9 @@ func (repo *repo) shallowCloneDefaultBranch() error {
 	return err
 }
 
-// createEmptyOrphanedBranch creates an empty orphaned branch
-func (repo *repo) createEmptyOrphanedBranch() error {
-	_, err := repo.execGitCmd("checkout", "--orphan", repo.settings.Branch)
+// createEmptyBranch creates an empty branch from the current branch
+func (repo *repo) createEmptyBranch() error {
+	_, err := repo.execGitCmd("checkout", "-b", repo.settings.Branch)
 	if err != nil {
 		return err
 	}

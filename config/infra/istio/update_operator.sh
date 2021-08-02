@@ -11,8 +11,9 @@ if [ -z $ISTIO_VERSION ] || [ -z $ISTIO_REPO_PATH ]; then
 fi
 
 helm template $ISTIO_REPO_PATH/manifests/charts/istio-operator/ \
-  --set hub=docker.io/istio \
-  --set tag=$ISTIO_VERSION \
-  --set operatorNamespace=istio-operator \
-  --set istioNamespace=istio-system > istio_operator.yaml
+    --set hub=docker.io/istio \
+    --set tag=$ISTIO_VERSION \
+    --set operatorNamespace=istio-operator \
+    --set enableCRDTemplates=true \
+    --set istioNamespace=istio-system > istio_operator.yaml
 

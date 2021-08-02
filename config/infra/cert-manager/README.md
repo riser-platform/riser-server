@@ -1,1 +1,1 @@
-Pulled from https://github.com/jetstack/cert-manager/releases/download/v0.14.2/cert-manager.yaml at time of writing.
+Pulled from https://github.com/jetstack/cert-manager/releases/download/v1.3.2/cert-manager.yaml at time of writing.

@@ -2,7 +2,7 @@ IMG ?= ghcr.io/riser-platform/riser-server
 TAG ?= latest
 
 # Run tests.
-test: fmt lint tidy test-cmd
+test: fmt tidy lint test-cmd
 	$(TEST_COMMAND)
 	# Nested go modules are not tested for some reason, so test them separately
 	cd api/v1/model && $(TEST_COMMAND)

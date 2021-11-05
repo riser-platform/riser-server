@@ -5,9 +5,12 @@ import (
 
 	"github.com/riser-platform/riser-server/pkg/core"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	servingv1 "knative.dev/serving/pkg/apis/serving/v1"
 )
 
-func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
+// Create a knative serving spec pod spec
+
+func CreateKNativeConfiguration(ctx *core.DeploymentContext) *servingv1.Configuration {
 	podSpec := createPodSpec(ctx)
 	// KNative does not allow setting this
 	podSpec.EnableServiceLinks = nil
@@ -16,7 +19,7 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 
 	// Not sure yet if we want this with KNative since KNative seems to handle readiness probes differently via the queue-proxy.
 
-	return &Configuration{
+	return &servingv1.Configuration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        ctx.DeploymentConfig.Name,
 			Namespace:   ctx.DeploymentConfig.Namespace,
@@ -27,10 +30,10 @@ func CreateKNativeConfiguration(ctx *core.DeploymentContext) *Configuration {
 			Kind:       "Configuration",
 			APIVersion: "serving.knative.dev/v1",
 		},
-		Spec: ConfigurationSpec{
-			Template: RevisionTemplateSpec{
+		Spec: servingv1.ConfigurationSpec{
+			Template: servingv1.RevisionTemplateSpec{
 				ObjectMeta: revisionMeta,
-				Spec: RevisionSpec{
+				Spec: servingv1.RevisionSpec{
 					PodSpec: podSpec,
 				},
 			},

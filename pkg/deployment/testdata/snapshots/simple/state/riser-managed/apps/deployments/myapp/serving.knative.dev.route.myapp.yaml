@@ -17,3 +17,4 @@ spec:
   - percent: 100
     revisionName: myapp-1
     tag: r1
+status: {}

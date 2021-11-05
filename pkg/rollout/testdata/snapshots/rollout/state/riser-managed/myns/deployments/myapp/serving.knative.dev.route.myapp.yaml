@@ -16,3 +16,4 @@ spec:
   traffic:
   - percent: 100
     tag: r1
+status: {}

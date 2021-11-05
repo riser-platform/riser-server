@@ -57,3 +57,4 @@ spec:
             path: /health
             port: 0
         resources: {}
+status: {}

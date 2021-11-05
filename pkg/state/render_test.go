@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	servingv1 "knative.dev/serving/pkg/apis/serving/v1"
 )
 
 func Test_RenderDeleteDeployment(t *testing.T) {
@@ -73,7 +74,7 @@ func Test_RenderDeployment(t *testing.T) {
 			Name: "myapp01",
 		},
 	}
-	resource := &resources.Service{
+	resource := &servingv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "mydeployment",
 		},
@@ -83,7 +84,7 @@ func Test_RenderDeployment(t *testing.T) {
 	}
 
 	// Ignore nil resources
-	var nilResource *resources.Service
+	var nilResource *servingv1.Service
 
 	result, err := RenderDeployment(deployment, nilResource, resource)
 

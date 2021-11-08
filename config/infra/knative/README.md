@@ -1,6 +1,5 @@
 A base [Kustomization](https://kustomize.io/) is provided for generation of Knative Serving manifests that work with Riser. The base manifests are:
-- [serving-core](https://github.com/knative/serving/releases)
-- [net-istio](https://github.com/knative/net-istio/releases)
+- [operator](https://github.com/knative/operator/releases)
 - [net-certmanager](https://github.com/knative/net-certmanager/releases)
 
 To build run `kustomize build base >/path/to/gitops/repo/kustomization.yaml`
@@ -11,16 +10,21 @@ To build run `kustomize build base >/path/to/gitops/repo/kustomization.yaml`
 Knative configuration is vast and is dependant largely on your needs. The following is meant to help get you started with a basic demo of Riser and is not intended as being exhaustive.
 
 ### Domain Name
-You should configure a wildcard domain for each environment and namespace using a pattern like `<environment>.riser.<your-domain>` (e.g. for the `dev` environment `dev.riser.your-domain.org`. To do this, create a ConfigMap like the following example:
+You should configure a wildcard domain for each environment and namespace using a pattern like `<environment>.riser.<your-domain>` (e.g. for the `dev` environment `dev.riser.your-domain.org`. To do this, add your domain to the configuration found in `knative.serving.yaml` file e.g.
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: operator.knative.dev/v1alpha1
+kind: KnativeServing
 metadata:
-  name: config-domain
+  name: knative-serving
   namespace: knative-serving
-data:
-  dev.riser.your-domain.org: ""
+spec:
+  version: 1.0.0
+  config:
+    # ---v--- example domain configuration
+    domain:
+      dev.riser.your-domain.org: ""
+    # ---^--- example domain configuration
 ```
 
 

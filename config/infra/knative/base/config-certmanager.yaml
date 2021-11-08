@@ -3,9 +3,8 @@ kind: ConfigMap
 metadata:
   name: config-certmanager
   namespace: knative-serving
-  labels:
-    networking.knative.dev/certificate-provider: cert-manager
 data:
+  enabled: "true"
   issuerRef: |
     kind: ClusterIssuer
     name: selfsigning-issuer

@@ -7,7 +7,7 @@ metadata:
   namespace: flux
   labels:
     app: flux
-    chart: flux-1.4.0
+    chart: flux-1.11.2
     release: flux
     heritage: Helm
 ---
@@ -41,13 +41,13 @@ data:
     users: []
 ---
 # Source: flux/templates/rbac.yaml
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: flux
   labels:
     app: flux
-    chart: flux-1.4.0
+    chart: flux-1.11.2
     release: flux
     heritage: Helm
 rules:
@@ -63,13 +63,13 @@ rules:
       - '*'
 ---
 # Source: flux/templates/rbac.yaml
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: flux
   labels:
     app: flux
-    chart: flux-1.4.0
+    chart: flux-1.11.2
     release: flux
     heritage: Helm
 roleRef:
@@ -89,7 +89,7 @@ metadata:
   namespace: flux
   labels:
     app: flux
-    chart: flux-1.4.0
+    chart: flux-1.11.2
     release: flux
     heritage: Helm
 spec:
@@ -111,7 +111,7 @@ metadata:
   namespace: flux
   labels:
     app: flux
-    chart: flux-1.4.0
+    chart: flux-1.11.2
     release: flux
     heritage: Helm
 spec:
@@ -120,6 +120,8 @@ spec:
     matchLabels:
       app: flux
       release: flux
+  strategy:
+    type: Recreate
   template:
     metadata:
       annotations:
@@ -141,7 +143,7 @@ spec:
           medium: Memory
       containers:
         - name: flux
-          image: "docker.io/fluxcd/flux:1.20.1"
+          image: "docker.io/fluxcd/flux:1.24.2"
           imagePullPolicy: IfNotPresent
           ports:
           - name: http
@@ -175,7 +177,7 @@ spec:
               name: flux-git
           args:
           - --log-format=fmt
-
+          
           - --ssh-keygen-dir=/var/fluxd/keygen
           - --ssh-keygen-format=RFC4716
           - --k8s-secret-name=flux-git-deploy
@@ -205,4 +207,4 @@ spec:
               cpu: 50m
               memory: 64Mi
       nodeSelector:
-        beta.kubernetes.io/os: linux
+        kubernetes.io/os: linux

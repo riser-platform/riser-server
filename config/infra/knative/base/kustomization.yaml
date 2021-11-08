@@ -1,15 +1,8 @@
 resources:
+- namespace.yaml
+- knative-serving.yaml
+- operator.yaml
 - net-certmanager.yaml
-- net-istio.yaml
-- serving-core.yaml
 
 patches:
-- config-autoscaler.yaml
 - config-certmanager.yaml
-- config-defaults.yaml
-- config-deployment.yaml
-- config-istio.yaml
-- config-network.yaml
-- patch-ingress-gateway.yaml
-- patch-webhooks.yaml
-

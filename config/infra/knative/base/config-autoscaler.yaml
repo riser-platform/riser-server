@@ -1,8 +1,0 @@
-  apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: config-autoscaler
-    namespace: knative-serving
-  data:
-    # Keep pods around for 10m
-    scale-to-zero-pod-retention-period: "10m"

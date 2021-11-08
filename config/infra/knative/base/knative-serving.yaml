@@ -1,0 +1,21 @@
+apiVersion: operator.knative.dev/v1alpha1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+  namespace: knative-serving
+spec:
+  version: 1.0.0
+  config:
+    autoscaler:
+      scale-to-zero-pod-retention-period: "10m"
+    defaults:
+      enable-service-links: "false"
+    deployment:
+      # This is so that we can use Kind image caching for e2e tests. See also https://github.com/knative/serving/issues/6114
+      registriesSkippingTagResolving: index.docker.io
+    istio:
+      enabled: "true"
+      local-gateway.mesh: "mesh"
+    network:
+      autoTLS: Enabled
+      httpProtocol: Redirected

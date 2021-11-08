@@ -1,7 +1,0 @@
-apiVersion: v1
-data:
-  local-gateway.mesh: "mesh"
-kind: ConfigMap
-metadata:
-  name: config-istio
-  namespace: knative-serving

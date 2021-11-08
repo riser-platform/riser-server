@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: config-defaults
-  namespace: knative-serving
-data:
-  enable-service-links: "false"

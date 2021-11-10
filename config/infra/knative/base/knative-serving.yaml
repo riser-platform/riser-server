@@ -13,6 +13,9 @@ spec:
     deployment:
       # This is so that we can use Kind image caching for e2e tests. See also https://github.com/knative/serving/issues/6114
       registriesSkippingTagResolving: index.docker.io
+    domain:
+      # Change this to your desired domain
+      demo.riser: ""
     istio:
       enabled: "true"
       local-gateway.mesh: "mesh"

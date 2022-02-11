@@ -3,7 +3,7 @@ module github.com/riser-platform/riser-server/api/v1/model
 go 1.17
 
 require (
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.0+incompatible
 	github.com/go-ozzo/ozzo-validation/v3 v3.8.1
 	github.com/google/uuid v1.1.2
 	github.com/imdario/mergo v0.3.10

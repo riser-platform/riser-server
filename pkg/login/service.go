@@ -106,8 +106,8 @@ func (s *service) BootstrapRootUser(apiKeyPlainText string) error {
 
 /*
 Important! Changing this algorithm could be a breaking change:
-	- Update the DB to store the algorithm used for existing keys and/or provide a way to rehash the keys on next login
-	- Update the `riser ops generate-apikey` command to use the updated algorithm
+  - Update the DB to store the algorithm used for existing keys and/or provide a way to rehash the keys on next login
+  - Update the `riser ops generate-apikey` command to use the updated algorithm
 */
 func hashApiKey(in []byte) []byte {
 	arr := sha256.Sum256(in)

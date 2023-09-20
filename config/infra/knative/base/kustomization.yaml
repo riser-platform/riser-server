@@ -1,8 +1,8 @@
 resources:
-- namespace.yaml
-- knative-serving.yaml
-- operator.yaml
-- net-certmanager.yaml
+  - namespace.yaml
+  - knative-serving.yaml
+  - operator.yaml
+  - net-certmanager.yaml
 
 patches:
-- config-certmanager.yaml
+  - config-certmanager.yaml

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -134,7 +133,7 @@ func (r *repo) init() error {
 		return errors.Wrap(err, fmt.Sprintf("error ensuring git dir: %s", r.workspaceDir))
 	}
 
-	workspaceDir, err := ioutil.TempDir(r.settings.BaseWorkspaceDir, "repo-*")
+	workspaceDir, err := os.MkdirTemp(r.settings.BaseWorkspaceDir, "repo-*")
 	if err != nil {
 		return errors.Wrap(err, "Error creating workspace dir")
 	}

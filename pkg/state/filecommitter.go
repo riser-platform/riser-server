@@ -2,7 +2,7 @@ package state
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/riser-platform/riser-server/pkg/util"
@@ -26,7 +26,7 @@ func (committer *FileCommitter) Commit(message string, files []core.ResourceFile
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("error creating directory for file %q", fullpath))
 		}
-		err = ioutil.WriteFile(fullpath, file.Contents, 0644)
+		err = os.WriteFile(fullpath, file.Contents, 0644)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("error writing file %q", fullpath))
 		}

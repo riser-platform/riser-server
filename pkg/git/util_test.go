@@ -2,7 +2,6 @@ package git
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +12,7 @@ import (
 )
 
 func Test_processFiles(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "riser-test")
+	dir, err := os.MkdirTemp(os.TempDir(), "riser-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,13 +26,13 @@ func Test_processFiles(t *testing.T) {
 	err = processFiles(dir, []core.ResourceFile{file})
 
 	assert.NoError(t, err)
-	contents, err := ioutil.ReadFile(filepath.Join(dir, file.Name))
+	contents, err := os.ReadFile(filepath.Join(dir, file.Name))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "contents", contents)
 }
 
 func Test_processFiles_deletes(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "riser-test")
+	dir, err := os.MkdirTemp(os.TempDir(), "riser-test")
 	if err != nil {
 		t.Fatal(err)
 	}

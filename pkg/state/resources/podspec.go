@@ -50,7 +50,7 @@ func readinessProbe(appConfig *model.AppConfig) *corev1.Probe {
 	}
 
 	probe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: appConfig.HealthCheck.Path,
 			},

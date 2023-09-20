@@ -4,7 +4,7 @@ metadata:
   name: knative-serving
   namespace: knative-serving
 spec:
-  version: 1.0.0
+  version: 1.11.0
   config:
     autoscaler:
       scale-to-zero-pod-retention-period: "10m"

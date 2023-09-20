@@ -1,7 +1,6 @@
 package git
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +29,7 @@ func processFiles(baseDir string, files []core.ResourceFile) error {
 				return err
 			}
 
-			err = ioutil.WriteFile(fullFileName, file.Contents, workspaceFilePerm)
+			err = os.WriteFile(fullFileName, file.Contents, workspaceFilePerm)
 			if err != nil {
 				return errors.Wrap(err, "error writing file")
 			}

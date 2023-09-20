@@ -2,7 +2,6 @@ package snapshot
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,7 +23,7 @@ func AssertEqual(t *testing.T, snapshotDir string, actualFiles []core.ResourceFi
 
 	err := filepath.Walk(snapshotDir, func(filePath string, info os.FileInfo, err error) error {
 		if info != nil && !info.IsDir() {
-			bytes, err := ioutil.ReadFile(filePath)
+			bytes, err := os.ReadFile(filePath)
 			if err != nil {
 				return err
 			}

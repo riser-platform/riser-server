@@ -22,3 +22,4 @@ spec:
   selector:
     matchLabels:
       riser.dev/deployment: myapp
+status: {}

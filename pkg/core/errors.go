@@ -11,7 +11,6 @@ var ErrConflictNewerVersion = errors.New("a newer version of the object exists")
 
 // ValidationError provides an error consumable by a client. This is safe to return to the API as the errorHandler is aware of this error
 type ValidationError struct {
-	error
 	Message string
 	// ValidationError represents the validation error that ocurred. See the API errorHandler for how this is returned to the client.
 	ValidationError error

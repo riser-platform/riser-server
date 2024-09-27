@@ -46,7 +46,8 @@ func RegisterRoutes(e *echo.Echo, repoCache *environment.RepoCache, db *sql.DB) 
 
 	e.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
 		// We will probably use the "Bearer" scheme for OIDC
-		AuthScheme: "Apikey",
+		// Hack: Add colon as the old client used a colon. Echo used to support parsing without specifying the colon but a breaking change was introduced
+		AuthScheme: "Apikey:",
 		Validator: func(apikey string, c echo.Context) (bool, error) {
 			return loginWithApiKey(c, loginService, apikey)
 		},
